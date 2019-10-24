@@ -182,7 +182,7 @@ public class JsonParser {
         char current;
         while(true) {
             current = seeker.current();
-            if (string(current) && ready(state)) {
+            if (ready(state)) {
                 state = STARTED;
                 seeker.proceed(1);
             }
@@ -233,42 +233,36 @@ public class JsonParser {
 
     private static Consumption consumeTrue(final Seeker seeker) {
         final char tchar = seeker.current();
-        if (t(tchar)) {
-            if (seeker.hasNext(3)) {
-                final char rchar = seeker.atNext(1);
-                final char uchar = seeker.atNext(2);
-                final char echar = seeker.atNext(3);
-                if (truth(tchar, rchar, uchar, echar)) return succeed(seeker.proceed(4), JBool.jtrue);
-                else return failed(seeker, abruptEnd(BOOLS));
-            } else return failed(seeker, abruptEnd(BOOLS));
-        } else return failed(seeker, unexpectedEnd(BOOLS, tchar));
+        if (seeker.hasNext(3)) {
+            final char rchar = seeker.atNext(1);
+            final char uchar = seeker.atNext(2);
+            final char echar = seeker.atNext(3);
+            if (truth(tchar, rchar, uchar, echar)) return succeed(seeker.proceed(4), JBool.jtrue);
+            else return failed(seeker, abruptEnd(BOOLS));
+        } else return failed(seeker, abruptEnd(BOOLS));
     }
 
     private static Consumption consumeFalse(final Seeker seeker) {
         final char fchar = seeker.current();
-        if (f(fchar)) {
-            if (seeker.hasNext(4)) {
-                final char achar = seeker.atNext(1);
-                final char lchar = seeker.atNext(2);
-                final char schar = seeker.atNext(3);
-                final char echar = seeker.atNext(4);
-                if (falsity(fchar, achar, lchar, schar, echar)) return succeed(seeker.proceed(5), JBool.jfalse);
-                else return failed(seeker, abruptEnd(BOOLS));
-            } else return failed(seeker, abruptEnd(BOOLS));
-        } else return failed(seeker, unexpectedEnd(BOOLS, fchar));
+        if (seeker.hasNext(4)) {
+            final char achar = seeker.atNext(1);
+            final char lchar = seeker.atNext(2);
+            final char schar = seeker.atNext(3);
+            final char echar = seeker.atNext(4);
+            if (falsity(fchar, achar, lchar, schar, echar)) return succeed(seeker.proceed(5), JBool.jfalse);
+            else return failed(seeker, abruptEnd(BOOLS));
+        } else return failed(seeker, abruptEnd(BOOLS));
     }
 
     private static Consumption consumeNull(final Seeker seeker) {
         final char nchar = seeker.current();
-        if (n(nchar)) {
-            if (seeker.hasNext(3)) {
-                final char uchar = seeker.atNext(1);
-                final char lchar1 = seeker.atNext(2);
-                final char lchar2 = seeker.atNext(3);
-                if (nullity(nchar, uchar, lchar1, lchar2)) return succeed(seeker.proceed(4), JNull.instance);
-                else return failed(seeker, abruptEnd(NULL));
-            } else return failed(seeker, abruptEnd(NULL));
-        } else return failed(seeker, unexpectedEnd(NULL, nchar));
+        if (seeker.hasNext(3)) {
+            final char uchar = seeker.atNext(1);
+            final char lchar1 = seeker.atNext(2);
+            final char lchar2 = seeker.atNext(3);
+            if (nullity(nchar, uchar, lchar1, lchar2)) return succeed(seeker.proceed(4), JNull.instance);
+            else return failed(seeker, abruptEnd(NULL));
+        } else return failed(seeker, abruptEnd(NULL));
     }
 
     private static Consumption consumeObj(final Seeker seeker) {
@@ -278,7 +272,7 @@ public class JsonParser {
         while (true) {
             skipFiller(seeker);
             current = seeker.current();
-            if (objOpen(current) && ready(state)) {
+            if (ready(state)) {
                 state = STARTED;
                 seeker.proceed(1);
             }
@@ -315,7 +309,7 @@ public class JsonParser {
         while(true) {
             skipFiller(seeker);
             current = seeker.current();
-            if (ready(state) && arrOpen(current)) {
+            if (ready(state)) {
                 state = STARTED;
                 seeker.proceed(1);
             }
