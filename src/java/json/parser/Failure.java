@@ -1,6 +1,8 @@
 package json.parser;
 
-public final class Failure<A> extends Consumption<A> {
+import json.data.Json;
+
+public final class Failure extends Consumption {
     public final Seeker seeker;
     public final String msg;
 
@@ -10,14 +12,7 @@ public final class Failure<A> extends Consumption<A> {
     }
 
     @Override
-    A value() {
-        return null;
-    }
-
-    @Override
-    <B> Consumption<B> coerce() {
-        return new Failure<>(seeker, msg);
-    }
+    Json value() { return null; }
 
     @Override
     public String toString() {

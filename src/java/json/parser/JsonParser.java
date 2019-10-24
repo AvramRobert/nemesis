@@ -114,7 +114,7 @@ public class JsonParser {
         }
     }
 
-    private static Consumption<Json> consumeDecimal(final StringBuilder buffer, final Seeker seeker) {
+    private static Consumption consumeDecimal(final StringBuilder buffer, final Seeker seeker) {
         int state = READY;
         char current;
         while (true) {
@@ -129,7 +129,7 @@ public class JsonParser {
         }
     }
 
-    private static Consumption<Json> consumeExponent(final StringBuilder buffer, final Seeker seeker) {
+    private static Consumption consumeExponent(final StringBuilder buffer, final Seeker seeker) {
         int state = READY;
         char current;
         while (true) {
@@ -149,7 +149,7 @@ public class JsonParser {
         }
     }
 
-    private static Consumption<Json> consumeNumber(final Seeker seeker) {
+    private static Consumption consumeNumber(final Seeker seeker) {
         final StringBuilder buffer  = new StringBuilder();
         int state = READY;
         char current;
@@ -176,7 +176,7 @@ public class JsonParser {
         }
     }
 
-    private static Consumption<Json> consumeString(final Seeker seeker) {
+    private static Consumption consumeString(final Seeker seeker) {
         final StringBuilder buffer = new StringBuilder();
         int state = READY;
         char current;
@@ -201,13 +201,13 @@ public class JsonParser {
         return succeed(seeker, new JString(buffer.toString()));
     }
 
-    private static Consumption<String> consumeKey(final Seeker seeker) {
-        final Consumption<Json> result = consumeString(seeker);
-        if (result.succeeded()) return succeed(seeker, result.value().toString());
-        else return result.coerce();
+    private static Consumption consumeKey(final Seeker seeker) {
+        final Consumption result = consumeString(seeker);
+        if (result.succeeded()) return succeed(seeker, result.value());
+        else return result;
     }
 
-    private static Consumption<Void> consumeComma(final Seeker seeker, final char stop) {
+    private static Consumption consumeComma(final Seeker seeker, final char stop) {
         skipFiller(seeker);
         final char current = seeker.current();
         if (current == stop) return succeed(seeker, null);
@@ -220,7 +220,7 @@ public class JsonParser {
 
     }
 
-    private static Consumption<Void> consumePair(final Seeker seeker) {
+    private static Consumption consumePair(final Seeker seeker) {
         skipFiller(seeker);
         final char current = seeker.current();
         if (pair(current)) {
@@ -231,7 +231,7 @@ public class JsonParser {
         else return failed(seeker, unexpectedEnd(COLON, current));
     }
 
-    private static Consumption<Json> consumeTrue(final Seeker seeker) {
+    private static Consumption consumeTrue(final Seeker seeker) {
         final char tchar = seeker.current();
         if (t(tchar)) {
             if (seeker.hasNext(3)) {
@@ -244,7 +244,7 @@ public class JsonParser {
         } else return failed(seeker, unexpectedEnd(BOOLS, tchar));
     }
 
-    private static Consumption<Json> consumeFalse(final Seeker seeker) {
+    private static Consumption consumeFalse(final Seeker seeker) {
         final char fchar = seeker.current();
         if (f(fchar)) {
             if (seeker.hasNext(4)) {
@@ -258,7 +258,7 @@ public class JsonParser {
         } else return failed(seeker, unexpectedEnd(BOOLS, fchar));
     }
 
-    private static Consumption<Json> consumeNull(final Seeker seeker) {
+    private static Consumption consumeNull(final Seeker seeker) {
         final char nchar = seeker.current();
         if (n(nchar)) {
             if (seeker.hasNext(3)) {
@@ -271,7 +271,7 @@ public class JsonParser {
         } else return failed(seeker, unexpectedEnd(NULL, nchar));
     }
 
-    private static Consumption<Json> consumeObj(final Seeker seeker) {
+    private static Consumption consumeObj(final Seeker seeker) {
         final HashMap<String, Json> fields = new HashMap<>();
         int state = READY;
         char current;
@@ -287,28 +287,28 @@ public class JsonParser {
                 break;
             }
             else if (started(state)) {
-                final Consumption<String> key = consumeKey(seeker);
+                final Consumption key = consumeKey(seeker);
                 if (key.succeeded()) {
-                    final Consumption<Void> separation = consumePair(seeker);
+                    final Consumption separation = consumePair(seeker);
                     if (separation.succeeded()) {
-                        final Consumption<Json> value = consumeAny(seeker);
+                        final Consumption value = consumeAny(seeker);
                         if (value.succeeded()) {
-                            final Consumption<Void> delimitation = consumeComma(seeker, CPAREN);
+                            final Consumption delimitation = consumeComma(seeker, CPAREN);
                             if (delimitation.succeeded()) {
-                                fields.put(key.value(), value.value());
+                                fields.put(key.value().toString(), value.value());
                             }
-                            else return delimitation.coerce();
+                            else return delimitation;
                         }
                         else return value;
-                    } else return separation.coerce();
-                } else return key.coerce();
+                    } else return separation;
+                } else return key;
             }
             else failed(seeker, unexpectedEnd(JSON, current));
         }
         return succeed(seeker, new JObj(Map.from(fields)));
     }
 
-    private static Consumption<Json> consumeArr(final Seeker seeker) {
+    private static Consumption consumeArr(final Seeker seeker) {
         final ArrayList<Json> list = new ArrayList<>();
         int state = READY;
         char current;
@@ -324,11 +324,11 @@ public class JsonParser {
                 break;
             }
             else if (started(state)) {
-                final Consumption<Json> result = consumeAny(seeker);
+                final Consumption result = consumeAny(seeker);
                 if (result.succeeded()) {
-                    final Consumption<Void> delimitation = consumeComma(seeker, CBRAKET);
+                    final Consumption delimitation = consumeComma(seeker, CBRAKET);
                     if (delimitation.succeeded()) list.add(result.value());
-                    else return delimitation.coerce();
+                    else return delimitation;
                 }
                 else return result;
             }
@@ -337,7 +337,7 @@ public class JsonParser {
         return succeed(seeker, new JArr(List.from(list)));
     }
 
-    private static Consumption<Json> consumeAny(final Seeker seeker) {
+    private static Consumption consumeAny(final Seeker seeker) {
         skipFiller(seeker);
         final char current = seeker.current();
         if (number(current)) {
@@ -364,7 +364,7 @@ public class JsonParser {
         else return failed(seeker, unexpectedEnd(JSON, current));
     }
 
-    public static Consumption<Json> parse (final String input) {
+    public static Consumption parse (final String input) {
         final Seeker seeker = new Seeker(input);
         if (input.isEmpty()) return succeed(seeker, JEmpty.empty);
         else {

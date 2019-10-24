@@ -1,19 +1,20 @@
 package json.parser;
 
-public abstract class Consumption<A> {
+import json.data.Json;
+
+public abstract class Consumption {
     Seeker seeker;
+    abstract Json value ();
 
     public boolean succeeded() {
         return this instanceof Success;
     }
-    abstract A value ();
-    abstract <B> Consumption<B> coerce();
 
-    public static <C> Success<C> succeed(final Seeker seeker, final C result) {
-        return new Success<>(seeker, result);
+    public static Success succeed(final Seeker seeker, final Json result) {
+        return new Success(seeker, result);
     }
 
-    public static <C> Failure<C> failed(final Seeker seeker, final String msg) {
-        return new Failure<>(seeker, msg);
+    public static Failure failed(final Seeker seeker, final String msg) {
+        return new Failure(seeker, msg);
     }
 }
