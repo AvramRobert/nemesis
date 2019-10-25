@@ -76,16 +76,18 @@ public class Parser2 {
         return String.format("%s\nFailed at line: %d\n%s", prelude, lines, pointedSample(30));
     }
 
-    private void unexpectedEnd (final String expected, final char received) {
+    private boolean unexpectedEnd (final String expected, final char received) {
         SUCCESSFUL = !SUCCESSFUL;
         final String msg = String.format("Unexpected end of input. Expected `%s` but received `%c`.", expected, received);
         this.failure = failureMessage(msg);
+        return SUCCESSFUL;
     }
 
-    private void abruptEnd (final String expected) {
+    private boolean abruptEnd (final String expected) {
         SUCCESSFUL = !SUCCESSFUL;
         final String msg = String.format("Unexpected end of input. Expected `%s but received nothing.", expected);
         this.failure = failureMessage(msg);
+        return SUCCESSFUL;
     }
 
     private boolean number(final char c) {
@@ -165,9 +167,10 @@ public class Parser2 {
         return f == 'f' && a == 'a' && l == 'l' && s == 's' && e == 'e';
     }
 
-    private void succeed(final Json json) {
+    private boolean succeed(final Json json) {
         SUCCESSFUL = true;
         this.result = json;
+        return SUCCESSFUL;
     }
 
     private void skipFiller() {
@@ -178,7 +181,7 @@ public class Parser2 {
         }
     }
 
-    private void consumeDecimal(final StringBuilder buffer) {
+    private boolean consumeDecimal(final StringBuilder buffer) {
         int state = READY;
         char current;
         while (true) {
@@ -189,17 +192,15 @@ public class Parser2 {
                 proceed(1);
             }
             else if (ready(state)) {
-                unexpectedEnd(NUMS, current);
-                break;
+                return unexpectedEnd(NUMS, current);
             }
             else {
-                succeed(new JNum(Double.parseDouble(buffer.toString())));
-                break;
+                return succeed(new JNum(Double.parseDouble(buffer.toString())));
             }
         }
     }
 
-    private void consumeExponent(final StringBuilder buffer) {
+    private boolean consumeExponent(final StringBuilder buffer) {
         int state = READY;
         char current;
         while (true) {
@@ -215,17 +216,15 @@ public class Parser2 {
                 proceed(1);
             }
             else if (ready(state)) {
-                unexpectedEnd(NUMS, current);
-                break;
+                return unexpectedEnd(NUMS, current);
             }
             else {
-                succeed(new JNum(Float.parseFloat(buffer.toString())));
-                break;
+                return succeed(new JNum(Float.parseFloat(buffer.toString())));
             }
         }
     }
 
-    private void consumeNumber() {
+    private boolean consumeNumber() {
         final StringBuilder buffer  = new StringBuilder();
         int state = READY;
         char current;
@@ -239,31 +238,26 @@ public class Parser2 {
             else if (started(state)) {
                 if (decimal(current)) {
                     proceed(1);
-                    consumeDecimal(buffer.append(current));
-                    break;
+                    return consumeDecimal(buffer.append(current));
                 }
                 else if (exponent(current)) {
                     proceed(1);
-                    consumeExponent(buffer.append(current));
-                    break;
+                    return consumeExponent(buffer.append(current));
                 }
                 else {
-                    succeed(new JNum(Integer.parseInt(buffer.toString())));
-                    break;
+                    return succeed(new JNum(Integer.parseInt(buffer.toString())));
                 }
             }
             else if (ready(state)) {
-                unexpectedEnd(NUMS, current);
-                break;
+                return unexpectedEnd(NUMS, current);
             }
             else {
-                succeed(new JNum(Integer.parseInt(buffer.toString())));
-                break;
+                return succeed(new JNum(Integer.parseInt(buffer.toString())));
             }
         }
     }
 
-    private void consumeString() {
+    private boolean consumeString() {
         final StringBuilder buffer = new StringBuilder();
         int state = READY;
         char current;
@@ -282,48 +276,49 @@ public class Parser2 {
                 proceed(1);
             }
             else {
-                unexpectedEnd(QUOTE, current);
-                break;
+                return unexpectedEnd(QUOTE, current);
             }
         }
-        succeed(new JString(buffer.toString()));
+        return succeed(new JString(buffer.toString()));
     }
 
-    private void consumeComma(final char until) {
+    private boolean consumeComma(final char until) {
         skipFiller();
         final char current = CURRENT();
-        if (current == until) {}
+        if (current == until) { return SUCCESSFUL; }
         else if (comma(current)) {
             proceed(1);
             skipFiller();
+            return SUCCESSFUL;
         }
-        else unexpectedEnd(COMMA, current);
+        else return unexpectedEnd(COMMA, current);
     }
 
-    private void consumePair() {
+    private boolean consumePair() {
         skipFiller();
         final char current = CURRENT();
         if (pair(current)) {
             proceed(1);
             skipFiller();
+            return SUCCESSFUL;
         }
-        else unexpectedEnd(COLON, current);
+        else return unexpectedEnd(COLON, current);
     }
 
-    private void consumeTrue() {
+    private boolean consumeTrue() {
         if (hasNext(3)) {
             final char rchar = atNext(1);
             final char uchar = atNext(2);
             final char echar = atNext(3);
             if (truth(CURRENT(), rchar, uchar, echar)) {
                 proceed(4);
-                succeed(JBool.jtrue);
+                return succeed(JBool.jtrue);
             }
-            else abruptEnd(BOOLS);
-        } else abruptEnd(BOOLS);
+            else return abruptEnd(BOOLS);
+        } else return abruptEnd(BOOLS);
     }
 
-    private void consumeFalse() {
+    private boolean consumeFalse() {
         if (hasNext(4)) {
             final char achar = atNext(1);
             final char lchar = atNext(2);
@@ -331,26 +326,26 @@ public class Parser2 {
             final char echar = atNext(4);
             if (falsity(CURRENT(), achar, lchar, schar, echar)) {
                 proceed(5);
-                succeed(JBool.jfalse);
+                return succeed(JBool.jfalse);
             }
-            else abruptEnd(BOOLS);
-        } else abruptEnd(BOOLS);
+            else return abruptEnd(BOOLS);
+        } else return abruptEnd(BOOLS);
     }
 
-    private void consumeNull() {
+    private boolean consumeNull() {
         if (hasNext(3)) {
             final char uchar  = atNext(1);
             final char lchar1 = atNext(2);
             final char lchar2 = atNext(3);
             if (nullity(CURRENT(), uchar, lchar1, lchar2)) {
                 proceed(4);
-                succeed(JNull.instance);
+                return succeed(JNull.instance);
             }
-            else abruptEnd(NULL);
-        } else abruptEnd(NULL);
+            else return abruptEnd(NULL);
+        } else return abruptEnd(NULL);
     }
 
-    private void consumeObj() {
+    private boolean consumeObj() {
         final HashMap<String, Json> fields = new HashMap<>();
         int state = READY;
         char current;
@@ -376,16 +371,20 @@ public class Parser2 {
                             final Json value = result; // this isn't a copy. be careful
                             consumeComma(CPAREN);
                             if (SUCCESSFUL) fields.put(key, value);
+                            else return SUCCESSFUL;
                         }
+                        else return SUCCESSFUL;
                     }
+                    else return SUCCESSFUL;
                 }
+                else return SUCCESSFUL;
             }
-            else unexpectedEnd(JSON, current);
+            else return unexpectedEnd(JSON, current);
         }
-        succeed(new JObj(Map.from(fields)));
+        return succeed(new JObj(Map.from(fields)));
     }
 
-    private void consumeArr() {
+    private boolean consumeArr() {
         final ArrayList<Json> list = new ArrayList<>();
         int state = READY;
         char current;
@@ -406,33 +405,37 @@ public class Parser2 {
                     final Json value = result;
                     consumeComma(CBRAKET);
                     if (SUCCESSFUL) list.add(value);
+                    else return SUCCESSFUL;
                 }
+                else return SUCCESSFUL;
             }
-            else unexpectedEnd(JSON, current);
+            else return unexpectedEnd(JSON, current);
         }
-        succeed(new JArr(List.from(list)));
+        return succeed(new JArr(List.from(list)));
     }
 
-    private void consumeAny() {
+    private boolean consumeAny() {
         final char current = CURRENT();
         skipFiller();
-        if (number(current)) consumeNumber();
-        else if (arrOpen(current)) consumeArr();
-        else if (objOpen(current)) consumeObj();
-        else if (string(current)) consumeString();
-        else if (n(current)) consumeNull();
-        else if (t(current)) consumeTrue();
-        else if (f(current)) consumeFalse();
-        else unexpectedEnd(JSON, current);
+        if (number(current)) return consumeNumber();
+        else if (arrOpen(current)) return consumeArr();
+        else if (objOpen(current)) return consumeObj();
+        else if (string(current)) return consumeString();
+        else if (n(current)) return consumeNull();
+        else if (t(current)) return consumeTrue();
+        else if (f(current)) return consumeFalse();
+        else return unexpectedEnd(JSON, current);
     }
 
+    // Remove SUCCESSFUL and make every method return true or false automatically.
+    // This will suffice for a shot-circuit and will do everything properly.
     public static Consumption parse (final String input) {
         final Parser2 p = new Parser2(input);
         if (input.isEmpty()) return Consumption.succeed(p.result);
         else {
             try {
-                p.consumeAny();
-                if (p.SUCCESSFUL) return Consumption.succeed(p.result);
+                final boolean succeeded = p.consumeAny();
+                if (succeeded) return Consumption.succeed(p.result);
                 else return Consumption.failed(p.failure);
             } catch (Exception e) {
                 return Consumption.failed(e.getMessage()); // do better
