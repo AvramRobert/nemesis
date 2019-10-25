@@ -10,7 +10,8 @@ import java.util.HashMap;
 public class Parser2 {
 
     // == PARSING STATE INFO == //
-    private boolean SUCCESSFUL = true;
+    private final boolean SUCCESSFUL = true;
+    private final boolean FAILED = false;
     private String failure = "";
     private Json result = JEmpty.empty;
 
@@ -77,14 +78,12 @@ public class Parser2 {
     }
 
     private boolean unexpectedEnd (final String expected, final char received) {
-        SUCCESSFUL = !SUCCESSFUL;
         final String msg = String.format("Unexpected end of input. Expected `%s` but received `%c`.", expected, received);
         this.failure = failureMessage(msg);
         return SUCCESSFUL;
     }
 
     private boolean abruptEnd (final String expected) {
-        SUCCESSFUL = !SUCCESSFUL;
         final String msg = String.format("Unexpected end of input. Expected `%s but received nothing.", expected);
         this.failure = failureMessage(msg);
         return SUCCESSFUL;
@@ -168,7 +167,6 @@ public class Parser2 {
     }
 
     private boolean succeed(final Json json) {
-        SUCCESSFUL = true;
         this.result = json;
         return SUCCESSFUL;
     }
@@ -269,7 +267,7 @@ public class Parser2 {
             }
             else if (string(current) && started(state)) {
                 proceed(1);
-                break;
+                return succeed(new JString(buffer.toString()));
             }
             else if (started(state)) {
                 buffer.append(current);
@@ -279,9 +277,9 @@ public class Parser2 {
                 return unexpectedEnd(QUOTE, current);
             }
         }
-        return succeed(new JString(buffer.toString()));
     }
 
+    // Mention dangling comma problem
     private boolean consumeComma(final char until) {
         skipFiller();
         final char current = CURRENT();
@@ -289,7 +287,10 @@ public class Parser2 {
         else if (comma(current)) {
             proceed(1);
             skipFiller();
-            return SUCCESSFUL;
+            if (CURRENT() == until) {
+                return unexpectedEnd(JSON, until);
+            }
+            else return SUCCESSFUL;
         }
         else return unexpectedEnd(COMMA, current);
     }
@@ -358,30 +359,25 @@ public class Parser2 {
             }
             else if (started(state) && objClose(current)) {
                 proceed(1);
-                break;
+                return succeed(new JObj(Map.from(fields)));
             }
             else if (started(state)) {
-                consumeString();
-                if (SUCCESSFUL) {
+                if (consumeString()) {
                     final String key = result.toString();
-                    consumePair();
-                    if (SUCCESSFUL) {
-                        consumeAny();
-                        if (SUCCESSFUL) {
+                    if (consumePair()) {
+                        if (consumeAny()) {
                             final Json value = result; // this isn't a copy. be careful
-                            consumeComma(CPAREN);
-                            if (SUCCESSFUL) fields.put(key, value);
-                            else return SUCCESSFUL;
+                            if (consumeComma(CPAREN)) fields.put(key, value);
+                            else return FAILED;
                         }
-                        else return SUCCESSFUL;
+                        else return FAILED;
                     }
-                    else return SUCCESSFUL;
+                    else return FAILED;
                 }
-                else return SUCCESSFUL;
+                else return FAILED;
             }
             else return unexpectedEnd(JSON, current);
         }
-        return succeed(new JObj(Map.from(fields)));
     }
 
     private boolean consumeArr() {
@@ -397,21 +393,18 @@ public class Parser2 {
             }
             else if (started(state) && arrClose(current)) {
                 proceed(1);
-                break;
+                return succeed(new JArr(List.from(list)));
             }
             else if (started(state)) {
-                consumeAny();
-                if (SUCCESSFUL) {
+                if (consumeAny()) {
                     final Json value = result;
-                    consumeComma(CBRAKET);
-                    if (SUCCESSFUL) list.add(value);
-                    else return SUCCESSFUL;
+                    if (consumeComma(CBRAKET)) list.add(value);
+                    else return FAILED;
                 }
-                else return SUCCESSFUL;
+                else return FAILED;
             }
             else return unexpectedEnd(JSON, current);
         }
-        return succeed(new JArr(List.from(list)));
     }
 
     private boolean consumeAny() {
