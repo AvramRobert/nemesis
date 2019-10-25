@@ -39,14 +39,20 @@ public class Parser2 {
         this.length = text.length();
     }
 
-    private String pointedSample(final int chars) {
-        int div = chars / 2;
+    private String pointedSample(final int subtextSize) {
+        int div = subtextSize / 2;
         int left = cursor - div;
         int right = cursor + div;
-        if (left >= 0 && right < length) return text.substring(left, cursor) + "| ->" + text.substring(cursor, right);
-        else if (right < length) return "| ->" + text.substring(0, right);
-        else if (left >= 0) return text.substring(left, length - 1) + "<- |";
-        else return "";
+        if (left >= 0 && right < length) {
+            return text.substring(left, cursor) + " |-> " + text.substring(cursor, right);
+        }
+        else if (right < length) {
+            return text.substring(0, cursor) + " |-> " + text.substring(cursor, right);
+        }
+        else if (left >= 0) {
+            return text.substring(left, cursor) + " |-> " + text.substring(cursor, length - 1);
+        }
+        else return text + " <-| ";
     }
 
     private char CURRENT() { return text.charAt(cursor); }
@@ -67,23 +73,23 @@ public class Parser2 {
     }
 
     private String failureMessage(final String prelude) {
-        return prelude + "\nFailed at line: %d\n" + pointedSample(20);
+        return String.format("%s\nFailed at line: %d\n%s", prelude, lines, pointedSample(30));
     }
 
     private void unexpectedEnd (final String expected, final char received) {
         SUCCESSFUL = !SUCCESSFUL;
-        final String msg = String.format("Unexpected end of input. Expected `%s`, received `%c`.", expected, received);
+        final String msg = String.format("Unexpected end of input. Expected `%s` but received `%c`.", expected, received);
         this.failure = failureMessage(msg);
     }
 
     private void abruptEnd (final String expected) {
         SUCCESSFUL = !SUCCESSFUL;
-        final String msg = String.format("Unexpected end of input. Expected `%s`, received nothing", expected);
+        final String msg = String.format("Unexpected end of input. Expected `%s but received nothing.", expected);
         this.failure = failureMessage(msg);
     }
 
     private boolean number(final char c) {
-        return c == '0' ||
+        return  c == '0' ||
                 c == '1' ||
                 c == '2' ||
                 c == '3' ||
