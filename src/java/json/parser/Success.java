@@ -3,11 +3,9 @@ package json.parser;
 import json.data.Json;
 
 public final class Success extends Consumption {
-    public final Seeker seeker;
     public final Json result;
 
-    public Success(final Seeker seeker, final Json result) {
-        this.seeker = seeker;
+    public Success(final Json result) {
         this.result = result;
     }
 

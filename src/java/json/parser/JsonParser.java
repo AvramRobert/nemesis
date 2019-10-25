@@ -8,24 +8,31 @@ import java.util.HashMap;
 import static json.parser.Consumption.*;
 
 public class JsonParser {
-    private static int READY = 0;
-    private static int STARTED = 1;
-    private static String NULL = "NULL";
-    private static String BOOLS = "true,false";
-    private static String NUMS  = "0-9";
-    private static String JSON  = "{, [, \", 0-9, true, false or null";
-    private static String COLON = ":";
-    private static String COMMA = ",";
-    private static String QUOTE = "\"";
-    private static char CBRAKET = ']';
-    private static char CPAREN  = '}';
+    private static final int READY = 0;
+    private static final int STARTED = 1;
+    private static final String NULL = "NULL";
+    private static final String BOOLS = "true,false";
+    private static final String NUMS  = "0-9";
+    private static final String JSON  = "{, [, \", 0-9, true, false or null";
+    private static final String COLON = ":";
+    private static final String COMMA = ",";
+    private static final String QUOTE = "\"";
+    private static final char CBRAKET = ']';
+    private static final char CPAREN  = '}';
 
-    private static String unexpectedEnd (final String expected, final char received) {
-        return String.format("Unexpected end of input. Expected `%s`, received `%c`", expected, received);
+    private static String failureMessage(final Seeker seeker, final String msg) {
+        final String sample = seeker.pointedSample(20);
+        return String.format("%s\nFailed at line: %d\n%s", msg, seeker.line(), sample);
     }
 
-    private static String abruptEnd (final String expected) {
-        return String.format("Unexpected end of input. Expected `%s`, received nothing", expected);
+    private static String unexpectedEnd (final Seeker seeker, final String expected, final char received) {
+        final String msg = String.format("Unexpected end of input. Expected `%s`, received `%c`", expected, received);
+        return failureMessage(seeker, msg);
+    }
+
+    private static String abruptEnd (final Seeker seeker, final String expected) {
+        final String msg = String.format("Unexpected end of input. Expected `%s`, received nothing", expected);
+        return failureMessage(seeker, msg);
     }
 
     private static boolean number(final char c) {
@@ -124,8 +131,8 @@ public class JsonParser {
                 state = STARTED;
                 seeker.proceed(1);
             }
-            else if (ready(state)) return failed(seeker, unexpectedEnd(NUMS, current));
-            else return succeed(seeker, new JNum(Double.parseDouble(buffer.toString())));
+            else if (ready(state)) return failed(unexpectedEnd(seeker, NUMS, current));
+            else return succeed(new JNum(Double.parseDouble(buffer.toString())));
         }
     }
 
@@ -144,8 +151,8 @@ public class JsonParser {
                 state = STARTED;
                 seeker.proceed(1);
             }
-            else if (ready(state)) return failed(seeker, unexpectedEnd(NUMS, current));
-            else return succeed(seeker, new JNum(Float.parseFloat(buffer.toString())));
+            else if (ready(state)) return failed(unexpectedEnd(seeker, NUMS, current));
+            else return succeed(new JNum(Float.parseFloat(buffer.toString())));
         }
     }
 
@@ -169,10 +176,10 @@ public class JsonParser {
                     seeker.proceed(1);
                     return consumeExponent(buffer.append(current), seeker);
                 }
-                else return succeed(seeker, new JNum(Integer.parseInt(buffer.toString())));
+                else return succeed(new JNum(Integer.parseInt(buffer.toString())));
             }
-            else if (ready(state)) return failed(seeker, unexpectedEnd(NUMS, current));
-            else return succeed(seeker, new JNum(Integer.parseInt(buffer.toString())));
+            else if (ready(state)) return failed(unexpectedEnd(seeker, NUMS, current));
+            else return succeed(new JNum(Integer.parseInt(buffer.toString())));
         }
     }
 
@@ -195,29 +202,28 @@ public class JsonParser {
                 seeker.proceed(1);
             }
             else {
-                return failed(seeker, unexpectedEnd(QUOTE, current));
+                return failed(unexpectedEnd(seeker, QUOTE, current));
             }
         }
-        return succeed(seeker, new JString(buffer.toString()));
+        return succeed(new JString(buffer.toString()));
     }
 
     private static Consumption consumeKey(final Seeker seeker) {
         final Consumption result = consumeString(seeker);
-        if (result.succeeded()) return succeed(seeker, result.value());
+        if (result.succeeded()) return succeed(result.value());
         else return result;
     }
 
     private static Consumption consumeComma(final Seeker seeker, final char stop) {
         skipFiller(seeker);
         final char current = seeker.current();
-        if (current == stop) return succeed(seeker, null);
+        if (current == stop) return succeed(null);
         else if (comma(current)) {
             seeker.proceed(1);
             skipFiller(seeker);
-            return succeed(seeker, null);
+            return succeed(null);
         }
-        else return failed(seeker, unexpectedEnd(COMMA, current));
-
+        else return failed(unexpectedEnd(seeker, COMMA, current));
     }
 
     private static Consumption consumePair(final Seeker seeker) {
@@ -226,9 +232,9 @@ public class JsonParser {
         if (pair(current)) {
             seeker.proceed(1);
             skipFiller(seeker);
-            return succeed(seeker, null);
+            return succeed(null);
         }
-        else return failed(seeker, unexpectedEnd(COLON, current));
+        else return failed(unexpectedEnd(seeker, COLON, current));
     }
 
     private static Consumption consumeTrue(final Seeker seeker) {
@@ -237,9 +243,12 @@ public class JsonParser {
             final char rchar = seeker.atNext(1);
             final char uchar = seeker.atNext(2);
             final char echar = seeker.atNext(3);
-            if (truth(tchar, rchar, uchar, echar)) return succeed(seeker.proceed(4), JBool.jtrue);
-            else return failed(seeker, abruptEnd(BOOLS));
-        } else return failed(seeker, abruptEnd(BOOLS));
+            if (truth(tchar, rchar, uchar, echar)) {
+                seeker.proceed(4);
+                return succeed(JBool.jtrue);
+            }
+            else return failed(abruptEnd(seeker, BOOLS));
+        } else return failed(abruptEnd(seeker, BOOLS));
     }
 
     private static Consumption consumeFalse(final Seeker seeker) {
@@ -249,9 +258,12 @@ public class JsonParser {
             final char lchar = seeker.atNext(2);
             final char schar = seeker.atNext(3);
             final char echar = seeker.atNext(4);
-            if (falsity(fchar, achar, lchar, schar, echar)) return succeed(seeker.proceed(5), JBool.jfalse);
-            else return failed(seeker, abruptEnd(BOOLS));
-        } else return failed(seeker, abruptEnd(BOOLS));
+            if (falsity(fchar, achar, lchar, schar, echar)) {
+                seeker.proceed(5);
+                return succeed(JBool.jfalse);
+            }
+            else return failed(abruptEnd(seeker, BOOLS));
+        } else return failed(abruptEnd(seeker, BOOLS));
     }
 
     private static Consumption consumeNull(final Seeker seeker) {
@@ -260,9 +272,12 @@ public class JsonParser {
             final char uchar = seeker.atNext(1);
             final char lchar1 = seeker.atNext(2);
             final char lchar2 = seeker.atNext(3);
-            if (nullity(nchar, uchar, lchar1, lchar2)) return succeed(seeker.proceed(4), JNull.instance);
-            else return failed(seeker, abruptEnd(NULL));
-        } else return failed(seeker, abruptEnd(NULL));
+            if (nullity(nchar, uchar, lchar1, lchar2)) {
+                seeker.proceed(4);
+                return succeed(JNull.instance);
+            }
+            else return failed(abruptEnd(seeker, NULL));
+        } else return failed(abruptEnd(seeker, NULL));
     }
 
     private static Consumption consumeObj(final Seeker seeker) {
@@ -297,9 +312,9 @@ public class JsonParser {
                     } else return separation;
                 } else return key;
             }
-            else failed(seeker, unexpectedEnd(JSON, current));
+            else failed(unexpectedEnd(seeker, JSON, current));
         }
-        return succeed(seeker, new JObj(Map.from(fields)));
+        return succeed(new JObj(Map.from(fields)));
     }
 
     private static Consumption consumeArr(final Seeker seeker) {
@@ -326,9 +341,9 @@ public class JsonParser {
                 }
                 else return result;
             }
-            else return failed (seeker, unexpectedEnd(JSON, current));
+            else return failed (unexpectedEnd(seeker, JSON, current));
         }
-        return succeed(seeker, new JArr(List.from(list)));
+        return succeed(new JArr(List.from(list)));
     }
 
     private static Consumption consumeAny(final Seeker seeker) {
@@ -355,17 +370,17 @@ public class JsonParser {
         else if (f(current)) {
             return consumeFalse(seeker);
         }
-        else return failed(seeker, unexpectedEnd(JSON, current));
+        else return failed(unexpectedEnd(seeker, JSON, current));
     }
 
     public static Consumption parse (final String input) {
         final Seeker seeker = new Seeker(input);
-        if (input.isEmpty()) return succeed(seeker, JEmpty.empty);
+        if (input.isEmpty()) return succeed(JEmpty.empty);
         else {
             try {
                 return consumeAny(seeker);
             } catch (Exception e) {
-                return failed(seeker, "Exception: " + e.getMessage()); // do better
+                return failed("Exception: " + e.getMessage()); // do better
             }
         }
     }

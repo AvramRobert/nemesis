@@ -22,6 +22,10 @@ public class Seeker {
         else return "";
     }
 
+    public final int cursor() { return cursor; }
+
+    public final int length() { return text.length(); }
+
     public final char current() { return text.charAt(cursor); }
 
     public final char atNext(final int i) {
