@@ -3,6 +3,7 @@ package json.parser;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.data.*;
+import util.Debug;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,13 +81,13 @@ public class Parser2 {
     private boolean unexpectedEnd (final String expected, final char received) {
         final String msg = String.format("Unexpected end of input. Expected `%s` but received `%c`.", expected, received);
         this.failure = failureMessage(msg);
-        return SUCCESSFUL;
+        return FAILED;
     }
 
     private boolean abruptEnd (final String expected) {
         final String msg = String.format("Unexpected end of input. Expected `%s but received nothing.", expected);
         this.failure = failureMessage(msg);
-        return SUCCESSFUL;
+        return FAILED;
     }
 
     private boolean number(final char c) {
@@ -279,7 +280,6 @@ public class Parser2 {
         }
     }
 
-    // Mention dangling comma problem
     private boolean consumeComma(final char until) {
         skipFiller();
         final char current = CURRENT();
@@ -420,8 +420,6 @@ public class Parser2 {
         else return unexpectedEnd(JSON, current);
     }
 
-    // Remove SUCCESSFUL and make every method return true or false automatically.
-    // This will suffice for a shot-circuit and will do everything properly.
     public static Consumption parse (final String input) {
         final Parser2 p = new Parser2(input);
         if (input.isEmpty()) return Consumption.succeed(p.result);
