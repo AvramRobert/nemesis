@@ -1,11 +1,13 @@
-package json.data;
+package json.data.typed;
+
+import json.data.JsonType;
 
 public class JNum extends Json {
-    final JType type;
+    final JsonType type;
     final Number value;
     public JNum(final Number value) {
         this.value = value;
-        this.type = JType.JsonNumber;
+        this.type = JsonType.JsonNumber;
     }
 
     @Override

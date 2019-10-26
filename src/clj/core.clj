@@ -1,7 +1,7 @@
 (ns core
   (:require [criterium.core :as c]
             [cheshire.core :as j])
-  (:import json.parser.Parser))
+  (:import json.parser.typed.Parser))
 
 
 (defn -main [& args]

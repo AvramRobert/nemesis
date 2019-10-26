@@ -1,8 +1,8 @@
-package json.parser;
+package json.parser.typed;
 
-import json.data.Json;
+import json.data.typed.Json;
 
-public final class Success extends Result {
+public final class Success implements Result {
     public final Json result;
 
     public Success(final Json result) {
@@ -10,7 +10,7 @@ public final class Success extends Result {
     }
 
     @Override
-    Json value() { return result; }
+    public Json json() { return result; }
 
     @Override
     public String toString() {

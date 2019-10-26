@@ -1,12 +1,13 @@
-package json.data;
+package json.data.typed;
 
 import io.lacuna.bifurcan.List;
+import json.data.JsonType;
 
 public final class JArr extends Json {
     final List<Json> value;
     public JArr(final List<Json> i) {
         this.value = i;
-        this.type = JType.JsonSeq;
+        this.type = JsonType.JsonArr;
     }
 
     @Override

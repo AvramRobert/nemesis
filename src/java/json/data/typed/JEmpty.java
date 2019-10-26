@@ -1,11 +1,13 @@
-package json.data;
+package json.data.typed;
+
+import json.data.JsonType;
 
 public final class JEmpty extends Json {
 
     public static JEmpty empty = new JEmpty();
 
     public JEmpty() {
-        this.type = JType.JsonEmpty;
+        this.type = JsonType.JsonEmpty;
     }
 
     @Override

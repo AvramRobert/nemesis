@@ -1,10 +1,12 @@
-package json.data;
+package json.data.typed;
+
+import json.data.JsonType;
 
 public final class JString extends Json {
     final String value;
     public JString(final String i) {
         this.value = i;
-        this.type = JType.JsonString;
+        this.type = JsonType.JsonString;
     }
 
     @Override

@@ -1,8 +1,8 @@
-package json.parser;
+package json.parser.typed;
 
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
-import json.data.*;
+import json.data.typed.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;

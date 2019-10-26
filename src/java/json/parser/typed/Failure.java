@@ -1,8 +1,8 @@
-package json.parser;
+package json.parser.typed;
 
-import json.data.Json;
+import json.data.typed.Json;
 
-public final class Failure extends Result {
+public final class Failure implements Result {
     public final String msg;
 
     public Failure(final String msg) {
@@ -10,7 +10,7 @@ public final class Failure extends Result {
     }
 
     @Override
-    Json value() { return null; }
+    public Json json() { return null; }
 
     @Override
     public String toString() {

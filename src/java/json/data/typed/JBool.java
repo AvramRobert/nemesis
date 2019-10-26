@@ -1,12 +1,14 @@
-package json.data;
+package json.data.typed;
+
+import json.data.JsonType;
 
 public class JBool extends Json {
-    final JType type;
+    final JsonType type;
     final boolean value;
 
     private JBool(final boolean value) {
         this.value = value;
-        this.type = JType.JBool;
+        this.type = JsonType.JsonBool;
     }
 
     @Override
