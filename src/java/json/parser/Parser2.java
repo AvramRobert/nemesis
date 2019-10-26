@@ -256,6 +256,11 @@ public class Parser2 {
         }
     }
 
+    private boolean consumeSignedNumber() {
+        proceed(1);
+        return consumeNumber();
+    }
+
     private boolean consumeString() {
         final StringBuilder buffer = new StringBuilder();
         int state = READY;
@@ -411,6 +416,7 @@ public class Parser2 {
         final char current = CURRENT();
         skipFiller();
         if (number(current)) return consumeNumber();
+        else if (sign(current)) return consumeSignedNumber();
         else if (arrOpen(current)) return consumeArr();
         else if (objOpen(current)) return consumeObj();
         else if (string(current)) return consumeString();
