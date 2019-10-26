@@ -4,7 +4,7 @@ public final class JString extends Json {
     final String value;
     public JString(final String i) {
         this.value = i;
-        this.type = JsonType.JsonString;
+        this.type = JType.JsonString;
     }
 
     @Override

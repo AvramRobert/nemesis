@@ -1,10 +1,10 @@
 package json.data;
 
 public class JNull extends Json {
-    final JsonType type;
+    final JType type;
 
     private JNull() {
-        this.type = JsonType.JNull;
+        this.type = JType.JNull;
     }
 
     public final static Json instance = new JNull();

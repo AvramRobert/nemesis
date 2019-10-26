@@ -1,12 +1,12 @@
 package json.data;
 
 public class JBool extends Json {
-    final JsonType type;
+    final JType type;
     final boolean value;
 
     private JBool(final boolean value) {
         this.value = value;
-        this.type = JsonType.JBool;
+        this.type = JType.JBool;
     }
 
     @Override

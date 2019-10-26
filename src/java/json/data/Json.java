@@ -1,7 +1,7 @@
 package json.data;
 
 public abstract class Json {
-    JsonType type;
+    JType type;
 
     private JEmpty jEmpty () {
         return (JEmpty) this;

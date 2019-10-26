@@ -7,7 +7,7 @@ public final class JObj extends Json {
     final Map<String, Json> value;
     public JObj(final Map<String, Json> i) {
         this.value = i;
-        this.type = JsonType.JsonObj;
+        this.type = JType.JsonObj;
     }
 
     @Override

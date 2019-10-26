@@ -4,14 +4,14 @@ import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 
 public class JsonT {
-    final JsonType type;
+    final JType type;
     final Object value;
-    public JsonT(final JsonType type, final Object value) {
+    public JsonT(final JType type, final Object value) {
         this.value = value;
         this.type = type;
     }
 
-    final JsonT empty = new JsonT(JsonType.JsonEmpty, null);
+    final JsonT empty = new JsonT(JType.JsonEmpty, null);
 
     final Map<String, JsonT> jobj() {
         return (Map<String, JsonT>) value;
