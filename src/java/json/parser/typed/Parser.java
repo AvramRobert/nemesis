@@ -22,8 +22,6 @@ public class Parser {
     private int lines = 0;
 
     // == GENERAL CONSTANTS == //
-    private final int READY = 0;
-    private final int STARTED = 1;
     private final String NULL = "`null`";
     private final String BOOLS = "`true`, `false`";
     private final String NUMS  = "`0-9`";
@@ -142,12 +140,6 @@ public class Parser {
         return c == ',';
     }
 
-    private boolean ready(final int state) {
-        return state == READY;
-    }
-
-    private boolean started(final int state) { return state == STARTED; }
-
     private boolean n(final char c) { return c == 'n'; }
 
     private boolean t(final char c) { return c == 't'; }
@@ -180,16 +172,16 @@ public class Parser {
     }
 
     private boolean consumeDecimal(final StringBuilder buffer) {
-        int state = READY;
+        boolean started = false;
         char current;
         while (true) {
             current = CURRENT();
             if (number(current)) {
                 buffer.append(current);
-                state = STARTED;
+                started = true;
                 proceed(1);
             }
-            else if (ready(state)) {
+            else if (!started) {
                 return unexpectedEnd(NUMS, current);
             }
             else {
@@ -199,21 +191,21 @@ public class Parser {
     }
 
     private boolean consumeExponent(final StringBuilder buffer) {
-        int state = READY;
+        boolean started = false;
         char current;
         while (true) {
             current = CURRENT();
             if (number(current)) {
                 buffer.append(current);
-                state = STARTED;
+                started = true;
                 proceed(1);
             }
-            else if (ready(state) && sign(current)) {
+            else if (!started && sign(current)) {
                 buffer.append(current);
-                state = STARTED;
+                started = true;
                 proceed(1);
             }
-            else if (ready(state)) {
+            else if (!started) {
                 return unexpectedEnd(NUMS, current);
             }
             else {
@@ -224,16 +216,16 @@ public class Parser {
 
     private boolean consumeNumber() {
         final StringBuilder buffer  = new StringBuilder();
-        int state = READY;
+        boolean started = false;
         char current;
         while (true) {
             current = CURRENT();
             if (number(current)) {
                 buffer.append(current);
-                state = STARTED;
+                started = true;
                 proceed(1);
             }
-            else if (started(state)) {
+            else if (started) {
                 if (decimal(current)) {
                     proceed(1);
                     return consumeDecimal(buffer.append(current));
@@ -246,7 +238,7 @@ public class Parser {
                     return succeed(new JNum(Integer.parseInt(buffer.toString())));
                 }
             }
-            else if (ready(state)) {
+            else if (!started) {
                 return unexpectedEnd(NUMS, current);
             }
             else {
@@ -262,19 +254,19 @@ public class Parser {
 
     private boolean consumeString() {
         final StringBuilder buffer = new StringBuilder();
-        int state = READY;
+        boolean started = false;
         char current;
         while(true) {
             current = CURRENT();
-            if (ready(state)) {
-                state = STARTED;
+            if (!started) {
+                started = true;
                 proceed(1);
             }
-            else if (string(current) && started(state)) {
+            else if (started && string(current)) {
                 proceed(1);
                 return succeed(new JString(buffer.toString()));
             }
-            else if (started(state)) {
+            else if (started) {
                 buffer.append(current);
                 proceed(1);
             }
@@ -352,20 +344,20 @@ public class Parser {
 
     private boolean consumeObj() {
         final HashMap<String, Json> fields = new HashMap<>();
-        int state = READY;
+        boolean started = false;
         char current;
         while (true) {
             current = CURRENT();
             skipFiller();
-            if (ready(state)) {
-                state = STARTED;
+            if (!started) {
+                started = true;
                 proceed(1);
             }
-            else if (started(state) && objClose(current)) {
+            else if (started && objClose(current)) {
                 proceed(1);
                 return succeed(new JObj(Map.from(fields)));
             }
-            else if (started(state)) {
+            else if (started) {
                 if (consumeString()) {
                     final String key = result.toString();
                     if (consumePair()) {
@@ -386,20 +378,20 @@ public class Parser {
 
     private boolean consumeArr() {
         final ArrayList<Json> list = new ArrayList<>();
-        int state = READY;
+        boolean started = false;
         char current;
         while(true) {
             current = CURRENT();
             skipFiller();
-            if (ready(state)) {
-                state = STARTED;
+            if (!started) {
+                started = true;
                 proceed(1);
             }
-            else if (started(state) && arrClose(current)) {
+            else if (started && arrClose(current)) {
                 proceed(1);
                 return succeed(new JArr(List.from(list)));
             }
-            else if (started(state)) {
+            else if (started) {
                 if (consumeAny()) {
                     final Json value = result;
                     if (consumeComma(CBRAKET)) list.add(value);
