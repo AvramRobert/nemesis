@@ -171,109 +171,89 @@ public class Parser {
         }
     }
 
-    private boolean consumeDecimal(final StringBuilder buffer) {
-        boolean started = false;
+    private boolean numeralConsumption(final StringBuilder buffer) {
         char current;
         while (true) {
             current = CURRENT();
             if (number(current)) {
                 buffer.append(current);
-                started = true;
                 proceed(1);
             }
-            else if (!started) {
-                return unexpectedEnd(NUMS, current);
-            }
-            else {
-                return succeed(new JNum(Double.parseDouble(buffer.toString())));
-            }
+            else return succeed(new JNum(Double.parseDouble(buffer.toString())));
         }
     }
 
+    private boolean consumeDecimal(final StringBuilder buffer) {
+        proceed(1);
+        final char current = CURRENT();
+        if (number(current)) {
+            buffer.append(current);
+            proceed(1);
+            return numeralConsumption(buffer);
+        } else return unexpectedEnd(NUMS, current);
+    }
+
     private boolean consumeExponent(final StringBuilder buffer) {
-        boolean started = false;
-        char current;
-        while (true) {
-            current = CURRENT();
-            if (number(current)) {
-                buffer.append(current);
-                started = true;
-                proceed(1);
-            }
-            else if (!started && sign(current)) {
-                buffer.append(current);
-                started = true;
-                proceed(1);
-            }
-            else if (!started) {
-                return unexpectedEnd(NUMS, current);
-            }
-            else {
-                return succeed(new JNum(Float.parseFloat(buffer.toString())));
-            }
+        proceed(1);
+        final char current = CURRENT();
+        if (number(current) || sign(current)) {
+            buffer.append(current);
+            proceed(1);
+            return numeralConsumption(buffer);
         }
+        else return unexpectedEnd(NUMS, current);
     }
 
     private boolean consumeNumber() {
         final StringBuilder buffer  = new StringBuilder();
-        boolean started = false;
         char current;
         while (true) {
             current = CURRENT();
             if (number(current)) {
                 buffer.append(current);
-                started = true;
                 proceed(1);
             }
-            else if (started) {
-                if (decimal(current)) {
-                    proceed(1);
-                    return consumeDecimal(buffer.append(current));
-                }
-                else if (exponent(current)) {
-                    proceed(1);
-                    return consumeExponent(buffer.append(current));
-                }
-                else {
-                    return succeed(new JNum(Integer.parseInt(buffer.toString())));
-                }
+            else if (decimal(current)) {
+                return consumeDecimal(buffer);
             }
-            else if (!started) {
-                return unexpectedEnd(NUMS, current);
+            else if (exponent(current)) {
+                return consumeExponent(buffer);
             }
-            else {
-                return succeed(new JNum(Integer.parseInt(buffer.toString())));
-            }
+            else return succeed(new JNum(Integer.parseInt(buffer.toString())));
         }
     }
 
     private boolean consumeSignedNumber() {
         proceed(1);
-        return consumeNumber();
+        final char current = CURRENT();
+        if (number(current)) return consumeNumber();
+        else return unexpectedEnd(NUMS, current);
+    }
+
+    private boolean stringConsumption(final StringBuilder buffer) {
+        char current;
+        while (true) {
+            current = CURRENT();
+            if (string(current)) {
+                proceed(1);
+                return succeed(new JString(buffer.toString()));
+            }
+            else {
+                buffer.append(current);
+                proceed(1);
+            }
+        }
     }
 
     private boolean consumeString() {
         final StringBuilder buffer = new StringBuilder();
-        boolean started = false;
-        char current;
-        while(true) {
-            current = CURRENT();
-            if (!started) {
-                started = true;
-                proceed(1);
-            }
-            else if (started && string(current)) {
-                proceed(1);
-                return succeed(new JString(buffer.toString()));
-            }
-            else if (started) {
-                buffer.append(current);
-                proceed(1);
-            }
-            else {
-                return unexpectedEnd(QUOTE, current);
-            }
+        final char current = CURRENT();
+        if (string(current)) {
+            buffer.append(current);
+            proceed(1);
+            return stringConsumption(buffer);
         }
+        else return unexpectedEnd(QUOTE, current);
     }
 
     private boolean consumeComma(final char until) {
@@ -343,60 +323,44 @@ public class Parser {
     }
 
     private boolean consumeObj() {
+        proceed(1);
         final HashMap<String, Json> fields = new HashMap<>();
-        boolean started = false;
         char current;
         while (true) {
             current = CURRENT();
             skipFiller();
-            if (!started) {
-                started = true;
-                proceed(1);
-            }
-            else if (started && objClose(current)) {
+            if (objClose(current)) {
                 proceed(1);
                 return succeed(new JObj(Map.from(fields)));
             }
-            else if (started) {
-                if (consumeString()) {
-                    final String key = result.toString();
-                    if (consumePair()) {
-                        if (consumeAny()) {
-                            final Json value = result; // this isn't a copy. be careful
-                            if (consumeComma(CPAREN)) fields.put(key, value);
-                            else return FAILED;
-                        }
+            else if (consumeString()) {
+                final String key = result.toString();
+                if (consumePair()) {
+                    if (consumeAny()) {
+                        final Json value = result;
+                        if (consumeComma(CPAREN)) fields.put(key, value);
                         else return FAILED;
-                    }
-                    else return FAILED;
-                }
-                else return FAILED;
+                    } else return FAILED;
+                } else return FAILED;
             }
             else return unexpectedEnd(JSON, current);
         }
     }
 
     private boolean consumeArr() {
+        proceed(1);
         final ArrayList<Json> list = new ArrayList<>();
-        boolean started = false;
         char current;
         while(true) {
             current = CURRENT();
             skipFiller();
-            if (!started) {
-                started = true;
-                proceed(1);
-            }
-            else if (started && arrClose(current)) {
+            if (arrClose(current)) {
                 proceed(1);
                 return succeed(new JArr(List.from(list)));
             }
-            else if (started) {
-                if (consumeAny()) {
-                    final Json value = result;
-                    if (consumeComma(CBRAKET)) list.add(value);
-                    else return FAILED;
-                }
+            else if (consumeAny()) {
+                final Json value = result;
+                if (consumeComma(CBRAKET)) list.add(value);
                 else return FAILED;
             }
             else return unexpectedEnd(JSON, current);
