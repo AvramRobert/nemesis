@@ -25,13 +25,13 @@ public class Parser2 {
     // == GENERAL CONSTANTS == //
     private final int READY = 0;
     private final int STARTED = 1;
-    private final String NULL = "NULL";
-    private final String BOOLS = "true,false";
-    private final String NUMS  = "0-9";
-    private final String JSON  = "{, [, \", 0-9, true, false or null";
-    private final String COLON = ":";
-    private final String COMMA = ",";
-    private final String QUOTE = "\"";
+    private final String NULL = "`null`";
+    private final String BOOLS = "`true`, `false`";
+    private final String NUMS  = "`0-9`";
+    private final String JSON  = "`{`, `[`, `\"`, `0-9`, `true`, `false` or `null`";
+    private final String COLON = "`:`";
+    private final String COMMA = "`,`";
+    private final String QUOTE = "`\"`";
     private final char CBRAKET = ']';
     private final char CPAREN  = '}';
 
@@ -79,13 +79,13 @@ public class Parser2 {
     }
 
     private boolean unexpectedEnd (final String expected, final char received) {
-        final String msg = String.format("Unexpected end of input. Expected `%s` but received `%c`.", expected, received);
+        final String msg = String.format("Unexpected end of input. Expected any of %s but received %c.", expected, received);
         this.failure = failureMessage(msg);
         return FAILED;
     }
 
     private boolean abruptEnd (final String expected) {
-        final String msg = String.format("Unexpected end of input. Expected `%s but received nothing.", expected);
+        final String msg = String.format("Unexpected end of input. Expected any of %s but received nothing.", expected);
         this.failure = failureMessage(msg);
         return FAILED;
     }
