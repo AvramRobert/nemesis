@@ -2,7 +2,7 @@ package json.parser;
 
 import json.data.Json;
 
-public final class Failure extends Consumption {
+public final class Failure extends Result {
     public final String msg;
 
     public Failure(final String msg) {

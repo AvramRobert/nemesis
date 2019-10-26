@@ -2,7 +2,7 @@ package json.parser;
 
 import json.data.Json;
 
-public abstract class Consumption {
+public abstract class Result {
     abstract Json value ();
 
     public boolean succeeded() {

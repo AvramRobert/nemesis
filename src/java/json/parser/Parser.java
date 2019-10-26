@@ -3,12 +3,11 @@ package json.parser;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.data.*;
-import util.Debug;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Parser2 {
+public class Parser {
 
     // == PARSING STATE INFO == //
     private final boolean SUCCESSFUL = true;
@@ -36,7 +35,7 @@ public class Parser2 {
     private final char CPAREN  = '}';
 
 
-    public Parser2(final String input) {
+    public Parser(final String input) {
         this.text = input;
         this.length = text.length();
     }
@@ -426,16 +425,16 @@ public class Parser2 {
         else return unexpectedEnd(JSON, current);
     }
 
-    public static Consumption parse (final String input) {
-        final Parser2 p = new Parser2(input);
-        if (input.isEmpty()) return Consumption.succeed(p.result);
+    public static Result parse (final String input) {
+        final Parser p = new Parser(input);
+        if (input.isEmpty()) return Result.succeed(p.result);
         else {
             try {
                 final boolean succeeded = p.consumeAny();
-                if (succeeded) return Consumption.succeed(p.result);
-                else return Consumption.failed(p.failure);
+                if (succeeded) return Result.succeed(p.result);
+                else return Result.failed(p.failure);
             } catch (Exception e) {
-                return Consumption.failed(e.getMessage()); // do better
+                return Result.failed(e.getMessage()); // do better
             }
         }
     }

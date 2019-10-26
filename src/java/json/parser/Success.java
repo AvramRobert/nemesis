@@ -2,7 +2,7 @@ package json.parser;
 
 import json.data.Json;
 
-public final class Success extends Consumption {
+public final class Success extends Result {
     public final Json result;
 
     public Success(final Json result) {
