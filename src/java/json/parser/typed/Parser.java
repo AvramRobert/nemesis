@@ -171,7 +171,7 @@ public class Parser {
         }
     }
 
-    private boolean numeralConsumption(final StringBuilder buffer) {
+    private boolean consumeNumeral(final StringBuilder buffer) {
         char current;
         while (true) {
             current = CURRENT();
@@ -189,7 +189,7 @@ public class Parser {
         if (number(current)) {
             buffer.append(current);
             proceed(1);
-            return numeralConsumption(buffer);
+            return consumeNumeral(buffer);
         } else return unexpectedEnd(NUMS, current);
     }
 
@@ -199,7 +199,7 @@ public class Parser {
         if (number(current) || sign(current)) {
             buffer.append(current);
             proceed(1);
-            return numeralConsumption(buffer);
+            return consumeNumeral(buffer);
         }
         else return unexpectedEnd(NUMS, current);
     }
@@ -230,7 +230,7 @@ public class Parser {
         else return unexpectedEnd(NUMS, current);
     }
 
-    private boolean stringConsumption(final StringBuilder buffer) {
+    private boolean consumeChars(final StringBuilder buffer) {
         char current;
         while (true) {
             current = CURRENT();
@@ -251,7 +251,7 @@ public class Parser {
         if (string(current)) {
             buffer.append(current);
             proceed(1);
-            return stringConsumption(buffer);
+            return consumeChars(buffer);
         }
         else return unexpectedEnd(QUOTE, current);
     }

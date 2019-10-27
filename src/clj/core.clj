@@ -8,6 +8,7 @@
   (c/with-progress-reporting (c/bench (json.parser.typed.Parser/parse json))))
 
 (defn parser-dynamic [json]
+  "6.76 ms"
   (c/with-progress-reporting (c/bench (json.parser.dynamic.Parser/parse json))))
 
 (defn parser-cheshire [json]
@@ -16,4 +17,4 @@
 
 (defn -main [& args]
   (let [json (slurp "/home/robert/Downloads/generated.json")]
-    (parser-cheshire json)))
+    (parser-dynamic json)))
