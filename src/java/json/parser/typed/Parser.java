@@ -163,7 +163,7 @@ public class Parser {
         return SUCCESSFUL;
     }
 
-    private void skipFiller() {
+    private void skip() {
         while (true) {
             if (space(CURRENT())) proceed(1);
             else if (newline(CURRENT())) jump();
@@ -171,55 +171,67 @@ public class Parser {
         }
     }
 
-    private boolean consumeNumeral(final StringBuilder buffer) {
+    private boolean consumeNumeral(int offset) {
         char current;
         while (true) {
-            current = CURRENT();
+            current = atNext(offset);
             if (number(current)) {
-                buffer.append(current);
-                proceed(1);
+                offset++;
             }
-            else return succeed(new JNum(Double.parseDouble(buffer.toString())));
+            else {
+                final double number = Double.parseDouble(text.substring(cursor, cursor + offset));
+                proceed(offset);
+                return succeed(new JNum(number));
+            }
         }
     }
 
-    private boolean consumeDecimal(final StringBuilder buffer) {
-        proceed(1);
-        final char current = CURRENT();
+    private boolean consumeDecimal(int offset) {
+        offset++;
+        final char current = atNext(offset);
         if (number(current)) {
-            buffer.append(current);
-            proceed(1);
-            return consumeNumeral(buffer);
-        } else return unexpectedEnd(NUMS, current);
+            return consumeNumeral(offset);
+        } else {
+            proceed(offset);
+            return unexpectedEnd(NUMS, current);
+        }
     }
 
-    private boolean consumeExponent(final StringBuilder buffer) {
-        proceed(1);
-        final char current = CURRENT();
-        if (number(current) || sign(current)) {
-            buffer.append(current);
-            proceed(1);
-            return consumeNumeral(buffer);
+    private boolean consumeExponent(int offset) {
+        offset++;
+        final char current = atNext(offset);
+        if (number(current)) {
+            return consumeNumeral(offset);
         }
-        else return unexpectedEnd(NUMS, current);
+        else if (sign(current)) {
+            offset++;
+            return consumeNumeral(offset);
+        }
+        else {
+            proceed(offset);
+            return unexpectedEnd(NUMS, current);
+        }
     }
 
     private boolean consumeNumber() {
-        final StringBuilder buffer  = new StringBuilder();
+        int offset = 0;
         char current;
         while (true) {
-            current = CURRENT();
+            current = atNext(offset);
             if (number(current)) {
-                buffer.append(current);
-                proceed(1);
+                offset++;
             }
             else if (decimal(current)) {
-                return consumeDecimal(buffer);
+                return consumeDecimal(offset);
             }
             else if (exponent(current)) {
-                return consumeExponent(buffer);
+                return consumeExponent(offset);
             }
-            else return succeed(new JNum(Integer.parseInt(buffer.toString())));
+            else {
+                final int number = Integer.parseInt(text.substring(cursor, cursor + offset));
+                proceed(offset);
+                return succeed(new JNum(number));
+            }
         }
     }
 
@@ -230,53 +242,48 @@ public class Parser {
         else return unexpectedEnd(NUMS, current);
     }
 
-    private boolean consumeChars(final StringBuilder buffer) {
-        char current;
+    private boolean consumeChars() {
+        int offset = 0;
         while (true) {
-            current = CURRENT();
-            if (string(current)) {
-                proceed(1);
-                return succeed(new JString(buffer.toString()));
+            if (string(atNext(offset))) {
+                final String sub = text.substring(cursor, cursor + offset);
+                proceed(offset + 1); // also consume the last ' " '
+                return succeed(new JString(sub));
             }
-            else {
-                buffer.append(current);
-                proceed(1);
-            }
+            else offset ++;
         }
     }
 
     private boolean consumeString() {
-        final StringBuilder buffer = new StringBuilder();
         final char current = CURRENT();
         if (string(current)) {
-            buffer.append(current);
             proceed(1);
-            return consumeChars(buffer);
+            return consumeChars();
         }
         else return unexpectedEnd(QUOTE, current);
     }
 
     private boolean consumeComma(final char until) {
-        skipFiller();
+        skip();
         final char current = CURRENT();
-        if (current == until) { return SUCCESSFUL; }
-        else if (comma(current)) {
+        if (comma(current)) {
             proceed(1);
-            skipFiller();
+            skip();
             if (CURRENT() == until) {
                 return unexpectedEnd(JSON, until);
             }
             else return SUCCESSFUL;
         }
+        else if (current == until) { return SUCCESSFUL; }
         else return unexpectedEnd(COMMA, current);
     }
 
     private boolean consumePair() {
-        skipFiller();
+        skip();
         final char current = CURRENT();
         if (pair(current)) {
             proceed(1);
-            skipFiller();
+            skip();
             return SUCCESSFUL;
         }
         else return unexpectedEnd(COLON, current);
@@ -328,7 +335,7 @@ public class Parser {
         char current;
         while (true) {
             current = CURRENT();
-            skipFiller();
+            skip();
             if (objClose(current)) {
                 proceed(1);
                 return succeed(new JObj(Map.from(fields)));
@@ -353,7 +360,7 @@ public class Parser {
         char current;
         while(true) {
             current = CURRENT();
-            skipFiller();
+            skip();
             if (arrClose(current)) {
                 proceed(1);
                 return succeed(new JArr(List.from(list)));
@@ -369,7 +376,7 @@ public class Parser {
 
     private boolean consumeAny() {
         final char current = CURRENT();
-        skipFiller();
+        skip();
         if (number(current)) return consumeNumber();
         else if (sign(current)) return consumeSignedNumber();
         else if (arrOpen(current)) return consumeArr();
@@ -389,6 +396,7 @@ public class Parser {
                 if (p.consumeAny()) return Result.succeed(p.result);
                 else return Result.failed(p.failure);
             } catch (Exception e) {
+                e.printStackTrace();
                 return Result.failed(e.getMessage()); // do better
             }
         }
