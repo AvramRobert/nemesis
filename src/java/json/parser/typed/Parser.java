@@ -386,8 +386,7 @@ public class Parser {
         if (input.isEmpty()) return Result.succeed(p.result);
         else {
             try {
-                final boolean succeeded = p.consumeAny();
-                if (succeeded) return Result.succeed(p.result);
+                if (p.consumeAny()) return Result.succeed(p.result);
                 else return Result.failed(p.failure);
             } catch (Exception e) {
                 return Result.failed(e.getMessage()); // do better
