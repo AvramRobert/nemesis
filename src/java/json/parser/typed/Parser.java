@@ -26,12 +26,26 @@ public class Parser {
     private final String BOOLS = "`true`, `false`";
     private final String NUMS  = "`0-9`";
     private final String JSON  = "`{`, `[`, `\"`, `0-9`, `true`, `false` or `null`";
-    private final String COLON = "`:`";
-    private final String COMMA = "`,`";
-    private final String QUOTE = "`\"`";
-    private final char CBRAKET = ']';
-    private final char CPAREN  = '}';
-
+    private final String S_COLON = "`:`";
+    private final String S_COMMA = "`,`";
+    private final String S_QUOTE = "`\"`";
+    private final char COMMA = ',';
+    private final char COLON = ':';
+    private final char QUOTE = '\"';
+    private final char O_CURLY = '{';
+    private final char C_CURLY = '}';
+    private final char O_BRACKET = '[';
+    private final char C_BRACKET = ']';
+    private final char N = 'n';
+    private final char F = 'f';
+    private final char T = 't';
+    private final char MINUS = '-';
+    private final char PLUS  = '+';
+    private final char DECIMAL = '.';
+    private final char EXP_S = 'e';
+    private final char EXP_L = 'E';
+    private final char SPACE = ' ';
+    private final char NEWLINE = '\n';
 
     public Parser(final String input) {
         this.text = input;
@@ -54,22 +68,7 @@ public class Parser {
         else return text + " <-| ";
     }
 
-    private char CURRENT() { return text.charAt(cursor); }
-
-    private char atNext(final int i) {
-        return text.charAt(cursor + i);
-    }
-
-    private boolean hasNext(final int i) { return i < length; }
-
-    private void proceed(final int i) {
-        cursor += i;
-    }
-
-    private void jump() {
-        lines ++;
-        cursor ++;
-    }
+    private boolean hasNext(final int i) { return (cursor + i) < length; }
 
     private String failureMessage(final String prelude) {
         return String.format("%s\nFailed at line: %d\n%s", prelude, lines, pointedSample(30));
@@ -100,52 +99,6 @@ public class Parser {
                 c == '9';
     }
 
-    private boolean objOpen(final char c) {
-        return c == '{';
-    }
-
-    private boolean objClose(final char c) {
-        return c == '}';
-    }
-
-    private boolean arrOpen (final char c) {
-        return c == '[';
-    }
-
-    private boolean arrClose (final char c) { return c == ']'; }
-
-    private boolean string (final char c) {
-        return c == '"';
-    }
-
-    private boolean sign (final char c) { return (c == '+') || (c == '-'); }
-
-    private boolean exponent(final char e) {
-        return e == 'e' || e == 'E';
-    }
-
-    private boolean space(final char c) {
-        return c == ' ';
-    }
-
-    private boolean newline (final char c) {
-        return c == '\n';
-    }
-
-    private boolean decimal(final char c) { return c == '.'; }
-
-    private boolean pair(final char c) { return c == ':'; }
-
-    private boolean comma(final char c) {
-        return c == ',';
-    }
-
-    private boolean n(final char c) { return c == 'n'; }
-
-    private boolean t(final char c) { return c == 't'; }
-
-    private boolean f(final char c) { return c == 'f'; }
-
     private boolean nullity(final char n, final char u, final char l1, final char l2) {
         return n == 'n' && u == 'u' && l1 == 'l' && l2 == 'l';
     }
@@ -164,138 +117,138 @@ public class Parser {
     }
 
     private void skip() {
+        char current;
         while (true) {
-            if (space(CURRENT())) proceed(1);
-            else if (newline(CURRENT())) jump();
+            current = text.charAt(cursor);
+            if (current == SPACE) {
+                cursor ++;
+            }
+            else if (current == NEWLINE) {
+                cursor ++;
+                lines ++;
+            }
             else break;
         }
     }
 
-    private boolean consumeNumeral(int offset) {
+    private boolean consumeNumeral(final int start) {
         char current;
         while (true) {
-            current = atNext(offset);
+            current = text.charAt(cursor);
             if (number(current)) {
-                offset++;
+                cursor ++;
             }
             else {
-                final double number = Double.parseDouble(text.substring(cursor, cursor + offset));
-                proceed(offset);
+                final double number = Double.parseDouble(text.substring(start, cursor));
                 return succeed(new JNum(number));
             }
         }
     }
 
-    private boolean consumeDecimal(int offset) {
-        offset++;
-        final char current = atNext(offset);
+    private boolean consumeDecimal(final int start) {
+        cursor ++;
+        final char current = text.charAt(cursor);
         if (number(current)) {
-            return consumeNumeral(offset);
+            return consumeNumeral(start);
         } else {
-            proceed(offset);
             return unexpectedEnd(NUMS, current);
         }
     }
 
-    private boolean consumeExponent(int offset) {
-        offset++;
-        final char current = atNext(offset);
+    private boolean consumeExponent(final int start) {
+        cursor ++;
+        final char current = text.charAt(cursor);
         if (number(current)) {
-            return consumeNumeral(offset);
+            return consumeNumeral(start);
         }
-        else if (sign(current)) {
-            offset++;
-            return consumeNumeral(offset);
+        else if (current == MINUS || current == PLUS) {
+            cursor ++; // consume the sign
+            return consumeNumeral(start);
         }
         else {
-            proceed(offset);
             return unexpectedEnd(NUMS, current);
         }
     }
 
     private boolean consumeNumber() {
-        int offset = 0;
+        final int start = cursor;
         char current;
         while (true) {
-            current = atNext(offset);
+            current = text.charAt(cursor);
             if (number(current)) {
-                offset++;
+                cursor ++;
             }
-            else if (decimal(current)) {
-                return consumeDecimal(offset);
+            else if (current == DECIMAL) {
+                return consumeDecimal(start);
             }
-            else if (exponent(current)) {
-                return consumeExponent(offset);
+            else if (current == EXP_S || current == EXP_L) {
+                return consumeExponent(start);
             }
             else {
-                final int number = Integer.parseInt(text.substring(cursor, cursor + offset));
-                proceed(offset);
+                final int number = Integer.parseInt(text.substring(start, cursor));
                 return succeed(new JNum(number));
             }
         }
     }
 
     private boolean consumeSignedNumber() {
-        proceed(1);
-        final char current = CURRENT();
+        cursor ++;
+        final char current = text.charAt(cursor);
         if (number(current)) return consumeNumber();
         else return unexpectedEnd(NUMS, current);
     }
 
-    private boolean consumeChars() {
-        int offset = 0;
-        while (true) {
-            if (string(atNext(offset))) {
-                final String sub = text.substring(cursor, cursor + offset);
-                proceed(offset + 1); // also consume the last ' " '
-                return succeed(new JString(sub));
-            }
-            else offset ++;
-        }
-    }
-
     private boolean consumeString() {
-        final char current = CURRENT();
-        if (string(current)) {
-            proceed(1);
-            return consumeChars();
+        char current = text.charAt(cursor);
+        if (current == QUOTE) {
+            cursor ++;
+            final int start = cursor;
+            current = text.charAt(cursor);
+            while (current != QUOTE) {
+                cursor ++;
+                current = text.charAt(cursor);
+            }
+            final String sub = text.substring(start, cursor);
+            cursor ++; // also consume the last ' " '
+            return succeed(new JString(sub));
         }
-        else return unexpectedEnd(QUOTE, current);
+        else return unexpectedEnd(S_QUOTE, current);
     }
 
     private boolean consumeComma(final char until) {
         skip();
-        final char current = CURRENT();
-        if (comma(current)) {
-            proceed(1);
+        final char current = text.charAt(cursor);
+        if (current == COMMA) {
+            cursor ++;
             skip();
-            if (CURRENT() == until) {
+            if (text.charAt(cursor) == until) {
                 return unexpectedEnd(JSON, until);
             }
             else return SUCCESSFUL;
         }
         else if (current == until) { return SUCCESSFUL; }
-        else return unexpectedEnd(COMMA, current);
+        else return unexpectedEnd(S_COMMA, current);
     }
 
     private boolean consumePair() {
         skip();
-        final char current = CURRENT();
-        if (pair(current)) {
-            proceed(1);
+        final char current = text.charAt(cursor);
+        if (current == COLON) {
+            cursor ++;
             skip();
             return SUCCESSFUL;
         }
-        else return unexpectedEnd(COLON, current);
+        else return unexpectedEnd(S_COLON, current);
     }
 
     private boolean consumeTrue() {
         if (hasNext(3)) {
-            final char rchar = atNext(1);
-            final char uchar = atNext(2);
-            final char echar = atNext(3);
-            if (truth(CURRENT(), rchar, uchar, echar)) {
-                proceed(4);
+            final char t = text.charAt(cursor);
+            final char r = text.charAt(cursor + 1);
+            final char u = text.charAt(cursor + 2);
+            final char e = text.charAt(cursor + 3);
+            if (truth(t, r, u, e)) {
+                cursor += 4;
                 return succeed(JBool.jtrue);
             }
             else return abruptEnd(BOOLS);
@@ -304,12 +257,13 @@ public class Parser {
 
     private boolean consumeFalse() {
         if (hasNext(4)) {
-            final char achar = atNext(1);
-            final char lchar = atNext(2);
-            final char schar = atNext(3);
-            final char echar = atNext(4);
-            if (falsity(CURRENT(), achar, lchar, schar, echar)) {
-                proceed(5);
+            final char f = text.charAt(cursor);
+            final char a = text.charAt(cursor + 1);
+            final char l = text.charAt(cursor + 2);
+            final char s = text.charAt(cursor + 3);
+            final char e = text.charAt(cursor+ 4);
+            if (falsity(f, a, l, s, e)) {
+                cursor += 5;
                 return succeed(JBool.jfalse);
             }
             else return abruptEnd(BOOLS);
@@ -318,11 +272,12 @@ public class Parser {
 
     private boolean consumeNull() {
         if (hasNext(3)) {
-            final char uchar  = atNext(1);
-            final char lchar1 = atNext(2);
-            final char lchar2 = atNext(3);
-            if (nullity(CURRENT(), uchar, lchar1, lchar2)) {
-                proceed(4);
+            final char n  = text.charAt(cursor);
+            final char u  = text.charAt(cursor + 1);
+            final char l1 = text.charAt(cursor + 2);
+            final char l2 = text.charAt(cursor + 3);
+            if (nullity(n, u, l1, l2)) {
+                cursor += 4;
                 return succeed(JNull.instance);
             }
             else return abruptEnd(NULL);
@@ -330,14 +285,14 @@ public class Parser {
     }
 
     private boolean consumeObj() {
-        proceed(1);
+        cursor ++;
         final HashMap<String, Json> fields = new HashMap<>();
         char current;
         while (true) {
-            current = CURRENT();
+            current = text.charAt(cursor);
             skip();
-            if (objClose(current)) {
-                proceed(1);
+            if (current == C_CURLY) {
+                cursor ++;
                 return succeed(new JObj(Map.from(fields)));
             }
             else if (consumeString()) {
@@ -345,7 +300,7 @@ public class Parser {
                 if (consumePair()) {
                     if (consumeAny()) {
                         final Json value = result;
-                        if (consumeComma(CPAREN)) fields.put(key, value);
+                        if (consumeComma(C_CURLY)) fields.put(key, value);
                         else return FAILED;
                     } else return FAILED;
                 } else return FAILED;
@@ -355,19 +310,19 @@ public class Parser {
     }
 
     private boolean consumeArr() {
-        proceed(1);
+        cursor ++;
         final ArrayList<Json> list = new ArrayList<>();
         char current;
         while(true) {
-            current = CURRENT();
+            current = text.charAt(cursor);
             skip();
-            if (arrClose(current)) {
-                proceed(1);
+            if (current == C_BRACKET) {
+                cursor ++;
                 return succeed(new JArr(List.from(list)));
             }
             else if (consumeAny()) {
                 final Json value = result;
-                if (consumeComma(CBRAKET)) list.add(value);
+                if (consumeComma(C_BRACKET)) list.add(value);
                 else return FAILED;
             }
             else return unexpectedEnd(JSON, current);
@@ -375,17 +330,18 @@ public class Parser {
     }
 
     private boolean consumeAny() {
-        final char current = CURRENT();
         skip();
-        if (number(current)) return consumeNumber();
-        else if (sign(current)) return consumeSignedNumber();
-        else if (arrOpen(current)) return consumeArr();
-        else if (objOpen(current)) return consumeObj();
-        else if (string(current)) return consumeString();
-        else if (n(current)) return consumeNull();
-        else if (t(current)) return consumeTrue();
-        else if (f(current)) return consumeFalse();
-        else return unexpectedEnd(JSON, current);
+        final char current = text.charAt(cursor);
+        if (number(current))           return consumeNumber();
+        else if (current == O_BRACKET) return consumeArr();
+        else if (current == O_CURLY)   return consumeObj();
+        else if (current == QUOTE)     return consumeString();
+        else if (current == N)         return consumeNull();
+        else if (current == T)         return consumeTrue();
+        else if (current == F)         return consumeFalse();
+        else if (current == MINUS)     return consumeSignedNumber();
+        else if (current == PLUS)      return consumeSignedNumber();
+        else                           return unexpectedEnd(JSON, current);
     }
 
     public static Result parse (final String input) {
