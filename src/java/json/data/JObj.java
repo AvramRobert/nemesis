@@ -1,14 +1,13 @@
-package json.data.typed;
+package json.data;
 
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.Map;
-import json.data.JsonType;
 
 public final class JObj extends Json {
     final Map<String, Json> value;
     public JObj(final Map<String, Json> i) {
         this.value = i;
-        this.type = JsonType.JsonObj;
+        this.type = JType.JsonObject;
     }
 
     @Override

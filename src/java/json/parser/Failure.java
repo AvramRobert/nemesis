@@ -1,6 +1,6 @@
-package json.parser.typed;
+package json.parser;
 
-import json.data.typed.Json;
+import json.data.Json;
 
 public final class Failure implements Result {
     public final String msg;

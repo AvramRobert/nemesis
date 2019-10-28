@@ -1,12 +1,10 @@
-package json.data.typed;
-
-import json.data.JsonType;
+package json.data;
 
 public class JNull extends Json {
-    final JsonType type;
+    final JType type;
 
     private JNull() {
-        this.type = JsonType.JsonNull;
+        this.type = JType.JsonNull;
     }
 
     public final static Json instance = new JNull();

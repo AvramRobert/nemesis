@@ -1,9 +1,7 @@
-package json.data.typed;
-
-import json.data.JsonType;
+package json.data;
 
 public abstract class Json {
-    JsonType type;
+    JType type;
 
     private JEmpty jEmpty () {
         return (JEmpty) this;
@@ -19,7 +17,7 @@ public abstract class Json {
 
     public final Json at (final String name) {
         switch (type) {
-            case JsonObj:
+            case JsonObject:
                 return jobj().value.get(name, JEmpty.empty);
             default:
                 return this;
@@ -28,7 +26,7 @@ public abstract class Json {
 
     public final Json at (final long index) {
         switch (type) {
-            case JsonArr:
+            case JsonArray:
                 return jseq().value.nth(index, JEmpty.empty);
             default:
                 return this;

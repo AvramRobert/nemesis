@@ -5,12 +5,6 @@
   (:import play.api.libs.json.Json)
   (:import com.google.gson.JsonParser))
 
-;; this needs to be as fast as jackson
-
-(defn parser-dynamic [json]
-  "~ 10 ms"
-  (c/with-progress-reporting (c/bench (json.parser.dynamic.Parser/parse json))))
-
 (defn parser-cheshire [json]
   "~8 ms"
   (c/with-progress-reporting (c/bench (j/parse-string-strict json))))
@@ -25,7 +19,7 @@
 
 (defn parser-typed [json]
   "~6 ms"
-  (c/with-progress-reporting (c/bench (json.parser.typed.Parser/parse json))))
+  (c/with-progress-reporting (c/bench (json.parser.Parser/parse json))))
 
 (defn parser-jackson [json]
   "~4 ms"
@@ -42,7 +36,7 @@
     (f json)))
 
 (defn -main [& args]
-  (benchmark parser-gson)
+  (benchmark parser-dynamic)
   #_(let [json# (slurp "/home/robert/Downloads/generated.json")]
-    (Thread/sleep 10000)
-    (dorun (repeatedly 10000 #(json.parser.typed.Parser/parse json#)))))
+      (Thread/sleep 10000)
+      (dorun (repeatedly 10000 #(json.parser.Parser/parse json#)))))

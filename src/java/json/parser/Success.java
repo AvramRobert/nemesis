@@ -1,6 +1,6 @@
-package json.parser.typed;
+package json.parser;
 
-import json.data.typed.Json;
+import json.data.Json;
 
 public final class Success implements Result {
     public final Json result;
