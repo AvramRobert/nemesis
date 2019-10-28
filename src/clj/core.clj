@@ -2,12 +2,10 @@
   (:require [criterium.core :as c]
             [cheshire.core :as j])
   (:import com.fasterxml.jackson.databind.ObjectMapper)
-  (:import play.api.libs.json.Json))
+  (:import play.api.libs.json.Json)
+  (:import com.google.gson.JsonParser))
 
 ;; this needs to be as fast as jackson
-(defn parser-typed [json]
-  "~10 ms"
-  (c/with-progress-reporting (c/bench (json.parser.typed.Parser/parse json))))
 
 (defn parser-dynamic [json]
   "~ 10 ms"
@@ -18,11 +16,19 @@
   (c/with-progress-reporting (c/bench (j/parse-string-strict json))))
 
 (defn parser-play [json]
-  "~ 6 ms"
+  "~7 ms"
   (c/with-progress-reporting (c/bench (Json/parse ^String json))))
 
+(defn parser-gson [json]
+  "~7 ms"
+  (c/with-progress-reporting (c/bench (JsonParser/parseString json))))
+
+(defn parser-typed [json]
+  "~6 ms"
+  (c/with-progress-reporting (c/bench (json.parser.typed.Parser/parse json))))
+
 (defn parser-jackson [json]
-  "~ 4 ms"
+  "~4 ms"
   (let [mapper ^ObjectMapper (ObjectMapper.)]
     (c/with-progress-reporting (c/bench (.readTree mapper ^String json)))))
 
@@ -36,7 +42,7 @@
     (f json)))
 
 (defn -main [& args]
-  (benchmark parser-typed)
+  (benchmark parser-gson)
   #_(let [json# (slurp "/home/robert/Downloads/generated.json")]
     (Thread/sleep 10000)
     (dorun (repeatedly 10000 #(json.parser.typed.Parser/parse json#)))))

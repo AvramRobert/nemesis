@@ -29,6 +29,7 @@
     <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.dataformat/jackson-dataformat-smile:2.9.9" level="project" />
     <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.datatype/jackson-datatype-jdk8:2.9.8" level="project" />
     <orderEntry type="library" name="Leiningen: com.fasterxml.jackson.datatype/jackson-datatype-jsr310:2.9.8" level="project" />
+    <orderEntry type="library" name="Leiningen: com.google.code.gson/gson:2.8.6" level="project" />
     <orderEntry type="library" name="Leiningen: com.typesafe.play/play-functional_2.13:2.7.4" level="project" />
     <orderEntry type="library" name="Leiningen: com.typesafe.play/play-json_2.13:2.7.4" level="project" />
     <orderEntry type="library" name="Leiningen: criterium:0.4.5" level="project" />
