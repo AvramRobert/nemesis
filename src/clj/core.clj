@@ -2,7 +2,6 @@
   (:require [criterium.core :as c]
             [cheshire.core :as j])
   (:import com.fasterxml.jackson.databind.ObjectMapper)
-  (:import play.api.libs.json.Json)
   (:import com.google.gson.JsonParser))
 
 (defn parser-cheshire [json]
@@ -11,7 +10,7 @@
 
 (defn parser-play [json]
   "~7 ms"
-  (c/with-progress-reporting (c/bench (Json/parse ^String json))))
+  (c/with-progress-reporting (c/bench (play.api.libs.json.Json/parse ^String json))))
 
 (defn parser-gson [json]
   "~7 ms"
@@ -36,7 +35,7 @@
     (f json)))
 
 (defn -main [& args]
-  (benchmark parser-dynamic)
+  (benchmark parser-typed)
   #_(let [json# (slurp "/home/robert/Downloads/generated.json")]
       (Thread/sleep 10000)
       (dorun (repeatedly 10000 #(json.parser.Parser/parse json#)))))

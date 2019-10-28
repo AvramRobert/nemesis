@@ -9,4 +9,7 @@ import java.util.Optional;
 
 public class JsonOps {
 
+    public static Json empty() {
+        return JEmpty.empty;
+    }
 }
