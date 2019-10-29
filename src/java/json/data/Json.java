@@ -2,11 +2,15 @@ package json.data;
 
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
+import json.coerce.Write;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static json.data.JType.*;
+import static util.Functions.*;
 
 public abstract class Json {
     JType type;
@@ -133,6 +137,24 @@ public abstract class Json {
         else return this;
     }
 
+    private Optional<Map<String, Json>> rcoerce (final HashMap<Object, Object> things) {
+        final HashMap<String, Json> map = new HashMap<>();
+        boolean broken = false;
+        for (java.util.Map.Entry e :  things.entrySet()) {
+            if (e.getKey() instanceof String) {
+                final String k         = (String) e.getKey();
+                final Optional<Json> v = coerce(e.getValue());
+                if (v.isPresent()) map.put(k, v.get());
+                else {
+                    broken = true;
+                    break;
+                }
+            }
+        }
+        if (broken) return Optional.of(Map.from(map));
+        else return Optional.empty();
+    }
+
     private <A> Optional<Json> coerce (final A value) {
         if (value instanceof Number) {
             return Optional.of(new JNum((Number) value));
@@ -147,22 +169,23 @@ public abstract class Json {
         else if (value == null) {
             return Optional.of(JNull.instance);
         }
-        else if (value instanceof Json) {
-            return Optional.of((Json) value);
+        else if (value instanceof java.util.HashMap) {
+            final HashMap<Object, Object> map = (HashMap<Object, Object>) value;
+            return rcoerce(map).map(JObj::new); // this is mutually recursive -- may not be that good
+        }
+        else if (value instanceof java.util.List) {
+            final java.util.List<Object> list = (java.util.List<Object>) value;
+            return sequence(map(this::coerce, list)).map(JArr::new); // this is mutually recursive -- may not be that good
         }
         else return Optional.empty(); // should I throw?
     }
 
-    public final <A> Json assoc (final String key, final A value) {
-        return assoc(key, coerce(value).get());
+    public final <A> Json assoc (final String key, final A value, final Write<A> w) {
+        return w.write(value).fold(x -> assoc(key, x), e -> this);
     }
 
-    public final <A> Json assoc (final String key, final java.util.List<A> vals) {
-        final java.util.List<Json> list = vals
-                        .stream()
-                        .map(this::coerce)
-                        .map(Optional::get)
-                        .collect(Collectors.toList());
-        return assoc(key, new JArr(List.from(list)));
+    public final <A> Json assoc (final int index, final A value, final Write<A> w) {
+        return w.write(value).fold(x -> assoc(index, x), e -> this);
     }
 }
+
