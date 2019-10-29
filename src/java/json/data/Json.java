@@ -3,11 +3,14 @@ package json.data;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.coerce.Write;
+import util.Either;
+import util.Left;
+import util.Right;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static json.data.JType.*;
 import static util.Functions.*;
@@ -26,6 +29,12 @@ public abstract class Json {
     private JArr jarr() {
         return (JArr) this;
     }
+
+    private final Write<Object> defaultWriteJson = x -> {
+        final Function<Json, Either<String, Json>> success = Either::right;
+        final Either<String, Json> error = new Left<>("Shit");
+        return coerce(x).map(success).orElse(error);
+    };
 
     public final Json at (final String name) {
         switch (type) {
@@ -155,6 +164,7 @@ public abstract class Json {
         else return Optional.empty();
     }
 
+    // Make this return an either
     private <A> Optional<Json> coerce (final A value) {
         if (value instanceof Number) {
             return Optional.of(new JNum((Number) value));
@@ -178,6 +188,14 @@ public abstract class Json {
             return sequence(map(this::coerce, list)).map(JArr::new); // this is mutually recursive -- may not be that good
         }
         else return Optional.empty(); // should I throw?
+    }
+
+    public final <A> Json assoc (final String key, final A value) {
+        return assoc(key, value, defaultWriteJson);
+    }
+
+    public final <A> Json assoc (final int index, final A value) {
+        return assoc(index, value, defaultWriteJson);
     }
 
     public final <A> Json assoc (final String key, final A value, final Write<A> w) {
