@@ -2,15 +2,10 @@ package json.data;
 
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
-import json.coerce.Write;
+import json.coerce.Convert;
 import util.Either;
-import util.Left;
-import util.Right;
 
 import java.util.HashMap;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static json.data.JType.*;
 import static util.Functions.*;
@@ -30,11 +25,90 @@ public abstract class Json {
         return (JArr) this;
     }
 
-    private final Write<Object> defaultWriteJson = x -> {
-        final Function<Json, Either<String, Json>> success = Either::right;
-        final Either<String, Json> error = new Left<>("Shit");
-        return coerce(x).map(success).orElse(error);
-    };
+    public final Convert<Object, String> defaultStringConvert = this::coerceString;
+
+    public final Convert<Object, Json> defaultJsonConvert = this::coerceJson;
+
+    private <A> Either<String, Integer> coerceInteger (final A value) {
+        if (value instanceof Integer) return Either.right((Integer) value);
+        else return Either.left(String.format("Value `%s` is not of type Integer", value.toString()));
+    }
+
+    private <A> Either<String, String> coerceString (final A value) {
+        if (value instanceof String) return Either.right((String) value);
+        else return Either.left(String.format("Value `%s` is not of type String", value.toString()));
+    }
+
+    private <A> Either<String, Json> coerceJson (final A value) {
+        if (value instanceof Number) {
+            return Either.right(new JNum((Number) value));
+        }
+        else if (value instanceof String) {
+            return Either.right(new JString((String) value));
+        }
+        else if (value instanceof Boolean) {
+            final boolean bool = (Boolean) value;
+            return Either.right(bool ? JBool.jtrue : JBool.jfalse);
+        }
+        else if (value == null) {
+            return Either.right(JNull.instance);
+        }
+        else if (value instanceof java.util.HashMap) {
+            final HashMap<Object, Object> map = (HashMap<Object, Object>) value;
+            return traversem(map, this::coerceString, this::coerceJson).map(JObj::new); // this is mutually recursive -- may not be that good
+        }
+        else if (value instanceof java.util.List) {
+            final java.util.List<Object> list = (java.util.List<Object>) value;
+            return traversel(list, this::coerceJson).map(JArr::new); // this is mutually recursive -- may not be that good
+        }
+        else return Either.left(String.format("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value));
+    }
+
+    private final Either<String, Json> assocInObj(final Json toAssoc, final int depth, final Object... keys) {
+        final Either<String, String> skey = coerceString(keys[depth]);
+        final Map<String, Json> map = jobj().value;
+        if (skey.isRight()) {
+            final String k = skey.value();
+            final Json  v  = map.get(k, null);
+            if (v != null) {
+                final Either<String, Json> nv = v.assocInR(toAssoc, depth + 1, keys);
+                if (nv.isRight()) return Either.right(new JObj(map.put(k, nv.value())));
+                else return nv;
+            }
+            else {
+                final Either<String, Json> nj = new JObj(new Map<>()).assocInR(toAssoc, depth + 1, keys);
+                return nj.map(json -> new JObj(map.put(k, json)));
+            }
+        } else return Either.left(String.format("Key for json was expected to be a string: %s", skey.error()));
+    }
+
+    private final Either<String, Json> assocInArr(final Json toAssoc, final int depth, final Object... keys) {
+        final Either<String, Integer> sidx = coerceInteger(keys[depth]);
+        final List<Json> list = jarr().value;
+        if (sidx.isRight()) {
+            final int  i = sidx.value();
+            final Json v = list.nth(i, null);
+            if (v != null) {
+                final Either<String, Json> newJson = v.assocInR(toAssoc, depth + 1, keys);
+                if (newJson.isRight()) return Either.right(new JArr((List<Json>) list.update(i, a -> newJson.value())));
+                else return newJson;
+            }
+            else return Either.left(String.format("Index `%s` is not in the `%s` array", i, list));
+        } else return Either.left(String.format("Index for array was expected to be an integer: %s", sidx.error()));
+    }
+
+    public final Either<String, Json> assocInR(final Json value, final int depth, final Object... keys) {
+        if (depth >= keys.length) return Either.right(value);
+        else {
+            if (type == JsonObject) {
+                return assocInObj(value, depth, keys);
+            }
+            else if (type == JsonArray) {
+                return assocInArr(value, depth, keys);
+            }
+            else return Either.left("Cannot associate into `%s`. It is not a structure.");
+        }
+    }
 
     public final Json at (final String name) {
         switch (type) {
@@ -54,79 +128,8 @@ public abstract class Json {
         }
     }
 
-    private Json rassocObj(final Json value, final int at, final String... keys) {
-        if (at >= keys.length) return value;
-        else {
-            final String key = keys[0];
-            final Map<String, Json> map = new Map<String, Json>().put(key, rassocObj(value, at + 1, keys));
-            return new JObj(map);
-        }
-    }
-
-    private Json rassocArr(final Json value, final int at, final int... indexes) {
-        if (at >= indexes.length) return value;
-        else {
-            final List<Json> list = new List<Json>().addLast(rassocArr(value, at + 1, indexes));
-            return new JArr(list);
-        }
-    }
-
-    private Json nestedAssocObj(final Json value, final int at, final String... keys) {
-        if (type == JsonObject) {
-            final String key = keys[0];
-            final Map<String, Json> obj = jobj().value;
-            final Json thing = obj.get(key, null);
-            if (thing != null) {
-                return new JObj(obj.put(key, thing.nestedAssocObj(value, at + 1, keys)));
-            }
-            return rassocObj(value, at, keys);
-        } else return this;
-    }
-
-    private Json nestedAssocArr(final Json value, final int at, final int... indexes) {
-        if (type == JsonArray) {
-            final int idx = indexes[at];
-            final List<Json> arr = jarr().value;
-            final Json thing = arr.nth(idx, null);
-            if (thing != null) {
-                final List<Json> updated = (List<Json>) arr.update(idx, x -> x.nestedAssocArr(value, at + 1, indexes));
-                return new JArr(updated);
-            }
-            else return rassocArr(value, at, indexes);
-        }
-        else return this;
-    }
-
-    public final Json assoc (final Json value, final int... indexes) {
-        if (type == JsonArray) {
-            if (indexes.length == 0) return this;
-            else return nestedAssocArr(value, 0, indexes);
-        }
-        else return this;
-    }
-
-    public final Json assoc (final Json value, final String... keys) {
-        if (type == JsonObject) {
-            if (keys.length == 0) return this;
-            else return nestedAssocObj(value, 0, keys);
-        } else return this;
-    }
-
-    public final Json assoc (final String key, final Json value) {
-        if (type == JsonObject) {
-            return new JObj(jobj().value.put(key, value));
-        }
-        else if (type == JsonEmpty) {
-            return new JObj(new Map<String, Json>().put(key, value));
-        }
-        else return this;
-    }
-
-    public final Json assoc (final int index, final Json value) {
-        if (type == JsonArray) {
-            return new JArr((List<Json>) jarr().value.update(index, x -> value));
-        }
-        else return this;
+    public final Json assocIn(final Json value, final Object... keys) {
+        return assocInR(value, 0, keys).fold(x -> x, e -> this);
     }
 
     public final Json dissoc (final String key) {
@@ -146,64 +149,36 @@ public abstract class Json {
         else return this;
     }
 
-    private Optional<Map<String, Json>> rcoerce (final HashMap<Object, Object> things) {
-        final HashMap<String, Json> map = new HashMap<>();
-        boolean broken = false;
-        for (java.util.Map.Entry e :  things.entrySet()) {
-            if (e.getKey() instanceof String) {
-                final String k         = (String) e.getKey();
-                final Optional<Json> v = coerce(e.getValue());
-                if (v.isPresent()) map.put(k, v.get());
-                else {
-                    broken = true;
-                    break;
-                }
-            }
+    public final Json assoc (final String key, final Json value) {
+        if (type == JsonObject) {
+            return new JObj(jobj().value.put(key, value));
         }
-        if (broken) return Optional.of(Map.from(map));
-        else return Optional.empty();
+        else if (type == JsonEmpty) {
+            return new JObj(new Map<String, Json>().put(key, value));
+        }
+        else return this;
     }
 
-    // Make this return an either
-    private <A> Optional<Json> coerce (final A value) {
-        if (value instanceof Number) {
-            return Optional.of(new JNum((Number) value));
+    public final Json assoc (final int index, final Json value) {
+        if (type == JsonArray) {
+            return new JArr((List<Json>) jarr().value.update(index, x -> value));
         }
-        else if (value instanceof String) {
-            return Optional.of(new JString((String) value));
-        }
-        else if (value instanceof Boolean) {
-            final boolean bool = (Boolean) value;
-            return Optional.of(bool ? JBool.jtrue : JBool.jfalse);
-        }
-        else if (value == null) {
-            return Optional.of(JNull.instance);
-        }
-        else if (value instanceof java.util.HashMap) {
-            final HashMap<Object, Object> map = (HashMap<Object, Object>) value;
-            return rcoerce(map).map(JObj::new); // this is mutually recursive -- may not be that good
-        }
-        else if (value instanceof java.util.List) {
-            final java.util.List<Object> list = (java.util.List<Object>) value;
-            return sequence(map(this::coerce, list)).map(JArr::new); // this is mutually recursive -- may not be that good
-        }
-        else return Optional.empty(); // should I throw?
+        else return this;
     }
 
     public final <A> Json assoc (final String key, final A value) {
-        return assoc(key, value, defaultWriteJson);
+        return assoc(key, value, defaultJsonConvert);
     }
 
     public final <A> Json assoc (final int index, final A value) {
-        return assoc(index, value, defaultWriteJson);
+        return assoc(index, value, defaultJsonConvert);
     }
 
-    public final <A> Json assoc (final String key, final A value, final Write<A> w) {
-        return w.write(value).fold(x -> assoc(key, x), e -> this);
+    public final <A> Json assoc (final String key, final A value, final Convert<A, Json> w) {
+        return w.convert(value).fold(x -> assoc(key, x), e -> this);
     }
 
-    public final <A> Json assoc (final int index, final A value, final Write<A> w) {
-        return w.write(value).fold(x -> assoc(index, x), e -> this);
+    public final <A> Json assoc (final int index, final A value, final Convert<A, Json> w) {
+        return w.convert(value).fold(x -> assoc(index, x), e -> this);
     }
 }
-

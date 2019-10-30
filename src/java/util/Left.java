@@ -23,4 +23,24 @@ public class Left<E, R> implements Either<E, R> {
     public <B> Either<E, B> flatMap(Function<R, Either<E, B>> f) {
         return (Left<E, B>) this;
     }
+
+    @Override
+    public boolean isRight() {
+        return false;
+    }
+
+    @Override
+    public E error() {
+        return error;
+    }
+
+    @Override
+    public R value() {
+        return null;
+    }
+
+    @Override
+    public boolean isLeft() {
+        return true;
+    }
 }

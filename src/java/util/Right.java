@@ -23,4 +23,24 @@ public class Right<E, R> implements Either<E, R> {
     public <B> Either<E, B> flatMap(Function<R, Either<E, B>> f) {
         return f.apply(value);
     }
+
+    @Override
+    public E error() {
+        return null;
+    }
+
+    @Override
+    public R value() {
+        return value;
+    }
+
+    @Override
+    public boolean isRight() {
+        return true;
+    }
+
+    @Override
+    public boolean isLeft() {
+        return false;
+    }
 }
