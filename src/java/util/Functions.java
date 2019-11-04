@@ -34,13 +34,4 @@ public class Functions {
         }
         return Either.right(List.from(bs));
     }
-
-    public static <E, A> Either<E, List<A>> sequence(final java.util.List<Either<E, A>> vals) {
-        final ArrayList<A> coerced = new ArrayList<>();
-        for (Either<E, A> v : vals) {
-            if (v.isRight()) coerced.add(v.value());
-            else return Either.left(v.error());
-        }
-        return Either.right(List.from(coerced));
-    }
 }

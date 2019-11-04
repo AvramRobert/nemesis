@@ -43,4 +43,9 @@ public class Right<E, R> implements Either<E, R> {
     public boolean isLeft() {
         return false;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Right: %s", value);
+    }
 }
