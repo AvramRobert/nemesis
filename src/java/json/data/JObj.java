@@ -17,16 +17,15 @@ public final class JObj extends Json {
         buff.append("{");
 
         for (IEntry<String, Json> entry : value) {
-            buff.append(", ")
+            buff.append(",")
                 .append(entry.key())
                 .append(":")
-                .append(entry.value().toString())
-                .append("\n");
+                .append(entry.value().toString());
         }
         if (value.size() == 0) {
             return buff.append("}").toString();
         } else {
-            return buff.delete(1, 3).append("}").toString();
+            return buff.delete(1, 2).append("}").toString();
         }
     }
 }

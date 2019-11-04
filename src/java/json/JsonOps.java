@@ -5,6 +5,6 @@ import json.data.*;
 public class JsonOps {
 
     public static Json empty() {
-        return JEmpty.empty;
+        return JEmpty.instance;
     }
 }

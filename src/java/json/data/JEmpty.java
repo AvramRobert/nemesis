@@ -2,7 +2,7 @@ package json.data;
 
 public final class JEmpty extends Json {
 
-    public static JEmpty empty = new JEmpty();
+    public final static JEmpty instance = new JEmpty();
 
     public JEmpty() {
         this.type = JType.JsonEmpty;

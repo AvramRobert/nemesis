@@ -16,12 +16,12 @@ public final class JArr extends Json {
         buff.append("[");
 
         for (Json json : value) {
-            buff.append(", ").append(json.toString()).append("\n");
+            buff.append(",").append(json.toString());
         }
         if (value.size() == 0) {
             return buff.append("]").toString();
         } else {
-            return buff.delete(1, 3).append("]").toString();
+            return buff.delete(1, 2).append("]").toString();
         }
     }
 }
