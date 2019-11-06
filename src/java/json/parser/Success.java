@@ -16,4 +16,9 @@ public final class Success implements Result {
     public String toString() {
         return String.format("Success: %s", result);
     }
+
+    @Override
+    public boolean succeeded() {
+        return true;
+    }
 }

@@ -16,4 +16,9 @@ public final class Failure implements Result {
     public String toString() {
         return String.format("Failure: %s", msg);
     }
+
+    @Override
+    public boolean succeeded() {
+        return false;
+    }
 }

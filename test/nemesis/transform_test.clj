@@ -1,4 +1,4 @@
-(ns nemesis.transformation.transform
+(ns nemesis.transform_test
   (:require [clojure.test :refer :all]
             [nemesis.util :refer :all]
             [clojure.test.check :refer [quick-check]]

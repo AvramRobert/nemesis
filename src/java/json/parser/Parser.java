@@ -3,6 +3,7 @@ package json.parser;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.data.*;
+import util.Debug;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -134,69 +135,89 @@ public class Parser {
     private boolean consumeNumeral(final int start) {
         char current;
         while (true) {
-            current = text.charAt(cursor);
-            if (number(current)) {
-                cursor ++;
+            if (cursor < length) {
+                current = text.charAt(cursor);
+                if (number(current)) {
+                    cursor ++;
+                }
+                else {
+                    final double number = Double.parseDouble(text.substring(start, cursor));
+                    return succeed(new JNum(number));
+                }
             }
-            else {
+            else if (start < cursor) {
                 final double number = Double.parseDouble(text.substring(start, cursor));
                 return succeed(new JNum(number));
             }
+            else return abruptEnd(NUMS);
         }
     }
 
     private boolean consumeDecimal(final int start) {
         cursor ++;
-        final char current = text.charAt(cursor);
-        if (number(current)) {
-            return consumeNumeral(start);
-        } else {
-            return unexpectedEnd(NUMS, current);
-        }
+        if (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (number(current)) {
+                return consumeNumeral(start);
+            } else {
+                return unexpectedEnd(NUMS, current);
+            }
+        } else return abruptEnd(NUMS);
     }
 
     private boolean consumeExponent(final int start) {
         cursor ++;
-        final char current = text.charAt(cursor);
-        if (number(current)) {
-            return consumeNumeral(start);
-        }
-        else if (current == MINUS || current == PLUS) {
-            cursor ++; // consume the sign
-            return consumeNumeral(start);
-        }
-        else {
-            return unexpectedEnd(NUMS, current);
-        }
+        if (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (number(current)) {
+                return consumeNumeral(start);
+            }
+            else if (current == MINUS || current == PLUS) {
+                cursor ++; // consume the sign
+                return consumeNumeral(start);
+            }
+            else {
+                return unexpectedEnd(NUMS, current);
+            }
+        } else return abruptEnd(NUMS);
     }
 
     // -2.3e-10 can also occur
-    private boolean consumeNumber() {
-        final int start = cursor;
+    private boolean consumeNumber(final int start) {
         char current;
         while (true) {
-            current = text.charAt(cursor);
-            if (number(current)) {
-                cursor ++;
+            if (cursor < length) {
+                current = text.charAt(cursor);
+                if (number(current)) {
+                    cursor ++;
+                }
+                else if (current == DECIMAL) {
+                    return consumeDecimal(start);
+                }
+                else if (current == EXP_S || current == EXP_L) {
+                    return consumeExponent(start);
+                }
+                else {
+                    final int number = Integer.parseInt(text.substring(start, cursor));
+                    return succeed(new JNum(number));
+                }
             }
-            else if (current == DECIMAL) {
-                return consumeDecimal(start);
-            }
-            else if (current == EXP_S || current == EXP_L) {
-                return consumeExponent(start);
-            }
-            else {
+            else if (start < cursor) {
                 final int number = Integer.parseInt(text.substring(start, cursor));
                 return succeed(new JNum(number));
             }
+            else return abruptEnd(NUMS);
         }
     }
 
     private boolean consumeSignedNumber() {
+        final int start = cursor;
         cursor ++;
-        final char current = text.charAt(cursor);
-        if (number(current)) return consumeNumber();
-        else return unexpectedEnd(NUMS, current);
+        if (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (number(current)) return consumeNumber(start);
+            else return unexpectedEnd(NUMS, current);
+        } else return abruptEnd(NUMS);
     }
 
     private boolean consumeString() {
@@ -333,7 +354,7 @@ public class Parser {
     private boolean consumeAny() {
         skip();
         final char current = text.charAt(cursor);
-        if (number(current))           return consumeNumber();
+        if      (number(current))      return consumeNumber(cursor);
         else if (current == O_BRACKET) return consumeArr();
         else if (current == O_CURLY)   return consumeObj();
         else if (current == QUOTE)     return consumeString();

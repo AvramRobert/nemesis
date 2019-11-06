@@ -86,11 +86,11 @@
 (defn clj->nem [clj]
   (walker coerce clj))
 
-(defn nem->clj [^Json json]
-  (json/parse-string-strict (str json)))
-
 (defn json->clj [json-string]
   (json/parse-string-strict json-string))
+
+(defn nem->clj [^Json json]
+  (json->clj (str json)))
 
 (defn clj->json [clj]
   (json/generate-string clj))
