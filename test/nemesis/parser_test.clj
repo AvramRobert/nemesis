@@ -9,10 +9,6 @@
 (defspec isomorphic-conversion 100
   (for-all [json-clj (gen-clj-json {:max-depth    4
                                     :max-elements 7})]
-    (let [_      (println json-clj)
-          json   (clj->json json-clj)
-          _      (println json)
-          result (Parser/parse json)
-          _      (println (str "Parsed: " (.json result)))
-          _      (println "=============================")]
-      (is (= (nem->clj (.json result)) json-clj)))))
+    (let [json   (clj->json json-clj)
+          result (-> json (Parser/parse) (.json))]
+      (is (= (nem->clj result) json-clj)))))

@@ -155,14 +155,32 @@ public class Parser {
 
     private boolean consumeDecimal(final int start) {
         cursor ++;
-        if (cursor < length) {
-            final char current = text.charAt(cursor);
-            if (number(current)) {
-                return consumeNumeral(start);
-            } else {
-                return unexpectedEnd(NUMS, current);
+        boolean atLeastOneNumber = FAILED;
+        while (true) {
+            if (cursor < length) {
+                final char current = text.charAt(cursor);
+                if (number(current)) {
+                    atLeastOneNumber = SUCCESSFUL;
+                    cursor ++;
+                }
+                else if (atLeastOneNumber) {
+                    if (current == EXP_S || current == EXP_L) {
+                        return consumeExponent(start);
+                    } else {
+                        final double number = Double.parseDouble(text.substring(start, cursor));
+                        return succeed(new JNum(number));
+                    }
+                }
+                else {
+                    return unexpectedEnd(NUMS, current);
+                }
             }
-        } else return abruptEnd(NUMS);
+            else if (atLeastOneNumber) {
+                final double number = Double.parseDouble(text.substring(start, cursor));
+                return succeed(new JNum(number));
+            }
+            else return abruptEnd(NUMS);
+        }
     }
 
     private boolean consumeExponent(final int start) {
