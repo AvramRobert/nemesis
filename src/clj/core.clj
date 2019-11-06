@@ -35,10 +35,7 @@
     (f json)))
 
 (defn -main [& args]
-  (->> "/home/robert/Downloads/generated.json"
-       (slurp)
-       (json.parser.Parser/parse))
-  #_(benchmark parser-typed)
+  (benchmark parser-typed)
   #_(let [json# (slurp "/home/robert/Downloads/generated.json")]
       (Thread/sleep 10000)
       (dorun (repeatedly 10000 #(json.parser.Parser/parse json#)))))

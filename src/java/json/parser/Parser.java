@@ -134,53 +134,50 @@ public class Parser {
 
     private boolean consumeNumeral(final int start) {
         char current;
-        while (true) {
-            if (cursor < length) {
-                current = text.charAt(cursor);
-                if (number(current)) {
-                    cursor ++;
-                }
-                else {
-                    final double number = Double.parseDouble(text.substring(start, cursor));
-                    return succeed(new JNum(number));
-                }
+        while (cursor < length) {
+            current = text.charAt(cursor);
+            if (number(current)) {
+                cursor ++;
             }
-            else if (start < cursor) {
+            else {
                 final double number = Double.parseDouble(text.substring(start, cursor));
                 return succeed(new JNum(number));
             }
-            else return abruptEnd(NUMS);
         }
+
+        if (start < cursor) {
+            final double number = Double.parseDouble(text.substring(start, cursor));
+            return succeed(new JNum(number));
+        }
+        else return abruptEnd(NUMS);
     }
 
     private boolean consumeDecimal(final int start) {
         cursor ++;
         boolean atLeastOneNumber = FAILED;
-        while (true) {
-            if (cursor < length) {
-                final char current = text.charAt(cursor);
-                if (number(current)) {
-                    atLeastOneNumber = SUCCESSFUL;
-                    cursor ++;
-                }
-                else if (atLeastOneNumber) {
-                    if (current == EXP_S || current == EXP_L) {
-                        return consumeExponent(start);
-                    } else {
-                        final double number = Double.parseDouble(text.substring(start, cursor));
-                        return succeed(new JNum(number));
-                    }
-                }
-                else {
-                    return unexpectedEnd(NUMS, current);
-                }
+        while (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (number(current)) {
+                atLeastOneNumber = SUCCESSFUL;
+                cursor ++;
             }
             else if (atLeastOneNumber) {
-                final double number = Double.parseDouble(text.substring(start, cursor));
-                return succeed(new JNum(number));
+                if (current == EXP_S || current == EXP_L) {
+                    return consumeExponent(start);
+                } else {
+                    final double number = Double.parseDouble(text.substring(start, cursor));
+                    return succeed(new JNum(number));
+                }
             }
-            else return abruptEnd(NUMS);
+            else {
+                return unexpectedEnd(NUMS, current);
+            }
         }
+        if (atLeastOneNumber) {
+            final double number = Double.parseDouble(text.substring(start, cursor));
+            return succeed(new JNum(number));
+        }
+        else return abruptEnd(NUMS);
     }
 
     private boolean consumeExponent(final int start) {
@@ -200,32 +197,30 @@ public class Parser {
         } else return abruptEnd(NUMS);
     }
 
-    // -2.3e-10 can also occur
     private boolean consumeNumber(final int start) {
         char current;
-        while (true) {
-            if (cursor < length) {
-                current = text.charAt(cursor);
-                if (number(current)) {
-                    cursor ++;
-                }
-                else if (current == DECIMAL) {
-                    return consumeDecimal(start);
-                }
-                else if (current == EXP_S || current == EXP_L) {
-                    return consumeExponent(start);
-                }
-                else {
-                    final int number = Integer.parseInt(text.substring(start, cursor));
-                    return succeed(new JNum(number));
-                }
+        while (cursor < length) {
+            current = text.charAt(cursor);
+            if (number(current)) {
+                cursor ++;
             }
-            else if (start < cursor) {
+            else if (current == DECIMAL) {
+                return consumeDecimal(start);
+            }
+            else if (current == EXP_S || current == EXP_L) {
+                return consumeExponent(start);
+            }
+            else {
                 final int number = Integer.parseInt(text.substring(start, cursor));
                 return succeed(new JNum(number));
             }
-            else return abruptEnd(NUMS);
         }
+
+        if (start < cursor) {
+            final int number = Integer.parseInt(text.substring(start, cursor));
+            return succeed(new JNum(number));
+        }
+        else return abruptEnd(NUMS);
     }
 
     private boolean consumeSignedNumber() {
