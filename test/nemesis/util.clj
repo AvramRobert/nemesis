@@ -57,31 +57,39 @@
    gen/boolean
    gen/string-alphanumeric])
 
-(defn- gen-arr [{:keys [depth max-depth max-elements] :as opts}]
+(defn deeper [{:keys [depth]
+               :or {depth 0}
+               :as opts}]
+  (assoc opts :depth (inc depth)))
+
+(defn gen-arr [{:keys [depth max-depth max-elements]
+                :or {depth 0}
+                :as opts}]
   (if (> depth max-depth)
     (gen/vector (gen/one-of scalars))
     (gen/recursive-gen
       (fn [scalars]
         (gen/vector (gen/one-of [scalars
-                                 (gen-arr (update opts :depth inc))
-                                 (gen-map (update opts :depth inc))]) 0 max-elements))
+                                 (gen-arr (deeper opts))
+                                 (gen-map (deeper opts))]) 0 max-elements))
       (gen/one-of scalars))))
 
-(defn- gen-map [{:keys [depth max-depth max-elements] :as opts}]
+(defn gen-map [{:keys [depth max-depth max-elements]
+                :or {depth 0}
+                :as opts}]
   (if (> depth max-depth)
     (gen/map gen/string-alphanumeric (gen/one-of scalars))
     (gen/recursive-gen
       (fn [scalars]
         (gen/map gen/string-alphanumeric
                  (gen/one-of [scalars
-                              (gen-arr (update opts :depth inc))
-                              (gen-map (update opts :depth inc))])
+                              (gen-arr (deeper opts))
+                              (gen-map (deeper opts))])
                  {:max-elements max-elements}))
       (gen/one-of scalars))))
 
 (defn gen-clj-json [opts]
-  (let [opts (assoc opts :depth 0)]
-    (gen/one-of (conj scalars (gen-arr opts) (gen-map opts)))))
+  (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
 
 (def gen-faulty-json-string
   (gen/fmap clojure.string/join
@@ -100,3 +108,6 @@
 
 (defn clj->json [clj]
   (json/generate-string clj))
+
+(defn json->nem [json]
+  (json.parser.Parser/parse json))
