@@ -45,11 +45,12 @@ public class Parser {
     private final char DECIMAL = '.';
     private final char EXP_S = 'e';
     private final char EXP_L = 'E';
-    private final char SPACE = ' ';
+    public static final char SPACE = ' ';
     private final char NEWLINE = '\n';
 
-    public Parser(final String input) {
+    public Parser(final int cursor, final String input) {
         this.text = input;
+        this.cursor = cursor;
         this.length = text.length();
     }
 
@@ -119,7 +120,7 @@ public class Parser {
 
     private void skip() {
         char current;
-        while (true) {
+        while (cursor < length) {
             current = text.charAt(cursor);
             if (current == SPACE) {
                 cursor ++;
@@ -379,12 +380,18 @@ public class Parser {
         else                           return unexpectedEnd(JSON, current);
     }
 
+    private boolean consume() {
+        skip();
+        if (cursor < length) return consumeAny();
+        else return abruptEnd(JSON);
+    }
+
     public static Result parse (final String input) {
-        final Parser p = new Parser(input);
-        if (input.isEmpty()) return Result.succeed(p.result);
+        final Parser p = new Parser(0, input);
+        if (input.isEmpty()) return Result.failed("No input to parse.");
         else {
             try {
-                if (p.consumeAny()) return Result.succeed(p.result);
+                if (p.consume()) return Result.succeed(p.result);
                 else return Result.failed(p.failure);
             } catch (Exception e) {
                 e.printStackTrace();
