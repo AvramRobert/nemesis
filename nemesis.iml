@@ -41,6 +41,7 @@
     <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.9.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/core.specs.alpha:0.1.24" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/spec.alpha:0.1.143" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/test.check:0.10.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.scala-lang/scala-library:2.13.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.scala-lang/scala-reflect:2.13.0" level="project" />
     <orderEntry type="library" name="Leiningen: tigris:0.1.1" level="project" />

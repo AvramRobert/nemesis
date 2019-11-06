@@ -12,4 +12,5 @@
                  [cheshire "5.9.0"]
                  [com.fasterxml.jackson.core/jackson-databind "2.9.8"]
                  [com.typesafe.play/play-json_2.13 "2.7.4"]
-                 [com.google.code.gson/gson "2.8.6"]])
+                 [com.google.code.gson/gson "2.8.6"]]
+  :profiles {:dev {:dependencies [[org.clojure/test.check "0.10.0"]]}})
