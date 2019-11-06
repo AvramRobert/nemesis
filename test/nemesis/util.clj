@@ -43,16 +43,21 @@
 
 (declare gen-arr gen-map)
 
-(def scalars
-  [gen/int
-   ;; gen 10e7
-   gen/boolean
-   gen/string-alphanumeric
-   (gen/return nil)
-   (gen/double* {:infinite? false
-                 :NaN?      false})])
+(def gen-double
+  (gen/double* {:infinite? false
+                :NaN?      false}))
 
-(defn gen-arr [{:keys [depth max-depth max-elements] :as opts}]
+(def gen-nil
+  (gen/return nil))
+
+(def ^:private scalars
+  [gen/int
+   gen-nil
+   gen-double
+   gen/boolean
+   gen/string-alphanumeric])
+
+(defn- gen-arr [{:keys [depth max-depth max-elements] :as opts}]
   (if (> depth max-depth)
     (gen/vector (gen/one-of scalars))
     (gen/recursive-gen
@@ -62,7 +67,7 @@
                                  (gen-map (update opts :depth inc))]) 0 max-elements))
       (gen/one-of scalars))))
 
-(defn gen-map [{:keys [depth max-depth max-elements] :as opts}]
+(defn- gen-map [{:keys [depth max-depth max-elements] :as opts}]
   (if (> depth max-depth)
     (gen/map gen/string-alphanumeric (gen/one-of scalars))
     (gen/recursive-gen
@@ -74,8 +79,8 @@
                  {:max-elements max-elements}))
       (gen/one-of scalars))))
 
-(defn gen-clj-json [{:keys [max-depth max-elements]}]
-  (let [opts {:depth 0 :max-depth max-depth :max-elements max-elements}]
+(defn gen-clj-json [opts]
+  (let [opts (assoc opts :depth 0)]
     (gen/one-of (conj scalars (gen-arr opts) (gen-map opts)))))
 
 (defn clj->nem [clj]

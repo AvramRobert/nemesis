@@ -170,6 +170,7 @@ public class Parser {
         }
     }
 
+    // -2.3e-10 can also occur
     private boolean consumeNumber() {
         final int start = cursor;
         char current;
