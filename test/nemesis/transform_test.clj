@@ -11,12 +11,15 @@
                                     :max-elements 7})]
     (-> json-clj (clj->nem) (nem->clj) (= json-clj) (is))))
 
-(defspec association 100
-  (for-all [json-clj  (gen-map {:max-depth    4
-                                :max-elements 7})
+(defspec association 1
+  (for-all [json-clj   (gen-map {:max-depth    4
+                                 :max-elements 7})
             associatee (gen-clj-json {:max-depth    2
                                       :max-elements 3})
-            key        gen/string-alphanumeric]
-    (-> (clj->nem json-clj)
+            key        gen/nat]
+    (-> (clj->json json-clj)
+        (json->nem)
+        (.json)
         (.transform)
-        (.assoc key (clj->nem associatee)))))
+        (.assoc (str key) (clj->nem associatee))
+        (.affix))))

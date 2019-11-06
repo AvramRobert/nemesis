@@ -1,6 +1,7 @@
 (ns nemesis.util
   (:require [cheshire.core :as json]
-            [clojure.test.check.generators :as gen])
+            [clojure.test.check.generators :as gen]
+            [clojure.string :refer [join]])
   (:import json.data.Json
            (json.data JNum JString JObj JArr JEmpty JBool JNull)
            (io.lacuna.bifurcan List Map)))
@@ -65,43 +66,41 @@
 (defn gen-arr [{:keys [depth max-depth max-elements]
                 :or {depth 0}
                 :as opts}]
-  (if (> depth max-depth)
-    (gen/vector (gen/one-of scalars))
-    (gen/recursive-gen
-      (fn [scalars]
-        (gen/vector (gen/one-of [scalars
-                                 (gen-arr (deeper opts))
-                                 (gen-map (deeper opts))]) 0 max-elements))
-      (gen/one-of scalars))))
+  (letfn [(rec-arr [scalars]
+            (gen/vector (gen/one-of [scalars
+                                     (gen-arr (deeper opts))
+                                     (gen-map (deeper opts))]) 0 max-elements))]
+    (if (> depth max-depth)
+      (gen/vector (gen/one-of scalars))
+      (rec-arr (gen/recursive-gen rec-arr (gen/one-of scalars))))))
 
 (defn gen-map [{:keys [depth max-depth max-elements]
                 :or {depth 0}
                 :as opts}]
-  (if (> depth max-depth)
-    (gen/map gen/string-alphanumeric (gen/one-of scalars))
-    (gen/recursive-gen
-      (fn [scalars]
-        (gen/map gen/string-alphanumeric
-                 (gen/one-of [scalars
-                              (gen-arr (deeper opts))
-                              (gen-map (deeper opts))])
-                 {:max-elements max-elements}))
-      (gen/one-of scalars))))
+  (letfn [(rec-map [scalars]
+            (gen/map gen/string-alphanumeric
+                     (gen/one-of [scalars
+                                  (gen-arr (deeper opts))
+                                  (gen-map (deeper opts))])
+                     {:max-elements max-elements}))]
+    (if (> depth max-depth)
+      (gen/map gen/string-alphanumeric (gen/one-of scalars))
+      (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
 (defn gen-clj-json [opts]
   (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
 
 (def gen-faulty-json-string
-  (gen/fmap clojure.string/join
-            (-> [(gen/return " ") (gen/return "\n")]
-                (gen/one-of)
-                (gen/vector))))
+  (->> [(gen/return " ") (gen/return "\n")]
+       (gen/one-of)
+       (gen/vector)
+       (gen/fmap join)))
 
 (defn clj->nem [clj]
   (walker coerce clj))
 
 (defn json->clj [json-string]
-  (json/parse-string-strict json-string))
+  (json/parse-string json-string))
 
 (defn nem->clj [^Json json]
   (json->clj (str json)))
