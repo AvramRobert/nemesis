@@ -83,6 +83,12 @@
   (let [opts (assoc opts :depth 0)]
     (gen/one-of (conj scalars (gen-arr opts) (gen-map opts)))))
 
+(def gen-faulty-json-string
+  (gen/fmap clojure.string/join
+            (-> [(gen/return " ") (gen/return "\n")]
+                (gen/one-of)
+                (gen/vector))))
+
 (defn clj->nem [clj]
   (walker coerce clj))
 

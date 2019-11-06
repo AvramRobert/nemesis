@@ -55,8 +55,8 @@ public class Parser {
     }
 
     private String pointedSample(final int subtextSize) {
-        int div = subtextSize / 2;
-        int left = cursor - div;
+        int div  = subtextSize / 2;
+        int left  = cursor - div;
         int right = cursor + div;
         if (left >= 0 && right < length) {
             return text.substring(left, cursor) + " |-> " + text.substring(cursor, right);
@@ -65,7 +65,7 @@ public class Parser {
             return text.substring(0, cursor) + " |-> " + text.substring(cursor, right);
         }
         else if (left >= 0) {
-            return text.substring(left, cursor) + " |-> " + text.substring(cursor, length - 1);
+            return text.substring(left, cursor) + " |-> " + text.substring(cursor, length);
         }
         else return text + " <-| ";
     }
