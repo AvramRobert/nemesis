@@ -45,7 +45,7 @@ public class Parser {
     private final char DECIMAL = '.';
     private final char EXP_S = 'e';
     private final char EXP_L = 'E';
-    public static final char SPACE = ' ';
+    private final char SPACE = ' ';
     private final char NEWLINE = '\n';
 
     public Parser(final int cursor, final String input) {
