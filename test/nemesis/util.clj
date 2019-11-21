@@ -51,6 +51,9 @@
 (def gen-nil
   (gen/return nil))
 
+(def gen-string-alpha
+  (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
+
 (def ^:private scalars
   [gen/int
    gen-nil
@@ -78,13 +81,13 @@
                 :or {depth 0}
                 :as opts}]
   (letfn [(rec-map [scalars]
-            (gen/map gen/string-alphanumeric
+            (gen/map gen-string-alpha
                      (gen/one-of [scalars
                                   (gen-arr (deeper opts))
                                   (gen-map (deeper opts))])
                      {:max-elements max-elements}))]
     (if (> depth max-depth)
-      (gen/map gen/string-alphanumeric (gen/one-of scalars))
+      (gen/map gen-string-alpha (gen/one-of scalars))
       (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
 (defn gen-clj-json [opts]

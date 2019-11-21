@@ -7,13 +7,13 @@
             [clojure.test.check.generators :as gen]))
 
 (defspec isomorphic-conversion 100
-  (for-all [json-clj (gen-clj-json {:max-depth    4
-                                    :max-elements 7})]
+  (for-all [json-clj (gen-clj-json {:max-depth    2
+                                    :max-elements 3})]
     (-> json-clj (clj->nem) (nem->clj) (= json-clj) (is))))
 
-(defspec association 1
-  (for-all [json-clj   (gen-map {:max-depth    4
-                                 :max-elements 7})
+(defspec association 100
+  (for-all [json-clj   (gen-map {:max-depth    2
+                                 :max-elements 3})
             associatee (gen-clj-json {:max-depth    2
                                       :max-elements 3})
             key        gen/nat]
@@ -22,4 +22,8 @@
         (.json)
         (.transform)
         (.assoc (str key) (clj->nem associatee))
-        (.affix))))
+        (.affix)
+        (.value)
+        (nem->clj)
+        (= (assoc json-clj (str key) associatee))
+        (is))))

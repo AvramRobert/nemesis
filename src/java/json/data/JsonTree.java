@@ -58,6 +58,10 @@ public class JsonTree {
 
     private final Convert<Object, Json> defaultJsonConvert = this::coerceJson;
 
+    private final String escape (final String s) {
+        return "\"" + s + "\"";
+    }
+
     private <A> JsonTree consume (final Either<String, A> comp, final Function<A, JsonTree> f) {
         return comp.fold(f, this::fail);
     }
@@ -66,8 +70,8 @@ public class JsonTree {
         return ea.flatMap(a -> eb.map(b -> f.apply(a, b))).fold(x -> x, this::fail);
     }
 
-    private <A> Either<String, Integer> coerceInteger(final A value) {
-        if (value instanceof Integer) return Either.right((Integer) value);
+    private <A> Either<String, Long> coerceLong(final A value) {
+        if (value instanceof Long) return Either.right((Long) value);
         else return Either.left(String.format("Value `%s` is not of type Integer", value.toString()));
     }
 
@@ -109,10 +113,10 @@ public class JsonTree {
     }
 
     private Either<String, Json> assocInArr(final Json json, final Json toAssoc, final int depth, final Object... keys) {
-        final Either<String, Integer> sidx = coerceInteger(keys[depth]);
+        final Either<String, Long> sidx = coerceLong(keys[depth]);
         final List<Json> list = jarr().value;
         if (sidx.isRight()) {
-            final int idx = sidx.value();
+            final long idx = sidx.value();
             final Json value = list.nth(idx, node);
             return assocInRec(value, toAssoc, depth + 1, keys);
         } else {
@@ -148,7 +152,7 @@ public class JsonTree {
                 return jobj().value.get(k).map(this::succeed).orElse(fail(String.format("Key `%s` does not exist", k)));
             });
         else if (json.type == JsonArray) {
-            return consume(coerceInteger(key), i -> {
+            return consume(coerceLong(key), i -> {
                 final Json r = jarr().value.nth(i, null);
                 return r != null ? succeed(r) : fail(String.format("Index `%d` does not exist", i));
             });
@@ -213,7 +217,7 @@ public class JsonTree {
             return consume(coerceString(key), k -> assoc(k, value));
         }
         else if (json.type == JsonArray) {
-            return consume(coerceInteger(key), i -> assoc(i, value));
+            return consume(coerceLong(key), i -> assoc(i, value));
         }
         else {
             return fail(String.format("Cannot associate key `%s` into `%s`.", key, json));
@@ -222,9 +226,9 @@ public class JsonTree {
 
     public final JsonTree assoc(final String key, final Json value) {
         if (json.type == JsonObject) {
-            return succeed(new JObj(jobj().value.put(key, value)));
+            return succeed(new JObj(jobj().value.put(escape(key), value)));
         } else if (json.type == JsonEmpty) {
-            return succeed(new JObj(map.put(key, value)));
+            return succeed(new JObj(map.put(escape(key), value)));
         } else {
             return fail(String.format("Cannot associate key `%s` into `%s`.", key, json));
         }

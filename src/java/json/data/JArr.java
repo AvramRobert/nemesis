@@ -1,6 +1,7 @@
 package json.data;
 
 import io.lacuna.bifurcan.List;
+import util.Debug;
 
 public final class JArr extends Json {
     final List<Json> value;
@@ -16,6 +17,7 @@ public final class JArr extends Json {
         buff.append("[");
 
         for (Json json : value) {
+            //Debug.println(json);
             buff.append(",").append(json.toString());
         }
         if (value.size() == 0) {

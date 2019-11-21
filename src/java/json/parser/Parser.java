@@ -266,6 +266,9 @@ public class Parser {
         else return unexpectedEnd(S_COMMA, current);
     }
 
+    // There's an error here: "[[[{\"A\" 0}]]]"
+    // parsing this, where clearly a colon is missing, leads to a different error than expected
+    // It parses it `correctly`, but the error doesn't point to the colon.
     private boolean consumePair() {
         skip();
         final char current = text.charAt(cursor);
