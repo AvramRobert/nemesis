@@ -6,6 +6,14 @@
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen]))
 
+(defn nem-map [f json-clj]
+  (->> (clj->nem json-clj)
+       (.transform)
+       (f)
+       (.affix)
+       (.value)
+       (nem->clj)))
+
 (defspec isomorphic-conversion 100
   (for-all [json-clj (gen-clj-json {:max-depth    2
                                     :max-elements 3})]
@@ -17,13 +25,5 @@
             associatee (gen-clj-json {:max-depth    2
                                       :max-elements 3})
             key        gen/nat]
-    (-> (clj->json json-clj)
-        (json->nem)
-        (.json)
-        (.transform)
-        (.assoc (str key) (clj->nem associatee))
-        (.affix)
-        (.value)
-        (nem->clj)
-        (= (assoc json-clj (str key) associatee))
-        (is))))
+    (is (= (nem-map #(.assoc % (str key) (clj->nem associatee)) json-clj)
+           (assoc json-clj (str key) associatee)))))
