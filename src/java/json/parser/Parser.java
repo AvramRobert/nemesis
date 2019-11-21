@@ -23,13 +23,13 @@ public class Parser {
     private int lines = 0;
 
     // == GENERAL CONSTANTS == //
-    private final String NULL = "`null`";
-    private final String BOOLS = "`true`, `false`";
-    private final String NUMS  = "`0-9`";
-    private final String JSON  = "`{`, `[`, `\"`, `0-9`, `true`, `false` or `null`";
-    private final String S_COLON = "`:`";
-    private final String S_COMMA = "`,`";
-    private final String S_QUOTE = "`\"`";
+    private final String NULL = "null";
+    private final String BOOLS = "true, false";
+    private final String NUMS  = "0-9";
+    private final String JSON  = "{, [, \", 0-9, true, false or null";
+    private final char S_COLON = ':';
+    private final char S_COMMA = ',';
+    private final char S_QUOTE = '\"';
     private final char COMMA = ',';
     private final char COLON = ':';
     private final char QUOTE = '\"';
@@ -54,20 +54,19 @@ public class Parser {
         this.length = text.length();
     }
 
+    private int left (final int subtextSize) {
+        if (cursor < subtextSize) return 0;
+        else return cursor - subtextSize;
+    }
+
+    private int right (final int subtextSize) {
+        if (cursor < subtextSize) return text.length();
+        else return cursor + subtextSize;
+    }
+
     private String pointedSample(final int subtextSize) {
-        int div  = subtextSize / 2;
-        int left  = cursor - div;
-        int right = cursor + div;
-        if (left >= 0 && right < length) {
-            return text.substring(left, cursor) + " |-> " + text.substring(cursor, right);
-        }
-        else if (right < length) {
-            return text.substring(0, cursor) + " |-> " + text.substring(cursor, right);
-        }
-        else if (left >= 0) {
-            return text.substring(left, cursor) + " |-> " + text.substring(cursor, length);
-        }
-        else return text + " <-| ";
+        int middle  = subtextSize / 2;
+        return text.substring(left(middle), cursor) + " <-| " + text.substring(cursor, right(middle));
     }
 
     private boolean hasNext(final int i) { return (cursor + i) < length; }
@@ -77,7 +76,13 @@ public class Parser {
     }
 
     private boolean unexpectedEnd (final String expected, final char received) {
-        final String msg = String.format("Unexpected end of input. Expected any of %s but received %c.", expected, received);
+        final String msg = String.format("Unexpected end of input. Expected any of `%s` but received `%c`.", expected, received);
+        this.failure = failureMessage(msg);
+        return FAILED;
+    }
+
+    private boolean unexpectedEnd (final char expected, final char received) {
+        final String msg = String.format("Unexpected end of input. Expected `%c` but received `%c`.", expected, received);
         this.failure = failureMessage(msg);
         return FAILED;
     }
@@ -266,9 +271,6 @@ public class Parser {
         else return unexpectedEnd(S_COMMA, current);
     }
 
-    // There's an error here: "[[[{\"A\" 0}]]]"
-    // parsing this, where clearly a colon is missing, leads to a different error than expected
-    // It parses it `correctly`, but the error doesn't point to the colon.
     private boolean consumePair() {
         skip();
         final char current = text.charAt(cursor);
@@ -359,12 +361,14 @@ public class Parser {
                 cursor ++;
                 return succeed(new JArr(List.from(list)));
             }
-            else if (consumeAny()) {
-                final Json value = result;
-                if (consumeComma(C_BRACKET)) list.add(value);
+            else {
+                if (consumeAny()) {
+                    final Json value = result;
+                    if (consumeComma(C_BRACKET)) list.add(value);
+                    else return FAILED;
+                }
                 else return FAILED;
             }
-            else return unexpectedEnd(JSON, current);
         }
     }
 
