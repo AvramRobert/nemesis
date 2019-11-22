@@ -6,6 +6,8 @@
            (json.data JNum JString JObj JArr JEmpty JBool JNull)
            (io.lacuna.bifurcan List Map)))
 
+(declare gen-arr gen-map)
+
 (deftype WEntry [key value])
 (deftype WMap [entries])
 
@@ -42,7 +44,21 @@
       (vector? form)    (JArr. (List/from form))
       :else (throw (Exception. (format "Illegal JSON type of `%s`" form))))))
 
-(declare gen-arr gen-map)
+(defn- keyseq [form]
+  (cond
+    (and (map? form)
+         (not-empty form)) (let [k (->> form (keys) (rand-nth))]
+                             (cons k (lazy-seq (keyseq (get form k)))))
+    (and (vector? form)
+         (not-empty form)) (let [i (rand-int (count form))]
+                             (cons i (lazy-seq (keyseq (nth form i)))))
+    :else '()))
+
+
+(defn- deeper [{:keys [depth]
+                :or {depth 0}
+                :as opts}]
+  (assoc opts :depth (inc depth)))
 
 (def gen-double
   (gen/double* {:infinite? false
@@ -59,12 +75,8 @@
    gen-nil
    gen-double
    gen/boolean
-   gen/string-alphanumeric])
-
-(defn deeper [{:keys [depth]
-               :or {depth 0}
-               :as opts}]
-  (assoc opts :depth (inc depth)))
+   gen/string-alphanumeric
+   gen-string-alpha])
 
 (defn gen-arr [{:keys [depth max-depth max-elements]
                 :or {depth 0}
@@ -113,3 +125,12 @@
 
 (defn json->nem [json]
   (json.parser.Parser/parse json))
+
+(defn transform [f clj]
+  (let [res (->> (clj->nem clj) (.transform) (f) (.affix))]
+    (if (.isRight res)
+      (nem->clj (.value res))
+      (clojure.pprint/pprint res))))
+
+(defn rand-keyseq [form]
+  (vec (keyseq form)))
