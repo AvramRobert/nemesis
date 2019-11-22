@@ -3,7 +3,6 @@ package json.data;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.coerce.Convert;
-import util.Debug;
 import util.Either;
 
 import java.util.HashMap;
@@ -53,8 +52,12 @@ public class JsonTree {
         return new JsonTree(json);
     }
 
-    private JsonTree fail(final String error) {
-        return new JsonTree(error);
+    private JsonTree fail(final String msg, Object... params) {
+        return new JsonTree(String.format(msg, params));
+    }
+
+    private <A> Either<String, A> left (final String msg, Object... params) {
+        return Either.left(String.format(msg, params));
     }
 
     private final Optional<Json> lookup (final String key) {
@@ -126,7 +129,7 @@ public class JsonTree {
             final Json value   = json.lookup(key).orElse(node);
             return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JObj(json.insert(key, x)));
         } else {
-            return Either.left(String.format("Key for json was expected to be a string: %s", skey.error()));
+            return left("Key for json was expected to be a string: %s", skey.error());
         }
     }
 
@@ -139,9 +142,9 @@ public class JsonTree {
                 final Json value = list.nth(idx, node);
                 return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JArr(json.replace(idx, x)));
             }
-            else return Either.left(String.format("Index of `%d` does not exist.", idx));
+            else return left("Index of `%d` does not exist.", idx);
         } else {
-            return Either.left(String.format("Index for array was expected to be an integer: %s", sidx.error()));
+            return left("Index for array was expected to be an integer: %s", sidx.error());
         }
     }
 
@@ -149,14 +152,14 @@ public class JsonTree {
         if      (depth >= keys.length)     return Either.right(toAssoc);
         else if (value.type == JsonObject) return assocInObj(value.transform(), toAssoc, depth, keys);
         else if (value.type == JsonArray)  return assocInArr(value.transform(), toAssoc, depth, keys);
-        else return Either.left(String.format("Cannot associate into `%s`. It is not a structure.", toAssoc));
+        else return left("Cannot associate into `%s`. It is not a structure.", toAssoc);
     }
 
     public final JsonTree get (final String key) {
         if (json.type == JsonObject) {
             return lookup(key).map(this::succeed).orElse(fail(String.format("Key `%s` not found", key)));
         }
-        else return fail(String.format("Cannot lookup key `%s` in `%s`.", key, json));
+        else return fail("Cannot lookup key `%s` in `%s`.", key, json);
     }
 
     public final JsonTree get (final long index) {
@@ -164,21 +167,21 @@ public class JsonTree {
             final Json r = jarr().value.nth(index, null);
             return (r != null) ? succeed(r) : fail("Index not found");
         }
-        else return fail(String.format("Cannot lookup index `%d` in `%s`.", index, json));
+        else return fail("Cannot lookup index `%d` in `%s`.", index, json);
     }
 
     public final <K> JsonTree get (final K key) {
         if (json.type == JsonObject)
             return consume(coerceString(key), k -> {
-                return lookup(k).map(this::succeed).orElse(fail(String.format("Key `%s` does not exist", k)));
+                return lookup(k).map(this::succeed).orElse(fail("Key `%s` does not exist", k));
             });
         else if (json.type == JsonArray) {
             return consume(coerceLong(key), i -> {
                 final Json r = jarr().value.nth(i, null);
-                return r != null ? succeed(r) : fail(String.format("Index `%d` does not exist", i));
+                return r != null ? succeed(r) : fail("Index `%d` does not exist", i);
             });
         }
-        else return fail(String.format("Cannot get in structure `%s`", this.toString()));
+        else return fail("Cannot get in structure `%s`", json.toString());
     }
 
     public final JsonTree getIn (final Object... keys) {
@@ -206,7 +209,7 @@ public class JsonTree {
             return this;
         }
         else {
-            return fail(String.format("Cannot dissociate key `%s` from `%s`.", key, json));
+            return fail("Cannot dissociate key `%s` from `%s`.", key, json);
         }
     }
 
@@ -217,7 +220,7 @@ public class JsonTree {
             final List<Json> right = arr.value.slice(index + 1, arr.value.size());
             return succeed(new JArr((List<Json>) left.concat(right)));
         } else {
-            return fail(String.format("Cannot dissociate index `%d` from `%s`.", index, json));
+            return fail("Cannot dissociate index `%d` from `%s`.", index, json);
         }
     }
 
@@ -229,7 +232,7 @@ public class JsonTree {
             return biconsume(coerceString(key), f.convert(value), this::assoc);
         }
         else {
-            return fail(String.format("Cannot associate key `%s` into `%s`.", key, json));
+            return fail("Cannot associate key `%s` into `%s`.", key, json);
         }
     }
 
@@ -241,7 +244,7 @@ public class JsonTree {
             return consume(coerceLong(key), i -> assoc(i, value));
         }
         else {
-            return fail(String.format("Cannot associate key `%s` into `%s`.", key, json));
+            return fail("Cannot associate key `%s` into `%s`.", key, json);
         }
     }
 
@@ -249,7 +252,7 @@ public class JsonTree {
         if (json.type == JsonObject || json.type == JsonEmpty) {
             return succeed(new JObj(insert(key, value)));
         } else {
-            return fail(String.format("Cannot associate key `%s` into `%s`.", key, json));
+            return fail("Cannot associate key `%s` into `%s`.", key, json);
         }
     }
 
@@ -257,7 +260,7 @@ public class JsonTree {
         if (json.type == JsonArray) {
             return succeed(new JArr((List<Json>) jarr().value.update(index, x -> value)));
         } else {
-            return fail(String.format("Cannot associate index `%d` into `%s`.", index, json));
+            return fail("Cannot associate index `%d` into `%s`.", index, json);
         }
     }
 
