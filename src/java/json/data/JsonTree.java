@@ -3,7 +3,6 @@ package json.data;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.coerce.Convert;
-import scala.Option;
 import util.Debug;
 import util.Either;
 
@@ -70,6 +69,10 @@ public class JsonTree {
         return jobj().value.put(escape(key), value);
     }
 
+    private final List<Json> replace (final long index, final Json value) {
+        return (List<Json>) jarr().value.update(index, x -> value);
+    }
+
     private final Convert<Object, String> defaultStringConvert = this::coerceString;
 
     private final Convert<Object, Json> defaultJsonConvert = this::coerceJson;
@@ -120,8 +123,8 @@ public class JsonTree {
         final Either<String, String> skey = coerceString(keys[depth]);
         if (skey.isRight()) {
             final String key   = skey.value();
-            final Json value   = lookup(key).orElse(node);
-            return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JObj(insert(key, x)));
+            final Json value   = json.lookup(key).orElse(node);
+            return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JObj(json.insert(key, x)));
         } else {
             return Either.left(String.format("Key for json was expected to be a string: %s", skey.error()));
         }
@@ -129,11 +132,14 @@ public class JsonTree {
 
     private Either<String, Json> assocInArr(final JsonTree json, final Json toAssoc, final int depth, final Object... keys) {
         final Either<String, Long> sidx = coerceLong(keys[depth]);
-        final List<Json> list = json.jarr().value;
         if (sidx.isRight()) {
-            final long idx   = sidx.value();
-            final Json value = list.nth(idx, node);
-            return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JArr((List<Json>) list.update(idx, o -> x)));
+            final List<Json> list = json.jarr().value;
+            final long idx        = sidx.value();
+            if (list.size() > idx) {
+                final Json value = list.nth(idx, node);
+                return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JArr(json.replace(idx, x)));
+            }
+            else return Either.left(String.format("Index of `%d` does not exist.", idx));
         } else {
             return Either.left(String.format("Index for array was expected to be an integer: %s", sidx.error()));
         }
