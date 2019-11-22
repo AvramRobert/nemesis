@@ -94,7 +94,8 @@ public class JsonTree {
 
     private <A> Either<String, Long> coerceLong(final A value) {
         if (value instanceof Long) return Either.right((Long) value);
-        else return Either.left(String.format("Value `%s` is not of type Integer", value.toString()));
+        else if (value instanceof Integer) return Either.right(Integer.toUnsignedLong((Integer) value));
+        else return Either.left(String.format("Value `%s` is not of type Long", value.toString()));
     }
 
     private <A> Either<String, String> coerceString(final A value) {
@@ -144,7 +145,7 @@ public class JsonTree {
             }
             else return left("Index of `%d` does not exist.", idx);
         } else {
-            return left("Index for array was expected to be an integer: %s", sidx.error());
+            return left("Index for array was expected to be a long: %s", sidx.error());
         }
     }
 
@@ -198,7 +199,8 @@ public class JsonTree {
     }
 
     public final JsonTree assocIn(final Json value, final Object... keys) {
-        return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
+        if (keys.length == 0) return this;
+        else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
     }
 
     public final JsonTree dissoc(final String key) {
