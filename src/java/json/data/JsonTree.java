@@ -166,23 +166,9 @@ public class JsonTree {
     public final JsonTree get (final long index) {
         if (json.type == JsonArray) {
             final Json r = jarr().value.nth(index, null);
-            return (r != null) ? succeed(r) : fail("Index not found");
+            return (r != null) ? succeed(r) : fail("Index if `%n` does not exist", index);
         }
         else return fail("Cannot lookup index `%d` in `%s`.", index, json);
-    }
-
-    public final <K> JsonTree get (final K key) {
-        if (json.type == JsonObject)
-            return consume(coerceString(key), k -> {
-                return lookup(k).map(this::succeed).orElse(fail("Key `%s` does not exist", k));
-            });
-        else if (json.type == JsonArray) {
-            return consume(coerceLong(key), i -> {
-                final Json r = jarr().value.nth(i, null);
-                return r != null ? succeed(r) : fail("Index `%d` does not exist", i);
-            });
-        }
-        else return fail("Cannot get in structure `%s`", json.toString());
     }
 
     public final JsonTree getIn (final Object... keys) {
@@ -191,8 +177,16 @@ public class JsonTree {
         if (depth == keys.length) return this;
         else {
             while(depth < keys.length && tree.success) {
-                tree = get(keys[depth]);
-                depth ++;
+                final Object k = keys[depth];
+                if (tree.json.type == JsonObject) {
+                    tree = tree.consume(coerceString(k), tree::get);
+                    depth ++;
+                }
+                else if (tree.json.type == JsonArray) {
+                    tree = tree.consume(coerceLong(k), tree::get);
+                    depth ++;
+                }
+                else return fail("Cannot get `%s` in structure `%s`", k, json.toString());
             }
             return tree;
         }
@@ -223,30 +217,6 @@ public class JsonTree {
             return succeed(new JArr((List<Json>) left.concat(right)));
         } else {
             return fail("Cannot dissociate index `%d` from `%s`.", index, json);
-        }
-    }
-
-    public final <K, V> JsonTree assoc (final K key, final V value, final Convert<V, Json> f) {
-        if (json.type == JsonObject) {
-            return biconsume(coerceString(key), f.convert(value), this::assoc);
-        }
-        else if (json.type == JsonArray) {
-            return biconsume(coerceString(key), f.convert(value), this::assoc);
-        }
-        else {
-            return fail("Cannot associate key `%s` into `%s`.", key, json);
-        }
-    }
-
-    public final <K> JsonTree assoc(final K key, final Json value) {
-        if (json.type == JsonObject) {
-            return consume(coerceString(key), k -> assoc(k, value));
-        }
-        else if (json.type == JsonArray) {
-            return consume(coerceLong(key), i -> assoc(i, value));
-        }
-        else {
-            return fail("Cannot associate key `%s` into `%s`.", key, json);
         }
     }
 
