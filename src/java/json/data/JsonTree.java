@@ -3,9 +3,12 @@ package json.data;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.coerce.Convert;
+import scala.Option;
+import util.Debug;
 import util.Either;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -15,26 +18,30 @@ import static util.Functions.traversel;
 import static util.Functions.traversem;
 
 public class JsonTree {
-    private Json json;
-
-    private String error = "";
-    private final boolean SUCCESS = true;
-    private final boolean FAIL    = false;
-    private boolean success = SUCCESS;
+    private final Json json;
+    private final boolean success;
+    private final String error;
 
     private final Map<String, Json> map = new Map<>();
     private final JObj node = new JObj(map);
 
     public JsonTree(final Json json) {
         this.json = json;
+        this.success = true;
+        this.error = "";
+    }
 
+    public JsonTree(final String error) {
+        this.error = error;
+        this.success = false;
+        this.json = JEmpty.instance;
     }
 
     private JEmpty jEmpty () {
         return (JEmpty) json;
     }
 
-    private JObj jobj () {
+    public JObj jobj () {
         return (JObj) json;
     }
 
@@ -44,14 +51,23 @@ public class JsonTree {
 
 
     private JsonTree succeed(final Json json) {
-        this.json = json;
-        return this;
+        return new JsonTree(json);
     }
 
     private JsonTree fail(final String error) {
-        this.error = error;
-        success = FAIL;
-        return this;
+        return new JsonTree(error);
+    }
+
+    private final Optional<Json> lookup (final String key) {
+        return jobj().value.get(escape(key));
+    }
+
+    private final Map<String, Json> remove (final String key) {
+        return jobj().value.remove(escape(key));
+    }
+
+    private final Map<String, Json> insert (final String key, final Json value) {
+        return jobj().value.put(escape(key), value);
     }
 
     private final Convert<Object, String> defaultStringConvert = this::coerceString;
@@ -59,7 +75,7 @@ public class JsonTree {
     private final Convert<Object, Json> defaultJsonConvert = this::coerceJson;
 
     private final String escape (final String s) {
-        return "\"" + s + "\"";
+        return String.format("\"%s\"", s);
     }
 
     private <A> JsonTree consume (final Either<String, A> comp, final Function<A, JsonTree> f) {
@@ -100,40 +116,39 @@ public class JsonTree {
             return Either.left(String.format("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value));
     }
 
-    private Either<String, Json> assocInObj(final Json json, final Json toAssoc, final int depth, final Object... keys) {
-        final Map<String, Json> map = jobj().value;
+    private Either<String, Json> assocInObj(final JsonTree json, final Json toAssoc, final int depth, final Object... keys) {
         final Either<String, String> skey = coerceString(keys[depth]);
         if (skey.isRight()) {
             final String key   = skey.value();
-            final Json value   = map.get(key).orElse(node);
-            return assocInRec(value, toAssoc, depth + 1, keys);
+            final Json value   = lookup(key).orElse(node);
+            return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JObj(insert(key, x)));
         } else {
             return Either.left(String.format("Key for json was expected to be a string: %s", skey.error()));
         }
     }
 
-    private Either<String, Json> assocInArr(final Json json, final Json toAssoc, final int depth, final Object... keys) {
+    private Either<String, Json> assocInArr(final JsonTree json, final Json toAssoc, final int depth, final Object... keys) {
         final Either<String, Long> sidx = coerceLong(keys[depth]);
-        final List<Json> list = jarr().value;
+        final List<Json> list = json.jarr().value;
         if (sidx.isRight()) {
-            final long idx = sidx.value();
+            final long idx   = sidx.value();
             final Json value = list.nth(idx, node);
-            return assocInRec(value, toAssoc, depth + 1, keys);
+            return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JArr((List<Json>) list.update(idx, o -> x)));
         } else {
             return Either.left(String.format("Index for array was expected to be an integer: %s", sidx.error()));
         }
     }
 
     private Either<String, Json> assocInRec(final Json value, final Json toAssoc, final int depth, final Object... keys) {
-        if (depth >= keys.length)          return Either.right(toAssoc);
-        else if (value.type == JsonObject) return assocInObj(value, toAssoc, depth, keys);
-        else if (value.type == JsonArray)  return assocInArr(value, toAssoc, depth, keys);
-        else return Either.left("Cannot associate into `%s`. It is not a structure.");
+        if      (depth >= keys.length)     return Either.right(toAssoc);
+        else if (value.type == JsonObject) return assocInObj(value.transform(), toAssoc, depth, keys);
+        else if (value.type == JsonArray)  return assocInArr(value.transform(), toAssoc, depth, keys);
+        else return Either.left(String.format("Cannot associate into `%s`. It is not a structure.", toAssoc));
     }
 
     public final JsonTree get (final String key) {
         if (json.type == JsonObject) {
-            return jobj().value.get(key).map(this::succeed).orElse(fail("Key not found"));
+            return lookup(key).map(this::succeed).orElse(fail(String.format("Key `%s` not found", key)));
         }
         else return fail(String.format("Cannot lookup key `%s` in `%s`.", key, json));
     }
@@ -149,7 +164,7 @@ public class JsonTree {
     public final <K> JsonTree get (final K key) {
         if (json.type == JsonObject)
             return consume(coerceString(key), k -> {
-                return jobj().value.get(k).map(this::succeed).orElse(fail(String.format("Key `%s` does not exist", k)));
+                return lookup(k).map(this::succeed).orElse(fail(String.format("Key `%s` does not exist", k)));
             });
         else if (json.type == JsonArray) {
             return consume(coerceLong(key), i -> {
@@ -179,7 +194,7 @@ public class JsonTree {
 
     public final JsonTree dissoc(final String key) {
         if (json.type == JsonObject) {
-            return succeed(new JObj(jobj().value.remove(key)));
+            return succeed(new JObj(remove(key)));
         }
         else if (json.type == JsonEmpty) {
             return this;
@@ -225,10 +240,8 @@ public class JsonTree {
     }
 
     public final JsonTree assoc(final String key, final Json value) {
-        if (json.type == JsonObject) {
-            return succeed(new JObj(jobj().value.put(escape(key), value)));
-        } else if (json.type == JsonEmpty) {
-            return succeed(new JObj(map.put(escape(key), value)));
+        if (json.type == JsonObject || json.type == JsonEmpty) {
+            return succeed(new JObj(insert(key, value)));
         } else {
             return fail(String.format("Cannot associate key `%s` into `%s`.", key, json));
         }
