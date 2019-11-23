@@ -60,3 +60,20 @@
           computed (transform #(.dissoc % n-keys) json-clj)
           expected (apply dissoc json-clj keys)]
       (is (= expected computed)))))
+
+(defspec retrieval 100
+  (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
+                                              :max-elements 3}))]
+    (let [key      (-> json-clj (keys) (rand-nth))
+          computed (transform #(.get % key) json-clj)
+          expected (get json-clj key)]
+      (is (= expected computed)))))
+
+(defspec deep-retrieval 100
+  (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
+                                              :max-elements 3}))]
+    (let [keys     (rand-keyseq json-clj)
+          n-keys   (into-array Object keys)
+          computed (transform #(.getIn % n-keys) json-clj)
+          expected (get-in json-clj keys)]
+      (is (= expected computed)))))
