@@ -5,6 +5,7 @@ import io.lacuna.bifurcan.Map;
 import json.coerce.Convert;
 import util.Either;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -66,6 +67,14 @@ public class JsonTree {
 
     private final Map<String, Json> remove (final String key) {
         return jobj().value.remove(escape(key));
+    }
+
+    private final boolean contains (final String key) {
+        return jobj().value.contains(escape(key));
+    }
+
+    private final boolean within (final long index) {
+        return jarr().value.size() < index;
     }
 
     private final Map<String, Json> insert (final String key, final Json value) {
@@ -197,26 +206,22 @@ public class JsonTree {
         else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
     }
 
-    public final JsonTree dissoc(final String key) {
+    public final JsonTree dissoc(final String... keys) {
         if (json.type == JsonObject) {
-            return succeed(new JObj(remove(key)));
+            Map<String, Json> map = jobj().value;
+            for (String key: keys) {
+                final String k = escape(key);
+                if (map.contains(k)) {
+                    map = map.remove(k);
+                }
+            }
+            return succeed(new JObj(map));
         }
         else if (json.type == JsonEmpty) {
             return this;
         }
         else {
-            return fail("Cannot dissociate key `%s` from `%s`.", key, json);
-        }
-    }
-
-    public final JsonTree dissoc(final int index) {
-        if (json.type == JsonArray) {
-            final JArr arr         = jarr();
-            final List<Json> left  = arr.value.slice(0, index - 1);
-            final List<Json> right = arr.value.slice(index + 1, arr.value.size());
-            return succeed(new JArr((List<Json>) left.concat(right)));
-        } else {
-            return fail("Cannot dissociate index `%d` from `%s`.", index, json);
+            return fail("Cannot dissociate keys `%s` from `%s`.", Arrays.toString(keys), json);
         }
     }
 
