@@ -3,7 +3,8 @@
             [nemesis.util :refer :all]
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
-            [clojure.test.check.generators :as gen]))
+            [clojure.test.check.generators :as gen])
+  (:import (json.data JsonTree)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-clj-json {:max-depth    2
@@ -63,11 +64,17 @@
 
 (defspec retrieval 100
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
+                                              :max-elements 3}))
+            arr-clj  (gen/not-empty (gen-arr {:max-depth 2
                                               :max-elements 3}))]
-    (let [key      (-> json-clj (keys) (rand-nth))
-          computed (transform #(.get % key) json-clj)
-          expected (get json-clj key)]
-      (is (= expected computed)))))
+    (let [key        (-> json-clj (keys) (rand-nth))
+          index      (rand-int (count arr-clj))
+          computed-m (transform #(.get ^JsonTree % ^String key) json-clj)
+          computed-a (transform #(.get ^JsonTree % ^Long index) arr-clj)
+          expected-m (get json-clj key)
+          expected-a (get arr-clj index)]
+      (is (= expected-m computed-m))
+      (is (= expected-a computed-a)))))
 
 (defspec deep-retrieval 100
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2

@@ -201,11 +201,6 @@ public class JsonTree {
         }
     }
 
-    public final JsonTree assocIn(final Json value, final Object... keys) {
-        if (keys.length == 0) return this;
-        else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
-    }
-
     public final JsonTree dissoc(final String... keys) {
         if (json.type == JsonObject) {
             Map<String, Json> map = jobj().value;
@@ -223,6 +218,11 @@ public class JsonTree {
         else {
             return fail("Cannot dissociate keys `%s` from `%s`.", Arrays.toString(keys), json);
         }
+    }
+
+    public final JsonTree assocIn(final Json value, final Object... keys) {
+        if (keys.length == 0) return this;
+        else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
     }
 
     public final JsonTree assoc(final String key, final Json value) {
