@@ -372,6 +372,7 @@ public class Parser {
         }
     }
 
+    // fails on this input: "[{\"A\": {}}" -> `[` culprit
     private boolean consumeAny() {
         skip();
         final char current = text.charAt(cursor);

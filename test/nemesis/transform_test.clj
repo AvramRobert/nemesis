@@ -4,7 +4,8 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (json.data JsonTree)))
+  (:import (json.data JsonTree JNum)
+           (json.coerce Default)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-clj-json {:max-depth    2
@@ -83,4 +84,61 @@
           n-keys   (into-array Object keys)
           computed (transform #(.getIn % n-keys) json-clj)
           expected (get-in json-clj keys)]
+      (is (= expected computed)))))
+
+(defspec updating 100
+  (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
+                                              :max-elements 3
+                                              :scalars      [gen/int]}))
+            new-key   gen-string-alpha
+            new-value gen/nat]
+    (let [key      (-> json-clj (keys) (rand-nth))
+          elem     (json-clj key)
+          updates {:map {:clj #(assoc % new-key new-value)
+                         :nem (fn [tree]
+                                (.update tree key (function #(.assoc % new-key new-value))))}
+                   :vec {:clj #(assoc % 0 new-value)
+                         :nem (fn [tree]
+                                (.update tree key (function #(.assoc % 0 new-value))))}
+                   :scalar {:clj #(inc %)
+                            :nem (fn [tree]
+                                   (.update tree key (function #(inc %)) Default/jsonToLong Default/longToJson))}}
+          f        (fn [api]
+                     (cond
+                       (map? elem)     (get-in updates [:map api])
+                       (vector? elem)  (if (empty? elem)
+                                         identity
+                                         (get-in updates [:vec api]))
+                       :else           (get-in updates [:scalar api])))
+          computed (transform (f :nem) json-clj)
+          expected (update json-clj key (f :clj))]
+      (is (= expected computed)))))
+
+(defspec deep-updating 100
+  (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
+                                              :max-elements 3
+                                              :scalars      [gen/int]}))
+            new-key   gen-string-alpha
+            new-value gen/nat]
+    (let [keys     (rand-keyseq json-clj)
+          n-keys   (into-array Object keys)
+          elem     (get-in json-clj keys)
+          updates {:map {:clj #(assoc % new-key new-value)
+                         :nem (fn [tree]
+                                (.updateIn tree n-keys (function #(.assoc % new-key new-value))))}
+                   :vec {:clj #(assoc % 0 new-value)
+                         :nem (fn [tree]
+                                (.updateIn tree n-keys (function #(.assoc % 0 new-value))))}
+                   :scalar {:clj #(inc %)
+                            :nem (fn [tree]
+                                   (.updateIn tree n-keys (function #(inc %)) Default/jsonToLong Default/longToJson))}}
+          f        (fn [api]
+                     (cond
+                       (map? elem)     (get-in updates [:map api])
+                       (vector? elem)  (if (empty? elem)
+                                         identity
+                                         (get-in updates [:vec api]))
+                       :else           (get-in updates [:scalar api])))
+          computed (transform (f :nem) json-clj)
+          expected (update json-clj key (f :clj))]
       (is (= expected computed)))))

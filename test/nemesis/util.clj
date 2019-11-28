@@ -4,7 +4,8 @@
             [clojure.string :refer [join]])
   (:import json.data.Json
            (json.data JNum JString JObj JArr JEmpty JBool JNull)
-           (io.lacuna.bifurcan List Map)))
+           (io.lacuna.bifurcan List Map)
+           (java.util.function Function)))
 
 (declare gen-arr gen-map)
 
@@ -70,7 +71,7 @@
 (def gen-string-alpha
   (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
 
-(def ^:private scalars
+(def ^:private default-scalars
   [gen/int
    gen-nil
    gen-double
@@ -78,8 +79,9 @@
    gen/string-alphanumeric
    gen-string-alpha])
 
-(defn gen-arr [{:keys [depth max-depth max-elements]
-                :or {depth 0}
+(defn gen-arr [{:keys [depth max-depth max-elements scalars]
+                :or {depth   0
+                     scalars default-scalars}
                 :as opts}]
   (letfn [(rec-arr [scalars]
             (gen/vector (gen/one-of [scalars
@@ -89,8 +91,9 @@
       (gen/vector (gen/one-of scalars))
       (rec-arr (gen/recursive-gen rec-arr (gen/one-of scalars))))))
 
-(defn gen-map [{:keys [depth max-depth max-elements]
-                :or {depth 0}
+(defn gen-map [{:keys [depth max-depth max-elements scalars]
+                :or {depth   0
+                     scalars default-scalars}
                 :as opts}]
   (letfn [(rec-map [scalars]
             (gen/map gen-string-alpha
@@ -103,7 +106,7 @@
       (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
 (defn gen-clj-json [opts]
-  (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
+  (gen/one-of (conj default-scalars (gen-arr opts) (gen-map opts))))
 
 (def gen-faulty-json-string
   (->> [(gen/return " ") (gen/return "\n")]
@@ -134,3 +137,7 @@
 
 (defn rand-keyseq [form]
   (vec (keyseq form)))
+
+(defn function [fn]
+  (reify Function
+    (apply [_ a] (fn a))))

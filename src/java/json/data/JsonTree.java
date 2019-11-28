@@ -81,6 +81,10 @@ public class JsonTree {
         return jobj().value.put(escape(key), value);
     }
 
+    private final Map<String, Json> mupdate (final String key, final Function<Json, Json> f) {
+        return jobj().value.update(escape(key), f::apply);
+    }
+
     private final List<Json> replace (final long index, final Json value) {
         return (List<Json>) jarr().value.update(index, x -> value);
     }
@@ -257,13 +261,20 @@ public class JsonTree {
         return consume(w.convert(value), v -> assoc(index, v));
     }
 
-    public final JsonTree update(final String key, final Function<Json, Json> f) {
-        return succeed(new JObj(jobj().value.update(key, f :: apply)));
+    public final JsonTree update(final String key, final Function<JsonTree, JsonTree> f) {
+        return lookup(key)
+                .map(x -> f.apply(x.transform()).affix())
+                .map(x -> x.fold(j -> new JsonTree(new JObj(insert(key, j))), e -> fail(e)))
+                .orElse(fail("Cannot update `%s`. Key does not exist", key));
     }
 
-    public final JsonTree update(final int index, final Function<Json, Json> f) {
-        return succeed(new JArr((List<Json>) jarr().value.update(index, f)));
+    public final JsonTree updateIn(final Function<JsonTree, JsonTree> f, Object... keys) {
+        return null;
     }
+
+//    public final JsonTree update(final int index, final Function<Json, Json> f) {
+//        return succeed(new JArr((List<Json>) jarr().value.update(index, f)));
+//    }
 
     public final <A, B> JsonTree update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
