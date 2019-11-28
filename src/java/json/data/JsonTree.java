@@ -81,10 +81,6 @@ public class JsonTree {
         return jobj().value.put(escape(key), value);
     }
 
-    private final Map<String, Json> mupdate (final String key, final Function<Json, Json> f) {
-        return jobj().value.update(escape(key), f::apply);
-    }
-
     private final List<Json> replace (final long index, final Json value) {
         return (List<Json>) jarr().value.update(index, x -> value);
     }
@@ -262,19 +258,25 @@ public class JsonTree {
     }
 
     public final JsonTree update(final String key, final Function<JsonTree, JsonTree> f) {
-        return lookup(key)
-                .map(x -> f.apply(x.transform()).affix())
-                .map(x -> x.fold(j -> new JsonTree(new JObj(insert(key, j))), e -> fail(e)))
-                .orElse(fail("Cannot update `%s`. Key does not exist", key));
+        return f.apply(get(key)).affix().fold(x -> assoc(key, x), this::fail);
+    }
+
+    public final JsonTree update(final int index, final Function<JsonTree, JsonTree> f) {
+        return f.apply(get(index)).affix().fold(x -> assoc(index, x), this::fail);
     }
 
     public final JsonTree updateIn(final Function<JsonTree, JsonTree> f, Object... keys) {
-        return null;
+        return f.apply(getIn(keys)).affix().fold(x -> assocIn(x, keys), this::fail);
     }
 
-//    public final JsonTree update(final int index, final Function<Json, Json> f) {
-//        return succeed(new JArr((List<Json>) jarr().value.update(index, f)));
-//    }
+    public final <A, B> JsonTree updateIn (final Function<A, B> f, final Convert<Json, A> from, final Convert<B, Json> to, Object... keys) {
+        return getIn(keys)
+                .affix()
+                .flatMap(from::convert)
+                .map(f)
+                .flatMap(to::convert)
+                .fold(j -> assocIn(j, keys), this::fail);
+    }
 
     public final <A, B> JsonTree update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);

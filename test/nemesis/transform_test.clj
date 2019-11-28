@@ -125,13 +125,13 @@
           elem     (get-in json-clj keys)
           updates {:map {:clj #(assoc % new-key new-value)
                          :nem (fn [tree]
-                                (.updateIn tree n-keys (function #(.assoc % new-key new-value))))}
+                                (.updateIn tree (function #(.assoc % new-key new-value)) n-keys))}
                    :vec {:clj #(assoc % 0 new-value)
                          :nem (fn [tree]
-                                (.updateIn tree n-keys (function #(.assoc % 0 new-value))))}
-                   :scalar {:clj #(inc %)
+                                (.updateIn tree (function #(.assoc % 0 new-value)) n-keys))}
+                   :scalar {:clj inc
                             :nem (fn [tree]
-                                   (.updateIn tree n-keys (function #(inc %)) Default/jsonToLong Default/longToJson))}}
+                                   (.updateIn tree (function inc) Default/jsonToLong Default/longToJson n-keys))}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])
@@ -140,5 +140,5 @@
                                          (get-in updates [:vec api]))
                        :else           (get-in updates [:scalar api])))
           computed (transform (f :nem) json-clj)
-          expected (update json-clj key (f :clj))]
+          expected (update-in json-clj keys (f :clj))]
       (is (= expected computed)))))
