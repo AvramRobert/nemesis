@@ -68,9 +68,6 @@
 (def gen-nil
   (gen/return nil))
 
-(defn gen-quoted [gen-string]
-  (gen/fmap #(str \" % \") gen-string))
-
 (def gen-string-alpha
   (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
 
@@ -79,8 +76,8 @@
    gen-nil
    gen-double
    gen/boolean
-   gen/string-alphanumeric
-   gen-string-alpha])
+   gen-string-alpha
+   gen/string-alphanumeric])
 
 (defn gen-arr [{:keys [depth max-depth max-elements scalars]
                 :or {depth   0
@@ -114,7 +111,11 @@
   (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
 
 (def gen-faulty-json-string
-  (->> [(gen/return " ") (gen/return "\n")]
+  (->> [(gen/return " ")
+        (gen/return "\n")
+        (gen/return "[{}")
+        (gen/return "{[]")
+        (gen/return "{\"A:")]
        (gen/one-of)
        (gen/vector)
        (gen/not-empty)
