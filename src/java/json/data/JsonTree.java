@@ -220,11 +220,6 @@ public class JsonTree {
         }
     }
 
-    public final JsonTree assocIn(final Json value, final Object... keys) {
-        if (keys.length == 0) return this;
-        else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
-    }
-
     public final JsonTree assoc(final String key, final Json value) {
         if (json.type == JsonObject || json.type == JsonEmpty) {
             return succeed(new JObj(insert(key, value)));
@@ -239,6 +234,20 @@ public class JsonTree {
         } else {
             return fail("Cannot associate index `%d` into `%s`.", index, json);
         }
+    }
+
+    public final JsonTree assocIn(final Json value, final Object... keys) {
+        if (keys.length == 0) return this;
+        else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
+    }
+
+    public final <A> JsonTree assocIn(final A value, final Object... keys) {
+        return assocIn(value, defaultJsonConvert, keys);
+    }
+
+    public final <A> JsonTree assocIn(final A value, final Convert<A, Json> to, final Object... keys) {
+        if (keys.length == 0) return this;
+        else return to.convert(value).map(x -> assocIn(x, keys)).fold(x -> x, this::fail);
     }
 
     public final <A> JsonTree assoc(final String key, final A value) {
