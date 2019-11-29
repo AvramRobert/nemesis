@@ -6,6 +6,7 @@ import json.data.*;
 import util.Debug;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class Parser {
@@ -89,6 +90,18 @@ public class Parser {
 
     private boolean abruptEnd (final String expected) {
         final String msg = String.format("Unexpected end of input. Expected any of %s but received nothing.", expected);
+        this.failure = failureMessage(msg);
+        return FAILED;
+    }
+
+    private boolean abruptEnd (final Character... expected) {
+        String msg = "";
+        if (expected.length > 1) {
+            msg = String.format("Unexpected end of input. Expected `%c`, but received nothing", expected[0]);
+        } else {
+            msg = String.format("Unexpected end of input. Expected any of `%s`, but received nothing.", Arrays.toString(expected));
+        }
+
         this.failure = failureMessage(msg);
         return FAILED;
     }
@@ -239,47 +252,63 @@ public class Parser {
         } else return abruptEnd(NUMS);
     }
 
+    private boolean consumeStringContent() {
+        char current;
+        while (cursor < length) {
+            current = text.charAt(cursor);
+            if (current == QUOTE) {
+                cursor ++; // also consume the last ' " '
+                return SUCCESSFUL;
+            }
+            else cursor++;
+        }
+        return abruptEnd(JSON);
+    }
+
     private boolean consumeString() {
-        char current = text.charAt(cursor);
+        final char current = text.charAt(cursor);
         if (current == QUOTE) {
             cursor ++;
             final int start = cursor;
-            current = text.charAt(cursor);
-            while (current != QUOTE) {
-                cursor ++;
-                current = text.charAt(cursor);
+            if (consumeStringContent()) {
+                final String sub = text.substring(start, cursor);
+                return succeed(new JString(sub));
             }
-            final String sub = text.substring(start, cursor);
-            cursor ++; // also consume the last ' " '
-            return succeed(new JString(sub));
+            else return FAILED;
         }
         else return unexpectedEnd(S_QUOTE, current);
     }
 
     private boolean consumeComma(final char until) {
         skip();
-        final char current = text.charAt(cursor);
-        if (current == COMMA) {
-            cursor ++;
-            skip();
-            if (text.charAt(cursor) == until) {
-                return unexpectedEnd(JSON, until);
+        if (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (current == COMMA) {
+                cursor ++;
+                skip();
+                if (hasNext(0) && text.charAt(cursor) == until) {
+                    return unexpectedEnd(JSON, until);
+                }
+                else return SUCCESSFUL;
             }
-            else return SUCCESSFUL;
+            else if (current == until) { return SUCCESSFUL; }
+            else return unexpectedEnd(S_COMMA, current);
         }
-        else if (current == until) { return SUCCESSFUL; }
-        else return unexpectedEnd(S_COMMA, current);
+        else return abruptEnd(S_COMMA, until);
     }
 
     private boolean consumePair() {
         skip();
-        final char current = text.charAt(cursor);
-        if (current == COLON) {
-            cursor ++;
-            skip();
-            return SUCCESSFUL;
+        if (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (current == COLON) {
+                cursor ++;
+                skip();
+                return SUCCESSFUL;
+            }
+            else return unexpectedEnd(S_COLON, current);
         }
-        else return unexpectedEnd(S_COLON, current);
+        else return abruptEnd(COLON);
     }
 
     private boolean consumeTrue() {
@@ -372,7 +401,6 @@ public class Parser {
         }
     }
 
-    // fails on this input: "[{\"A\": {}}" -> `[` culprit
     private boolean consumeAny() {
         skip();
         final char current = text.charAt(cursor);
