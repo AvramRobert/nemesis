@@ -7,8 +7,8 @@
 
 
 (defspec isomorphic-conversion 100
-  (for-all [json-clj (gen-clj-json {:max-depth    4
-                                    :max-elements 7})]
+  (for-all [json-clj (gen-clj-json {:max-depth    3
+                                    :max-elements 4})]
     (let [json   (clj->json json-clj)
           result (-> json (Parser/parse) (.json))]
       (is (= (nem->clj result) json-clj)))))

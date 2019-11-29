@@ -37,7 +37,7 @@
       (nil? form)       JNull/instance
       (empty-map? form) JEmpty/instance
       (number? form)    (JNum. form)
-      (string? form)    (JString. form)
+      (string? form)    (JString. (pr-str form))
       (keyword? form)   (JString. (name form))
       (boolean? form)   (if form JBool/jtrue JBool/jfalse)
       (wentry? form)    form
@@ -67,6 +67,9 @@
 
 (def gen-nil
   (gen/return nil))
+
+(defn gen-quoted [gen-string]
+  (gen/fmap #(str \" % \") gen-string))
 
 (def gen-string-alpha
   (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
@@ -105,13 +108,16 @@
       (gen/map gen-string-alpha (gen/one-of scalars))
       (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
-(defn gen-clj-json [opts]
-  (gen/one-of (conj default-scalars (gen-arr opts) (gen-map opts))))
+(defn gen-clj-json [{:keys [scalars]
+                     :or   {scalars default-scalars}
+                     :as   opts}]
+  (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
 
 (def gen-faulty-json-string
   (->> [(gen/return " ") (gen/return "\n")]
        (gen/one-of)
        (gen/vector)
+       (gen/not-empty)
        (gen/fmap join)))
 
 (defn clj->nem [clj]

@@ -56,13 +56,13 @@ public class Parser {
     }
 
     private int left (final int subtextSize) {
-        if (cursor < subtextSize) return 0;
-        else return cursor - subtextSize;
+        final int bound = cursor - subtextSize;
+        return Math.max(bound, 0);
     }
 
     private int right (final int subtextSize) {
-        if (cursor < subtextSize) return text.length();
-        else return cursor + subtextSize;
+        final int bound = cursor + subtextSize;
+        return Math.min(bound, length);
     }
 
     private String pointedSample(final int subtextSize) {
@@ -268,8 +268,8 @@ public class Parser {
     private boolean consumeString() {
         final char current = text.charAt(cursor);
         if (current == QUOTE) {
-            cursor ++;
             final int start = cursor;
+            cursor ++;
             if (consumeStringContent()) {
                 final String sub = text.substring(start, cursor);
                 return succeed(new JString(sub));
