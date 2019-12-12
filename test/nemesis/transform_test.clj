@@ -102,7 +102,7 @@
                                 (.update tree key (function #(.assoc % 0 new-value))))}
                    :scalar {:clj #(inc %)
                             :nem (fn [tree]
-                                   (.update tree key (function #(inc %)) Default/jsonToLong Default/longToJson))}}
+                                   (.update tree key (function #(inc %)) Default/JSON_TO_LONG Default/LONG_TO_JSON))}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])
@@ -131,7 +131,7 @@
                                 (.updateIn tree (function #(.assoc % 0 new-value)) n-keys))}
                    :scalar {:clj inc
                             :nem (fn [tree]
-                                   (.updateIn tree (function inc) Default/jsonToLong Default/longToJson n-keys))}}
+                                   (.updateIn tree (function inc) Default/JSON_TO_LONG Default/LONG_TO_JSON n-keys))}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])

@@ -6,7 +6,7 @@ import util.Either;
 
 public class Default {
 
-    public final static Convert<Json, Long> jsonToLong = json -> {
+    public final static Convert<Json, Long> JSON_TO_LONG = json -> {
             if (json instanceof JNum) {
                 final Number num = ((JNum) json).value;
                 if (num instanceof Long) return Either.right((Long) num);
@@ -16,5 +16,5 @@ public class Default {
             else return Either.left(String.format("`%s` is not a JSON number", json));
         };
 
-    public static Convert<Long, Json> longToJson = value -> Either.right(new JNum(value));
+    public final static Convert<Long, Json> LONG_TO_JSON = value -> Either.right(new JNum(value));
 }
