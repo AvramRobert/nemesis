@@ -297,6 +297,10 @@ public class JsonTree {
         else return fail("%s is not a JSON object", json);
     }
 
+    public final JsonTree merge (final Json that) {
+        return merge(that.transform());
+    }
+
     public final <A, B> JsonTree update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
         return consume(get(key).convert(g), v -> assoc(key, v));
