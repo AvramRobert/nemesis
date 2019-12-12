@@ -142,3 +142,12 @@
           computed (transform (f :nem) json-clj)
           expected (update-in json-clj keys (f :clj))]
       (is (= expected computed)))))
+
+(defspec merging 100
+  (for-all [json-clj-1 (gen/not-empty (gen-map {:max-depth    2
+                                                :max-elements 3}))
+            json-clj-2 (gen/not-empty (gen-map {:max-depth    2
+                                                :max-elements 3}))]
+    (let [computed (transform (fn [a b] (.merge a b)) json-clj-1 json-clj-2)
+          expected (merge json-clj-1 json-clj-2)]
+      (is (= expected computed)))))

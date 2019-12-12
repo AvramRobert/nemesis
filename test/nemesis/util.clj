@@ -136,8 +136,8 @@
 (defn json->nem [json]
   (json.parser.Parser/parse json))
 
-(defn transform [f clj]
-  (let [res (->> (clj->nem clj) (.transform) (f) (.affix))]
+(defn transform [f & cljs]
+  (let [res (->> cljs (map clj->nem) (map #(.transform %)) (apply f) (.affix))]
     (if (.isRight res)
       (nem->clj (.value res))
       (clojure.pprint/pprint res))))

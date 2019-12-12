@@ -287,6 +287,16 @@ public class JsonTree {
                 .fold(j -> assocIn(j, keys), this::fail);
     }
 
+    public final JsonTree merge (final JsonTree that) {
+        if (json.type == JsonObject) {
+            if (that.json.type == JsonObject) {
+                return succeed(new JObj(jobj().value.merge(that.jobj().value, (a, b) -> b)));
+            }
+            else return that.affix().fold(j -> fail("%s is not a JSON object", j), this::fail);
+        }
+        else return fail("%s is not a JSON object", json);
+    }
+
     public final <A, B> JsonTree update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
         return consume(get(key).convert(g), v -> assoc(key, v));

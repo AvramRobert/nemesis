@@ -9,6 +9,7 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
+.idea
 
 # Compiled class file
 *.class
