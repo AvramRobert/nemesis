@@ -10,9 +10,9 @@
   (for-all [json-clj (gen-clj-json {:max-depth    3
                                     :max-elements 4})]
     (let [json   (clj->json json-clj)
-          result (-> json (Parser/parse) (.json))]
+          result (-> json (Parser/parse) (.value))]
       (is (= (nem->clj result) json-clj)))))
 
 (defspec fault-detection 100
   (for-all [json-string gen-faulty-json-string]
-    (->> json-string (Parser/parse) (.succeeded) (= false) (is))))
+    (->> json-string (Parser/parse) (.isRight) (= false) (is))))

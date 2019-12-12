@@ -4,6 +4,7 @@ import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.data.*;
 import util.Debug;
+import util.Either;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -422,16 +423,16 @@ public class Parser {
         else return abruptEnd(JSON);
     }
 
-    public static Result parse (final String input) {
+    public static Either<String, Json> parse (final String input) {
         final Parser p = new Parser(0, input);
-        if (input.isEmpty()) return Result.failed("No input to parse.");
+        if (input.isEmpty()) return Either.left("No input to parse.");
         else {
             try {
-                if (p.consume()) return Result.succeed(p.result);
-                else return Result.failed(p.failure);
+                if (p.consume()) return Either.right(p.result);
+                else return Either.left(p.failure);
             } catch (Exception e) {
                 e.printStackTrace();
-                return Result.failed(e.getMessage()); // do better
+                return Either.left(e.getMessage()); // do better
             }
         }
     }

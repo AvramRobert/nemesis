@@ -1,4 +1,4 @@
-(ns nemesis.benchmarks.core
+(ns benchmarks.core
   (:require [criterium.core :as c]
             [cheshire.core :as j]
             [clojure.test :refer [deftest]]
