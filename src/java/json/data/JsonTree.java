@@ -35,10 +35,6 @@ public class JsonTree {
         this.json = JEmpty.instance;
     }
 
-    private JEmpty jEmpty () {
-        return (JEmpty) json;
-    }
-
     public JObj jobj () {
         return (JObj) json;
     }
