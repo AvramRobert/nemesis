@@ -1,8 +1,11 @@
-(ns core
+(ns nemesis.benchmarks.core
   (:require [criterium.core :as c]
-            [cheshire.core :as j])
+            [cheshire.core :as j]
+            [clojure.test :refer [deftest]]
+            [clojure.java.io :as jio])
   (:import com.fasterxml.jackson.databind.ObjectMapper)
-  (:import com.google.gson.JsonParser))
+  (:import com.google.gson.JsonParser
+           (java.nio.file Files Paths)))
 
 (defn parser-cheshire [json]
   "~8 ms"
@@ -25,17 +28,13 @@
   (let [mapper ^ObjectMapper (ObjectMapper.)]
     (c/with-progress-reporting (c/bench (.readTree mapper ^String json)))))
 
-(defmacro try-out [f]
-  `(let [json# (slurp "/home/robert/Downloads/generated.json")]
-     (Thread/sleep 10000)
-     (dorun (repeatedly 10000 #(~f json#)))))
-
 (defn benchmark [f]
-  (let [json (slurp "/home/robert/Downloads/generated.json")]
-    (f json)))
+  (-> (jio/resource "resources/sample.json")
+      (.toURI)
+      (Paths/get)
+      (Files/readAllBytes)
+      (String.)
+      (f)))
 
-(defn -main [& args]
-  (benchmark parser-typed)
-  #_(let [json# (slurp "/home/robert/Downloads/generated.json")]
-      (Thread/sleep 10000)
-      (dorun (repeatedly 10000 #(json.parser.Parser/parse json#)))))
+#_(deftest run-benchmark
+  (benchmark parser-play))
