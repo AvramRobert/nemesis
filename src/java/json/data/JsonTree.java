@@ -8,7 +8,6 @@ import util.Either;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static json.data.JType.*;
@@ -65,18 +64,6 @@ public class JsonTree {
         return jobj().value.get(escape(key));
     }
 
-    private final Map<String, Json> remove (final String key) {
-        return jobj().value.remove(escape(key));
-    }
-
-    private final boolean contains (final String key) {
-        return jobj().value.contains(escape(key));
-    }
-
-    private final boolean within (final long index) {
-        return jarr().value.size() < index;
-    }
-
     private final Map<String, Json> insert (final String key, final Json value) {
         return jobj().value.put(escape(key), value);
     }
@@ -95,10 +82,6 @@ public class JsonTree {
 
     private <A> JsonTree consume (final Either<String, A> comp, final Function<A, JsonTree> f) {
         return comp.fold(f, this::fail);
-    }
-
-    private <A, B> JsonTree biconsume(final Either<String, A> ea, final Either<String, B> eb, final BiFunction<A, B, JsonTree> f) {
-        return ea.flatMap(a -> eb.map(b -> f.apply(a, b))).fold(x -> x, this::fail);
     }
 
     private <A> Either<String, Long> coerceLong(final A value) {
