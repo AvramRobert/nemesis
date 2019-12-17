@@ -1,7 +1,8 @@
 (ns nemesis.util
   (:require [cheshire.core :as json]
             [clojure.test.check.generators :as gen]
-            [clojure.string :refer [join]])
+            [clojure.string :refer [join]]
+            [clojure.pprint :refer [pprint]])
   (:import json.data.Json
            (json.data JNum JString JObj JArr JEmpty JBool JNull)
            (io.lacuna.bifurcan List Map)
@@ -140,7 +141,7 @@
   (let [res (->> cljs (map clj->nem) (map #(.transform %)) (apply f) (.affix))]
     (if (.isRight res)
       (nem->clj (.value res))
-      (clojure.pprint/pprint res))))
+      (pprint res))))
 
 (defn rand-keyseq [form]
   (vec (keyseq form)))
