@@ -159,6 +159,18 @@ public class JsonTree {
         else return fail("Cannot lookup index `%d` in `%s`.", index, json);
     }
 
+    public final <A> Either<String, A> getAs (final Convert<Json, A> f, final long index) {
+        return get(index).as(f);
+    }
+
+    public final <A> Either<String, A> getAs(final Convert<Json, A> f, final String key) {
+        return get(key).as(f);
+    }
+
+    public final <A> Either<String, A> getInAs(final Convert<Json, A> f, Object... keys) {
+        return getIn(keys).as(f);
+    }
+
     public final JsonTree getIn (final Object... keys) {
         int depth = 0;
         JsonTree tree = this;
@@ -282,12 +294,12 @@ public class JsonTree {
 
     public final <A, B> JsonTree update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
-        return consume(get(key).convert(g), v -> assoc(key, v));
+        return consume(get(key).as(g), v -> assoc(key, v));
     }
 
     public final <A, B> JsonTree update(final int index, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
-        return consume(get(index).convert(g), v -> assoc(index, v));
+        return consume(get(index).as(g), v -> assoc(index, v));
     }
 
     public final Either<String, Json> affix() {
@@ -295,7 +307,9 @@ public class JsonTree {
         else return Either.left(error);
     }
 
-    public final <A> Either<String, A> convert (final Convert<Json, A> f) {
+    // Fixme: implement an in-order walk, a fold and a traverse
+
+    public final <A> Either<String, A> as(final Convert<Json, A> f) {
         return f.convert(json);
     }
 }

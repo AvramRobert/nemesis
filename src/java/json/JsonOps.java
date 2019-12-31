@@ -16,7 +16,7 @@ public class JsonOps {
     }
 
     public static <A> Either<String, A> parseAs(final String text, final Convert<Json, A> f) {
-        return parse(text).flatMap(x -> x.transform().convert(f));
+        return parse(text).flatMap(x -> x.transform().as(f));
     }
 
     public static String asString(final Json json) {
