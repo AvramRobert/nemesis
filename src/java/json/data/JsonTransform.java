@@ -15,7 +15,7 @@ import static json.data.JType.JsonArray;
 import static util.Functions.traversel;
 import static util.Functions.traversem;
 
-public class JsonTree {
+public class JsonTransform {
     private final Json json;
     private final boolean success;
     private final String error;
@@ -23,13 +23,13 @@ public class JsonTree {
     private final Map<String, Json> map = new Map<>();
     private final JObj node = new JObj(map);
 
-    public JsonTree(final Json json) {
+    public JsonTransform(final Json json) {
         this.json = json;
         this.success = true;
         this.error = "";
     }
 
-    public JsonTree(final String error) {
+    public JsonTransform(final String error) {
         this.error = error;
         this.success = false;
         this.json = JEmpty.instance;
@@ -44,12 +44,12 @@ public class JsonTree {
     }
 
 
-    private JsonTree succeed(final Json json) {
-        return new JsonTree(json);
+    private JsonTransform succeed(final Json json) {
+        return new JsonTransform(json);
     }
 
-    private JsonTree fail(final String msg, Object... params) {
-        return new JsonTree(String.format(msg, params));
+    private JsonTransform fail(final String msg, Object... params) {
+        return new JsonTransform(String.format(msg, params));
     }
 
     private <A> Either<String, A> left (final String msg, Object... params) {
@@ -76,7 +76,7 @@ public class JsonTree {
         return String.format("\"%s\"", s);
     }
 
-    private <A> JsonTree consume (final Either<String, A> comp, final Function<A, JsonTree> f) {
+    private <A> JsonTransform consume (final Either<String, A> comp, final Function<A, JsonTransform> f) {
         return comp.fold(f, this::fail);
     }
 
@@ -111,7 +111,7 @@ public class JsonTree {
             return Either.left(String.format("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value));
     }
 
-    private Either<String, Json> assocInObj(final JsonTree json, final Json toAssoc, final int depth, final Object... keys) {
+    private Either<String, Json> assocInObj(final JsonTransform json, final Json toAssoc, final int depth, final Object... keys) {
         final Either<String, String> skey = coerceString(keys[depth]);
         if (skey.isRight()) {
             final String key   = skey.value();
@@ -122,7 +122,7 @@ public class JsonTree {
         }
     }
 
-    private Either<String, Json> assocInArr(final JsonTree json, final Json toAssoc, final int depth, final Object... keys) {
+    private Either<String, Json> assocInArr(final JsonTransform json, final Json toAssoc, final int depth, final Object... keys) {
         final Either<String, Long> sidx = coerceLong(keys[depth]);
         if (sidx.isRight()) {
             final List<Json> list = json.jarr().value;
@@ -144,14 +144,14 @@ public class JsonTree {
         else return left("Cannot associate into `%s`. It is not a structure.", toAssoc);
     }
 
-    public final JsonTree get (final String key) {
+    public final JsonTransform get (final String key) {
         if (json.type == JsonObject) {
             return lookup(key).map(this::succeed).orElse(fail(String.format("Key `%s` not found", key)));
         }
         else return fail("Cannot lookup key `%s` in `%s`.", key, json);
     }
 
-    public final JsonTree get (final long index) {
+    public final JsonTransform get (final long index) {
         if (json.type == JsonArray) {
             final Json r = jarr().value.nth(index, null);
             return (r != null) ? succeed(r) : fail("Index if `%n` does not exist", index);
@@ -171,9 +171,9 @@ public class JsonTree {
         return getIn(keys).as(f);
     }
 
-    public final JsonTree getIn (final Object... keys) {
+    public final JsonTransform getIn (final Object... keys) {
         int depth = 0;
-        JsonTree tree = this;
+        JsonTransform tree = this;
         if (depth == keys.length) return this;
         else {
             while(depth < keys.length && tree.success) {
@@ -192,7 +192,7 @@ public class JsonTree {
         }
     }
 
-    public final JsonTree dissoc(final String... keys) {
+    public final JsonTransform dissoc(final String... keys) {
         if (json.type == JsonObject) {
             Map<String, Json> map = jobj().value;
             for (String key: keys) {
@@ -211,7 +211,7 @@ public class JsonTree {
         }
     }
 
-    public final JsonTree assoc(final String key, final Json value) {
+    public final JsonTransform assoc(final String key, final Json value) {
         if (json.type == JsonObject || json.type == JsonEmpty) {
             return succeed(new JObj(insert(key, value)));
         } else {
@@ -219,7 +219,7 @@ public class JsonTree {
         }
     }
 
-    public final JsonTree assoc(final int index, final Json value) {
+    public final JsonTransform assoc(final int index, final Json value) {
         if (json.type == JsonArray) {
             return succeed(new JArr((List<Json>) jarr().value.update(index, x -> value)));
         } else {
@@ -227,49 +227,49 @@ public class JsonTree {
         }
     }
 
-    public final JsonTree assocIn(final Json value, final Object... keys) {
+    public final JsonTransform assocIn(final Json value, final Object... keys) {
         if (keys.length == 0) return this;
         else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
     }
 
-    public final <A> JsonTree assocIn(final A value, final Object... keys) {
+    public final <A> JsonTransform assocIn(final A value, final Object... keys) {
         return assocIn(value, defaultJsonConvert, keys);
     }
 
-    public final <A> JsonTree assocIn(final A value, final Convert<A, Json> to, final Object... keys) {
+    public final <A> JsonTransform assocIn(final A value, final Convert<A, Json> to, final Object... keys) {
         if (keys.length == 0) return this;
         else return to.convert(value).map(x -> assocIn(x, keys)).fold(x -> x, this::fail);
     }
 
-    public final <A> JsonTree assoc(final String key, final A value) {
+    public final <A> JsonTransform assoc(final String key, final A value) {
         return assoc(key, value, defaultJsonConvert);
     }
 
-    public final <A> JsonTree assoc(final int index, final A value) {
+    public final <A> JsonTransform assoc(final int index, final A value) {
         return assoc(index, value, defaultJsonConvert);
     }
 
-    public final <A> JsonTree assoc(final String key, final A value, final Convert<A, Json> w) {
+    public final <A> JsonTransform assoc(final String key, final A value, final Convert<A, Json> w) {
         return consume(w.convert(value), v -> assoc(key, v));
     }
 
-    public final <A> JsonTree assoc(final int index, final A value, final Convert<A, Json> w) {
+    public final <A> JsonTransform assoc(final int index, final A value, final Convert<A, Json> w) {
         return consume(w.convert(value), v -> assoc(index, v));
     }
 
-    public final JsonTree update(final String key, final Function<JsonTree, JsonTree> f) {
+    public final JsonTransform update(final String key, final Function<JsonTransform, JsonTransform> f) {
         return f.apply(get(key)).affix().fold(x -> assoc(key, x), this::fail);
     }
 
-    public final JsonTree update(final int index, final Function<JsonTree, JsonTree> f) {
+    public final JsonTransform update(final int index, final Function<JsonTransform, JsonTransform> f) {
         return f.apply(get(index)).affix().fold(x -> assoc(index, x), this::fail);
     }
 
-    public final JsonTree updateIn(final Function<JsonTree, JsonTree> f, Object... keys) {
+    public final JsonTransform updateIn(final Function<JsonTransform, JsonTransform> f, Object... keys) {
         return f.apply(getIn(keys)).affix().fold(x -> assocIn(x, keys), this::fail);
     }
 
-    public final <A, B> JsonTree updateIn (final Function<A, B> f, final Convert<Json, A> from, final Convert<B, Json> to, Object... keys) {
+    public final <A, B> JsonTransform updateIn (final Function<A, B> f, final Convert<Json, A> from, final Convert<B, Json> to, Object... keys) {
         return getIn(keys)
                 .affix()
                 .flatMap(from::convert)
@@ -278,7 +278,7 @@ public class JsonTree {
                 .fold(j -> assocIn(j, keys), this::fail);
     }
 
-    public final JsonTree merge (final JsonTree that) {
+    public final JsonTransform merge (final JsonTransform that) {
         if (json.type == JsonObject) {
             if (that.json.type == JsonObject) {
                 return succeed(new JObj(jobj().value.merge(that.jobj().value, (a, b) -> b)));
@@ -288,16 +288,16 @@ public class JsonTree {
         else return fail("%s is not a JSON object", json);
     }
 
-    public final JsonTree merge (final Json that) {
+    public final JsonTransform merge (final Json that) {
         return merge(that.transform());
     }
 
-    public final <A, B> JsonTree update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
+    public final <A, B> JsonTransform update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
         return consume(get(key).as(g), v -> assoc(key, v));
     }
 
-    public final <A, B> JsonTree update(final int index, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
+    public final <A, B> JsonTransform update(final int index, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
         return consume(get(index).as(g), v -> assoc(index, v));
     }

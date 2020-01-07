@@ -11,12 +11,16 @@ public class JsonOps {
         return JEmpty.instance;
     }
 
-    public static Either<String, Json> parse (final String text) {
+    public static Either<String, Json> eparse (final String text) {
         return Parser.parse(text);
     }
 
-    public static <A> Either<String, A> parseAs(final String text, final Convert<Json, A> f) {
-        return parse(text).flatMap(x -> x.transform().as(f));
+    public static JsonTransform parse (final String text) {
+        return eparse(text).fold(JsonTransform::new, JsonTransform::new);
+    }
+
+    public static <A> Either<String, A> parseAs(final Convert<Json, A> f, final String text) {
+        return parse(text).as(f);
     }
 
     public static String asString(final Json json) {
