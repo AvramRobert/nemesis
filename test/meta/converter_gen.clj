@@ -21,46 +21,47 @@
 
   public class Converter {\n  %s }")
 
-(defn function [params]
-  (format "Function%d<%s> comb" (dec params) (types params)))
+(defn combiner [arity]
+  (format "Function%d<%s> comb" (dec arity) (type-list arity)))
 
 (defn mapper [index letter]
   (format "Function1<JsonTransform, Either<String, %s>> f%d" letter index))
 
-(defn return [params]
-  (return-type \A params))
-
-(defn mappers [params]
-  (->> (letters \A)
+(defn transformers [params]
+  (->> type-labels
        (map-indexed mapper)
        (take params)
        (join ",\n")))
 
-(defn binds [letters param total]
-  (if (= param (dec total))
-    (format map-blob,
+(defn binds [param arity]
+  (if (>= param (dec arity))
+    (format map-blob
             param
-            (nth letters param)
-            (types \a total))
+            (nth type-vars param)
+            (var-list arity))
     (format flatmap-blob
             param
-            (nth letters param)
-            (binds letters (inc param) total))))
+            (nth type-vars param)
+            (binds (inc param) arity))))
 
-(defn flatmaps [total]
-  (binds (->> \a (letters) (take total) (vec)) 0 total))
+(defn flat-maps [arity]
+  (binds 0 arity))
 
 (defn method [arity]
-  (let [param# (inc arity)]
-    (format combine-fn
-            (types param#)
-            (return param#)
-            (mappers arity)
-            (function param#)
-            (flatmaps arity))))
+  (format combine-fn
+          (type-list arity)
+          (return-type arity)
+          (transformers (dec arity))
+          (combiner arity)
+          (flat-maps (dec arity))))
 
+;; It only makes sense to start with an arity of 2
 (defn class-def [method#]
-  (format converter-class (->> (range 1 method#) (map method) (join "\n\n"))))
+  (->> (+ method# 2)
+       (range 2)
+       (map method)
+       (join "\n\n")
+       (format converter-class)))
 
-(defn create-file [nr-fns]
-  (spit "./src/java/json/coerce/Converter.java" (class-def nr-fns)))
+(defn create-file [fn#]
+  (spit "./src/java/json/coerce/Converter.java" (class-def fn#)))

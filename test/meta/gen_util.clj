@@ -1,14 +1,17 @@
 (ns meta.gen-util
-  (:require [clojure.string :refer [join]]))
+  (:require [clojure.string :refer [join lower-case]]))
 
-(defn letters [start]
-  (->> (int start) (iterate inc) (map char)))
+(def type-labels
+  (->> 0 (iterate inc) (map (partial str "T"))))
 
-(defn types
-  ([param#]
-   (types \A param#))
-  ([letter param#]
-   (->> letter (letters) (take param#) (join ","))))
+(def type-vars
+  (map lower-case type-labels))
 
-(defn return-type [letter param#]
-  (->> letter (letters) (take param#) (last)))
+(defn var-list [arity]
+  (->> type-vars (take arity) (join ",")))
+
+(defn type-list [arity]
+  (->> type-labels (take arity) (join ",")))
+
+(defn return-type [arity]
+  (->> type-labels (take arity) (last)))

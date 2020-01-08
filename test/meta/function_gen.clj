@@ -12,18 +12,18 @@
   (format "final %s %s" (upper-case letter) (lower-case letter)))
 
 (defn params [arity]
-  (->> \A (letters) (take arity) (map param) (join ",\n")))
+  (->> type-labels (take arity) (map param) (join ",\n")))
 
 (defn interface [arity]
-  (let [param# (inc arity)]
-    (format functional-interface
-            arity
-            (types \A param#)
-            (return-type \A param#)
-            (params arity))))
+  (format functional-interface
+          arity
+          (type-list (inc arity))
+          (return-type (inc arity))
+          (params arity)))
 
 (defn class-def [interface#]
-  (->> (range 1 interface#)
+  (->> (+ interface# 1)
+       (range 1)
        (map interface)
        (join "\n\n")
        (format functions-class)))
