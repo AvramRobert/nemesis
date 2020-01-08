@@ -15,8 +15,8 @@ public class JsonOps {
         return Parser.parse(text);
     }
 
-    public static JsonTransform parse (final String text) {
-        return eparse(text).fold(JsonTransform::new, JsonTransform::new);
+    public static JsonT parse (final String text) {
+        return eparse(text).fold(JsonT::new, JsonT::new);
     }
 
     public static <A> Either<String, A> parseAs(final Convert<Json, A> f, final String text) {

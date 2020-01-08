@@ -3,8 +3,8 @@ package json.data;
 public abstract class Json {
     JType type;
 
-    public JsonTransform transform() {
-        return new JsonTransform(this);
+    public JsonT transform() {
+        return new JsonT(this);
     }
 
     public String stringify() {

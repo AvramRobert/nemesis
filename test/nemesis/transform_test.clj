@@ -4,7 +4,7 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (json.data JsonTransform JNum)
+  (:import (json.data JsonT JNum)
            (json.coerce Default)))
 
 (defspec isomorphism 100
@@ -70,8 +70,8 @@
                                               :max-elements 3}))]
     (let [key        (-> json-clj (keys) (rand-nth))
           index      (rand-int (count arr-clj))
-          computed-m (transform #(.get ^JsonTransform % ^String key) json-clj)
-          computed-a (transform #(.get ^JsonTransform % ^Long index) arr-clj)
+          computed-m (transform #(.get ^JsonT % ^String key) json-clj)
+          computed-a (transform #(.get ^JsonT % ^Long index) arr-clj)
           expected-m (get json-clj key)
           expected-a (get arr-clj index)]
       (is (= expected-m computed-m))
