@@ -2,9 +2,9 @@ package json.data;
 
 public class JBool extends Json {
     final JType type;
-    final boolean value;
+    public final boolean value;
 
-    private JBool(final boolean value) {
+    public JBool(final boolean value) {
         this.value = value;
         this.type = JType.JsonBool;
     }

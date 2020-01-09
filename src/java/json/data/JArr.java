@@ -4,7 +4,7 @@ import io.lacuna.bifurcan.List;
 import util.Debug;
 
 public final class JArr extends Json {
-    final List<Json> value;
+    public final List<Json> value;
 
     public JArr(final List<Json> i) {
         this.value = i;
