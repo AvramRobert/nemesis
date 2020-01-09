@@ -5,7 +5,7 @@
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
   (:import (json.data JsonT JNum)
-           (json.coerce Default)))
+           (json.coerce DefaultConverters)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-clj-json {:max-depth    2
@@ -102,7 +102,7 @@
                                 (.update tree key (function #(.assoc % 0 new-value))))}
                    :scalar {:clj #(inc %)
                             :nem (fn [tree]
-                                   (.update tree key (function #(inc %)) Default/JSON_TO_LONG Default/LONG_TO_JSON))}}
+                                   (.update tree key (function #(inc %)) DefaultConverters/JSON_TO_LONG DefaultConverters/LONG_TO_JSON))}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])
@@ -131,7 +131,7 @@
                                 (.updateIn tree (function #(.assoc % 0 new-value)) n-keys))}
                    :scalar {:clj inc
                             :nem (fn [tree]
-                                   (.updateIn tree (function inc) Default/JSON_TO_LONG Default/LONG_TO_JSON n-keys))}}
+                                   (.updateIn tree (function inc) DefaultConverters/JSON_TO_LONG DefaultConverters/LONG_TO_JSON n-keys))}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])

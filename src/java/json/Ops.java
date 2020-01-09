@@ -1,11 +1,12 @@
 package json;
 
 import json.coerce.Convert;
+import json.coerce.ObjectConverter;
 import json.data.*;
 import util.Either;
 import json.parser.Parser;
 
-public class JsonOps {
+public class Ops {
 
     public static Json empty() {
         return JEmpty.instance;
@@ -21,6 +22,9 @@ public class JsonOps {
 
     public static <A> Either<String, A> parseAs(final Convert<Json, A> f, final String text) {
         return parse(text).as(f);
+    }
+    public static <A> ObjectConverter<A> objectConverter() {
+        return new ObjectConverter<>();
     }
 
     public static String asString(final Json json) {

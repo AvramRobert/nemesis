@@ -1,5 +1,4 @@
 package json.coerce;
-
 import json.data.*;
 import util.Either;
 
@@ -7,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class Default {
+public class DefaultConverters {
 
     public final <A> Convert<Json, Optional<A>> optional(final Convert<Json, A> f) {
         return json -> f.convert(json).fold(a -> Either.right(Optional.of(a)), x -> Either.right(Optional.empty()));
