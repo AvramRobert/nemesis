@@ -3,6 +3,7 @@ package json.coerce;
 import json.data.*;
 import util.Either;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,7 @@ public class Default {
     public final static Convert<Long, Json> LONG_TO_JSON = value -> Either.right(new JNum(value));
     public final static Convert<String, Json> STRING_TO_JSON = value -> Either.right(new JString(value));
     public final static Convert<Void, Json> NULL_TO_JSON = x -> Either.right(JNull.instance);
+    public final static Convert<Boolean, Json> BOOLEAN_TO_JSON = value -> Either.right(new JBool(value));
 
     public final static Convert<Json, Long> JSON_TO_LONG = json -> {
         if (json instanceof JNum) {
@@ -41,8 +43,6 @@ public class Default {
         }
     };
 
-    public final static Convert<Boolean, Json> BOOLEAN_TO_JSON = value -> Either.right(new JBool(value));
-
     public final static Convert<Json, List<Json>> JSON_TO_LIST = json -> {
         if (json instanceof JArr) {
             return Either.right(((JArr) json).value.toList());
@@ -50,6 +50,36 @@ public class Default {
             return Either.left(String.format("`%s` is not a valid JSON array", json));
         }
     };
+
+    public final <A> Convert<Json, List<A>> partialListOf(final Convert<Json, A> f) {
+        return json -> {
+            if (json instanceof  JArr) {
+                final JArr arr = (JArr) json;
+                List<A> list = new ArrayList<>();
+                for (Json j : arr.value) {
+                    f.convert(j).fold(list::add, x -> null);
+                }
+                return Either.right(list);
+            }
+            else return Either.left(String.format("`%s` is not a valid JSON array", json));
+        };
+    }
+
+    public static <A> Convert<Json, List<A>> listOf(final Convert<Json, A> f) {
+        return json -> {
+            if (json instanceof JArr) {
+                final JArr arr = (JArr) json;
+                List<A> list = new ArrayList<>();
+                for (Json j : arr.value) {
+                    final Either<String, A> a = f.convert(j);
+                    if (a.isRight()) list.add(a.value());
+                    else return Either.left(String.format("Could not coerce `%s` into proper type", j));
+                }
+                return Either.right(list);
+            }
+            else return Either.left(String.format("`%s` is not a valid JSON array", json));
+        };
+    }
 
     public final static Convert<Json, Void> JSON_TO_NULL = json -> {
         if (json instanceof JNull) {

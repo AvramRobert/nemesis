@@ -1,10 +1,4 @@
 package util;
-
-import json.ext.Function2;
-import json.ext.Function3;
-import json.ext.Function4;
-import json.ext.Function5;
-
 import java.util.function.Function;
 
 public interface Either<E, R> {
