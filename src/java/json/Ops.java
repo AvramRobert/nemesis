@@ -30,4 +30,8 @@ public class Ops {
     public static String asString(final Json json) {
         return json.toString();
     }
+
+    public static <A> Either<String, Json> asJson (final Convert<A, Json> f, final A value) {
+        return f.convert(value);
+    }
 }
