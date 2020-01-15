@@ -1,14 +1,16 @@
-package json.coerce;
+package json.experimental;
 
+import json.coerce.Convert;
 import json.data.Json;
 import json.data.JsonT;
+import util.Debug;
 import util.Either;
 
 import static json.coerce.DefaultConverters.*;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 
 public class Derivator {
-
 
     private static Either<String, ?> coerce(final Class<?> clazz, final JsonT jsont) {
         final String type = clazz.getTypeName().toLowerCase();
@@ -24,15 +26,20 @@ public class Derivator {
         else if (type.equals("double")) {
             return jsont.as(JSON_TO_DOUBLE);
         }
-        else if (type.equals("string")) {
-            return jsont.as(JSON_TO_STRING);
-        }
         else if (type.equals("boolean")) {
             return jsont.as(JSON_TO_BOOLEAN);
         }
-        return null; // this is the point when this either becomes an object or a collection -> but this is getting complicated
+        else if (type.equals("java.lang.string")) {
+            return jsont.as(JSON_TO_STRING);
+        }
+        else return jsont.affix().flatMap(j -> reader(clazz).convert(j));
     }
 
+    // The order of the fields in the class is important. The constructor's parameters have to correspond to that order.
+    // If the constructor doesn't accept the fields in the same order, then I can't instantiate it, because it can't find one that matches
+    // I could theoretically get all constructors, get their types and then try to hash-mapishly rearrange the values so that they match,
+    // but if the constructor has values of the same type, that are semantically different, then this re-arranging can't guarantee that
+    // they'll also be put in the right place...
     public static <A> Convert<Json, A> reader (final Class<A> clazz) {
         return json -> {
             try {
@@ -42,13 +49,15 @@ public class Derivator {
                 final Object[] values = new Object[fields.length];
 
                 for (int i = 0; i < fields.length; i++) {
-                    final Class<?> attClazz = fields[i].getDeclaringClass();
-                    final Either<String, ?> type = coerce(attClazz, jsonT.get(fields[i].getName()));
-                    types[i] = fields[i].getDeclaringClass();
+                    final Class<?> attClazz = fields[i].getType();
+                    final Either<String, ?> result = coerce(attClazz, jsonT.get(fields[i].getName()));
+                    types[i] = attClazz;
+                    if (result.isRight()) values[i] = result.value();
+                    else return Either.left(result.error());
                 }
-
-                return Either.right(clazz.getConstructor(types).newInstance(values));
+                return Either.right(clazz.getDeclaredConstructor(types).newInstance(values));
             } catch (Exception e) {
+                e.printStackTrace();
                 return Either.left(e.getMessage());
             }
         };

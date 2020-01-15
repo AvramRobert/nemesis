@@ -12,7 +12,7 @@
 
   public class ObjectConverter<A> {
     private final Entry<String, Json> entry(final String key, final Json value) {
-      return new Entry<>(key, value);
+      return new Entry<>(\"\\\"\" + key + \"\\\"\", value);
     }
 
     @SafeVarargs
