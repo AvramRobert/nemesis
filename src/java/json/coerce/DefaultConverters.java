@@ -1,10 +1,12 @@
 package json.coerce;
+import io.lacuna.bifurcan.IList;
 import json.data.*;
 import util.Either;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DefaultConverters {
 
@@ -13,9 +15,21 @@ public class DefaultConverters {
     }
 
     public final static Convert<Long, Json> LONG_TO_JSON = value -> Either.right(new JNum(value));
+    public final static Convert<Integer, Json> INT_TO_JSON = value -> Either.right(new JNum(value));
+    public final static Convert<Float, Json> FLOAT_TO_JSON = value -> Either.right(new JNum(value));
+    public final static Convert<Double, Json> DOUBLE_TO_JSON = value -> Either.right(new JNum(value));
     public final static Convert<String, Json> STRING_TO_JSON = value -> Either.right(new JString(value));
     public final static Convert<Void, Json> NULL_TO_JSON = x -> Either.right(JNull.instance);
     public final static Convert<Boolean, Json> BOOLEAN_TO_JSON = value -> Either.right(new JBool(value));
+
+    public final static Convert<Json, Integer> JSON_TO_INT = json -> {
+        if (json instanceof JNum) {
+            final Number num = ((JNum) json).value;
+            if (num instanceof Integer) return Either.right((Integer) num);
+            else return Either.left(String.format("`%s` is not an Integer", num));
+        }
+        else return Either.left(String.format("`%s` is not a valid JSON number", json));
+    };
 
     public final static Convert<Json, Long> JSON_TO_LONG = json -> {
         if (json instanceof JNum) {
@@ -24,6 +38,24 @@ public class DefaultConverters {
             else if (num instanceof Integer) return Either.right(Integer.toUnsignedLong((Integer) num));
             else return Either.left(String.format("`%s` is not a Long", num));
         } else return Either.left(String.format("`%s` is not a valid JSON number", json));
+    };
+
+    public final static Convert<Json, Double> JSON_TO_DOUBLE = json -> {
+        if (json instanceof JNum) {
+            final Number num = ((JNum) json).value;
+            if (num instanceof Double) return Either.right((Double) num);
+            else return Either.left(String.format("`%s` is not a Double", num));
+        }
+        else return Either.left(String.format("`%s` is not a valid JSON number", json));
+    };
+
+    public final static Convert<Json, Float> JSON_TO_FLOAT = json -> {
+        if (json instanceof JNum) {
+            final Number num = ((JNum) json).value;
+            if (num instanceof Float) return Either.right((Float) num);
+            else return Either.left(String.format("`%s` is not a Float", num));
+        }
+        else return Either.left(String.format("`%s` is not a valid JSON number", json));
     };
 
     public final static Convert<Json, String> JSON_TO_STRING = json -> {
@@ -85,4 +117,36 @@ public class DefaultConverters {
             return Either.right(null);
         } else return Either.left(String.format("`%s` is not a valid JSON null", json));
     };
+
+
+    public <A> Convert<Json, A> derive (final Class<A> clazz) {
+        return json -> {
+            final Either<String, List<?>> values = util.Colls.traversel(Arrays.asList(clazz.getDeclaredFields()), x -> {
+                var name = x.getGenericType().getTypeName();
+                try {
+                    if (name.equals("Long")) {
+                        return JSON_TO_LONG.convert(json);
+                    }
+                    else return Either.left("Unknown parameter type");
+                } catch (Exception e) {
+                    return Either.left(e.getMessage());
+                }
+            }).map(IList::toList);
+
+            var ys = Arrays.stream(clazz.getFields()).map(Field::getType).collect(Collectors.toList());
+            Class<?>[] as = new Class<?>[ys.size()];
+
+            for (int i = 0; i < ys.size(); i++) {
+                as[i] = ys.get(i);
+            };
+
+            try {
+                var cons = clazz.getConstructor(as);
+                if (values.isRight()) return Either.right(cons.newInstance(values.value()));
+                else return Either.left(values.error());
+            } catch (Exception e) {
+                return Either.left(e.getMessage());
+            }
+        };
+    }
 }

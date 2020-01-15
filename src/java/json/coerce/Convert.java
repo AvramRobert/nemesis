@@ -4,6 +4,7 @@ import util.Either;
 import util.Left;
 import util.Right;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.function.Function;
 
 @FunctionalInterface
