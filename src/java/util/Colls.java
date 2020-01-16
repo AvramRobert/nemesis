@@ -25,13 +25,17 @@ public class Colls {
         return Either.right(Map.from(map));
     }
 
-    public static <E, A, B> Either<E, List<B>> traversel(final java.util.List<A> as, final Function<A, Either<E, B>> f) {
+    public static <E, A, B> Either<E, java.util.List<B>> traversel(final java.util.List<A> as, final Function<A, Either<E, B>> f) {
         final ArrayList<B> bs = new ArrayList<>();
         for (A a : as) {
             final Either<E, B> b = f.apply(a);
             if (b.isRight()) bs.add(b.value());
             else return Either.left(b.error());
         }
-        return Either.right(List.from(bs));
+        return Either.right(bs);
+    }
+
+    public static <E, A, B> Either<E, List<B>> traversel_(final java.util.List<A> as, final Function<A, Either<E, B>> f) {
+        return traversel(as, f).map(List::from);
     }
 }

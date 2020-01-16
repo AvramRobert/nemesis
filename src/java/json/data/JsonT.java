@@ -104,7 +104,7 @@ public class JsonT {
             return traversem(map, this::coerceString, this::coerceJson).map(JObj::new); // this is mutually recursive -- may not be that good
         } else if (value instanceof java.util.List) {
             final java.util.List<Object> list = (java.util.List<Object>) value;
-            return traversel(list, this::coerceJson).map(JArr::new); // this is mutually recursive -- may not be that good
+            return traversel(list, this::coerceJson).map(l -> new JArr(List.from(l))); // this is mutually recursive -- may not be that good
         } else
             return Either.left(String.format("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value));
     }

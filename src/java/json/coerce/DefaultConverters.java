@@ -1,6 +1,7 @@
 package json.coerce;
 import io.lacuna.bifurcan.IList;
 import json.data.*;
+import util.Colls;
 import util.Either;
 
 import java.lang.reflect.Field;
@@ -118,35 +119,7 @@ public class DefaultConverters {
         } else return Either.left(String.format("`%s` is not a valid JSON null", json));
     };
 
-
-    public <A> Convert<Json, A> derive (final Class<A> clazz) {
-        return json -> {
-            final Either<String, List<?>> values = util.Colls.traversel(Arrays.asList(clazz.getDeclaredFields()), x -> {
-                var name = x.getGenericType().getTypeName();
-                try {
-                    if (name.equals("Long")) {
-                        return JSON_TO_LONG.convert(json);
-                    }
-                    else return Either.left("Unknown parameter type");
-                } catch (Exception e) {
-                    return Either.left(e.getMessage());
-                }
-            }).map(IList::toList);
-
-            var ys = Arrays.stream(clazz.getFields()).map(Field::getType).collect(Collectors.toList());
-            Class<?>[] as = new Class<?>[ys.size()];
-
-            for (int i = 0; i < ys.size(); i++) {
-                as[i] = ys.get(i);
-            };
-
-            try {
-                var cons = clazz.getConstructor(as);
-                if (values.isRight()) return Either.right(cons.newInstance(values.value()));
-                else return Either.left(values.error());
-            } catch (Exception e) {
-                return Either.left(e.getMessage());
-            }
-        };
+    public static <A> Convert <List<A>, Json> listFrom(final Convert<A, Json> f) {
+        return list -> Colls.traversel_(list, f::convert).map(JArr::new);
     }
 }

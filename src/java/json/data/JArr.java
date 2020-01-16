@@ -17,7 +17,6 @@ public final class JArr extends Json {
         buff.append("[");
 
         for (Json json : value) {
-            //Debug.println(json);
             buff.append(",").append(json.toString());
         }
         if (value.size() == 0) {
