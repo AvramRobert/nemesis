@@ -38,4 +38,12 @@ public class Colls {
     public static <E, A, B> Either<E, List<B>> traversel_(final java.util.List<A> as, final Function<A, Either<E, B>> f) {
         return traversel(as, f).map(List::from);
     }
+
+    public static <E, A> Either<E, java.util.List<A>> sequencel (final java.util.List<Either<E, A>> as) {
+        return traversel(as, x -> x);
+    }
+
+    public static <E, A> Either<E, List<A>> sequencel_(final java.util.List<Either<E, A>> as) {
+        return sequencel(as).map(List::from);
+    }
 }

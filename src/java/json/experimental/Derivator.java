@@ -1,6 +1,7 @@
 package json.experimental;
 
 import json.coerce.Convert;
+import json.data.JArr;
 import json.data.JObj;
 import json.data.Json;
 import json.data.JsonT;
@@ -11,6 +12,8 @@ import util.Either;
 import static json.coerce.DefaultConverters.*;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Derivator {
@@ -30,6 +33,8 @@ public class Derivator {
         } else if (type.equals("java.lang.string")) {
             return jsont.as(JSON_TO_STRING);
         } else if (type.contains("java.util.list")) { // this is idiotic;
+            // this also doesn't work properly. At least not directly. I can derive the `Object` contents, but I can't derive its proper class due to erasure.
+            // so instantiation is not concrete
             return jsont.as(JSON_TO_LIST).flatMap(list -> Colls.traversel(list, a -> reader(Object.class).convert(a)));
         } else return jsont.affix().flatMap(j -> reader(clazz).convert(j));
     }
@@ -56,10 +61,39 @@ public class Derivator {
         }
     }
 
-    private static <A> Convert<Json, A> objectReader(final Class<A> clazz) {
-        return json -> {
-            return null;
-        };
+    private static <A> Either<String, Json> objectWriter(final A value) {
+        final Field[] fields = value.getClass().getDeclaredFields();
+        JsonT obj = JObj.empty().transform();
+        for (int i = 0; i < fields.length; i++) {
+            final Field field = fields[i];
+            final Either<String, Json> result = coerceToJson(field, value);
+            if (result.isRight()) {
+                obj = obj.assoc(field.getName(), result.value());
+            } else return Either.left(result.error());
+        }
+        return obj.affix();
+    }
+
+    private static <A> Either<String, Json> listWriter(final List<?> values) {
+        final List<Json> js = new ArrayList<>();
+        HashMap<String, Convert<Object, Json>> writers = new HashMap<>();
+        for (Object elm: values) {
+            final Class<Object> clazz = (Class<Object>) elm.getClass();
+            final String type         = clazz.getTypeName();
+            if (writers.containsKey(type)) {
+                final Either<String, Json> result = writers.get(type).convert(elm);
+                if (result.isRight()) js.add(result.value());
+                else return Either.left(result.error());
+            }
+            else {
+                final Convert<Object, Json> f = writer(clazz);
+                writers.put(clazz.getTypeName(), f);
+                final Either<String, Json> result = f.convert(elm);
+                if (result.isRight()) js.add(result.value());
+                else return Either.left(result.error());
+            }
+        }
+        return Either.right(new JArr(io.lacuna.bifurcan.List.from(js)));
     }
 
     // The order of the fields in the class is important. The constructor's parameters have to correspond to that order.
@@ -90,19 +124,6 @@ public class Derivator {
         };
     }
 
-    private static <A> Either<String, Json> objectWriter(final A value) {
-        final Field[] fields = value.getClass().getDeclaredFields();
-        JsonT obj = JObj.empty().transform();
-        for (int i = 0; i < fields.length; i++) {
-            final Field field = fields[i];
-            final Either<String, Json> result = coerceToJson(field, value);
-            if (result.isRight()) {
-                obj = obj.assoc(field.getName(), result.value());
-            } else return Either.left(result.error());
-        }
-        return obj.affix();
-    }
-
     public static <A> Convert<A, Json> writer(final Class<A> clazz) {
         return instance -> {
             try {
@@ -122,7 +143,7 @@ public class Derivator {
                     return STRING_TO_JSON.convert((String) instance);
                 }
                 else if (instance instanceof List) {
-                    return null;
+                    return listWriter((List<?>) instance);
                 }
                 else {
                     return objectWriter(instance);
