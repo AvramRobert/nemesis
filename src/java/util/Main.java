@@ -44,41 +44,22 @@ public class Main {
             this.x = x;
             this.y = y;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Point) {
+                final Point that = (Point) obj;
+                return this.x == that.x && this.y == that.y;
+            }
+            else return false;
+        }
     }
 
     public static void main (String... args) {
-        final Convert<Point, Json> POINT_TO_JSON =
-         Ops.<Point>objectConverter()
-          .object(
-           "x", p -> Ops.asJson(LONG_TO_JSON, p.x),
-           "y", p -> Ops.asJson(LONG_TO_JSON, p.y));
+        final Convert<Point, Json> POINT_TO_JSON = Derivator.writer(Point.class);
+        final Convert<Json, Point> JSON_TO_POINT = Derivator.reader(Point.class);
+        final Point point = new Point(1L, 2L);
 
-        final Convert<Line, Json> LINE_TO_JSON =
-         Ops.<Line> objectConverter()
-         .object(
-          "a", l -> Ops.asJson(POINT_TO_JSON, l.a),
-          "b", l -> Ops.asJson(POINT_TO_JSON, l.b),
-          "slope", l -> Ops.asJson(FLOAT_TO_JSON, l.slope),
-          "name", l -> Ops.asJson(STRING_TO_JSON, l.name));
-
-        final var line = new Line(new Point(0, 0), new Point(3, 1),2.0f, "Line 1");
-        final var spline = new Spline("My Spline", Arrays.asList(new Point (1, 2), new Point(2, 3)));
-
-        final Convert<Json, Point> JSON_TO_POINT =
-         Derivator.reader(Point.class);
-
-        final Convert<Json, Line> JSON_TO_LINE =
-         Derivator.reader(Line.class);
-
-        final Convert<Spline, Json> SPLINE_TO_JSON =
-         Ops.<Spline>objectConverter()
-         .object(
-          "name", s -> Ops.asJson(STRING_TO_JSON, s.name),
-          "points", s -> Ops.asJson(listFrom(POINT_TO_JSON), s.points));
-
-        final Convert<Json, Spline> JSON_TO_SPLINE =
-         Derivator.reader(Spline.class);
-
-        System.out.println(SPLINE_TO_JSON.convert(spline).flatMap(JSON_TO_SPLINE::convert));
+        Debug.println(POINT_TO_JSON.compose(JSON_TO_POINT).convert(point).map(x -> x.equals(point)));
     }
 }

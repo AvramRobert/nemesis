@@ -3,6 +3,8 @@ package json.data;
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.Map;
 
+import java.util.HashMap;
+
 public final class JObj extends Json {
     public final Map<String, Json> value;
     public JObj(final Map<String, Json> i) {
@@ -27,5 +29,9 @@ public final class JObj extends Json {
         } else {
             return buff.delete(1, 2).append("}").toString();
         }
+    }
+
+    public static JObj empty() {
+        return new JObj(Map.from(new HashMap<>()));
     }
 }
