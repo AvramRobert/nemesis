@@ -1,8 +1,11 @@
 package json.data;
 
+import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
+import io.lacuna.bifurcan.Maps;
 import json.coerce.Convert;
+import scala.Function2;
 import util.Either;
 
 import java.util.Arrays;
@@ -14,6 +17,17 @@ import static json.data.JType.*;
 import static json.data.JType.JsonArray;
 
 public class JsonT {
+
+    private  class Entry<V> {
+        public final String key;
+        public final V value;
+
+        public Entry(final String key, final V value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
     private final Json json;
     private final boolean success;
     private final String error;
@@ -305,9 +319,58 @@ public class JsonT {
         else return Either.left(error);
     }
 
-    // Fixme: implement an in-order walk, a fold and a traverse
-
     public final <A> Either<String, A> as(final Convert<Json, A> f) {
         return f.convert(json);
+    }
+
+    private <A> Entry<A> entry (final String key, final A value) {
+        return new Entry<>(key, value);
+    }
+
+    public final <A> Either<String, A> fold (final A start, final Function2<Entry<JsonT>, A, Either<String, A>> f) {
+        A init = start;
+        if (json.type == JsonObject) {
+            for (IEntry<String, Json> e: jobj ().value.entries()) {
+                final Either<String, A> res = f.apply(entry(e.key(), e.value().transform()), init);
+                if (res.isRight()) init     = res.value();
+                else return Either.left(res.error());
+            }
+            return Either.right(init);
+        }
+        else return Either.left(String.format("Cannot fold over json type `%s`.", json.type));
+    }
+
+    private <A> Either<String, A> subwalk (final A init,
+                                           final Entry<JsonT> entry,
+                                           final Function2<Entry<JsonT>, A, Either<String, A>> f,
+                                           final Function2<String, A, A> g) {
+        if (entry.value.json.type == JsonObject) {
+            final Either<String, A> inter = entry.value.foldWalk(init, f, g);
+            return inter.map(a -> g.apply(entry.key, a));
+        }
+        else return f.apply(entry, init);
+    }
+
+    private Entry<JsonT> from (final IEntry<String, Json> e) {
+        return entry(e.key(), e.value().transform());
+    }
+
+    public final <A> Either<String, A> foldWalk (final A start,
+                                                 final Function2<Entry<JsonT>, A, Either<String, A>> f,
+                                                 final Function2<String, A, A> g) {
+        A init = start;
+        if (json.type == JsonObject) {
+            for (IEntry<String, Json> e: jobj().value.entries()) {
+                final Either<String, A> res = subwalk(init, from(e), f, g);
+                if (res.isRight()) init = res.value();
+                else return Either.left(res.error());
+            }
+        }
+        else return Either.left(String.format("Cannot walk over json type `%s`.", json.type));
+        return Either.right(init);
+    }
+
+    public final <A> Either<String, Json> validate (final Function<Entry<JsonT>, Either<String, JsonT>> f) {
+        return null;
     }
 }

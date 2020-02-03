@@ -18,6 +18,7 @@ import java.util.List;
 
 public class Derivator {
 
+    // You could try the same as Jackson and force the Class<A> type by annotation.
     private static Either<String, ?> coerceFromJson(final Class<?> clazz, final JsonT jsont) {
         final String type = clazz.getTypeName().toLowerCase();
         if (type.equals("long")) {
