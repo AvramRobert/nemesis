@@ -1,5 +1,5 @@
 package util;
-import java.util.function.Function;
+import util.Functions.Function1;
 
 public interface Either<E, R> {
 
@@ -11,11 +11,11 @@ public interface Either<E, R> {
         return new Left<>(e);
     }
 
-    <B> B fold(final Function<R, B> f, final Function<E, B> g);
+    <B> B fold(final Function1<R, B> f, final Function1<E, B> g);
 
-    <B> Either<E, B> map(final Function<R, B> f);
+    <B> Either<E, B> map(final Function1<R, B> f);
 
-    <B> Either<E, B> flatMap(final Function<R, Either<E, B>> f);
+    <B> Either<E, B> flatMap(final Function1<R, Either<E, B>> f);
 
     R value();
 

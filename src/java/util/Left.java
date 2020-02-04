@@ -1,6 +1,6 @@
 package util;
 
-import java.util.function.Function;
+import util.Functions.Function1;
 
 public class Left<E, R> implements Either<E, R> {
     public final E error;
@@ -10,17 +10,17 @@ public class Left<E, R> implements Either<E, R> {
     }
 
     @Override
-    public <B> B fold(Function<R, B> f, Function<E, B> g) {
+    public <B> B fold(Function1<R, B> f, Function1<E, B> g) {
         return g.apply(error);
     }
 
     @Override
-    public <B> Either<E, B> map(Function<R, B> f) {
+    public <B> Either<E, B> map(Function1<R, B> f) {
         return (Left<E, B>) this;
     }
 
     @Override
-    public <B> Either<E, B> flatMap(Function<R, Either<E, B>> f) {
+    public <B> Either<E, B> flatMap(Function1<R, Either<E, B>> f) {
         return (Left<E, B>) this;
     }
 

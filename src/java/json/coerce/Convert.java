@@ -3,13 +3,11 @@ package json.coerce;
 import util.Either;
 import util.Left;
 import util.Right;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.function.Function;
+import util.Functions.Function1;
 
 @FunctionalInterface
 public interface Convert <A, B> {
-    default Function<A, Either<String, B>> function() {
+    default Function1<A, Either<String, B>> function() {
      return this::convert;
     }
 
@@ -17,7 +15,7 @@ public interface Convert <A, B> {
         return a -> convert(a).fold(f::convert, Left::new);
     }
 
-    default <C> Convert<A, C> compose (final Function<B, C> f) {
+    default <C> Convert<A, C> compose (final Function1<B, C> f) {
         return a -> convert(a).fold(b -> new Right<>(f.apply(b)), Left::new);
     }
 

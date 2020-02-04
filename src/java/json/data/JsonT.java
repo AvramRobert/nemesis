@@ -5,20 +5,18 @@ import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import io.lacuna.bifurcan.Maps;
 import json.coerce.Convert;
-import scala.Function2;
 import util.Either;
-
+import static util.Functions.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.function.Function;
 import static util.Colls.*;
 import static json.data.JType.*;
 import static json.data.JType.JsonArray;
 
 public class JsonT {
 
-    private  class Entry<V> {
+    public class Entry<V> {
         public final String key;
         public final V value;
 
@@ -88,7 +86,7 @@ public class JsonT {
         return String.format("\"%s\"", s);
     }
 
-    private <A> JsonT consume (final Either<String, A> comp, final Function<A, JsonT> f) {
+    private <A> JsonT consume (final Either<String, A> comp, final Function1<A, JsonT> f) {
         return comp.fold(f, this::fail);
     }
 
@@ -269,19 +267,19 @@ public class JsonT {
         return consume(w.convert(value), v -> assoc(index, v));
     }
 
-    public final JsonT update(final String key, final Function<JsonT, JsonT> f) {
+    public final JsonT update(final String key, final Function1<JsonT, JsonT> f) {
         return f.apply(get(key)).affix().fold(x -> assoc(key, x), this::fail);
     }
 
-    public final JsonT update(final int index, final Function<JsonT, JsonT> f) {
+    public final JsonT update(final int index, final Function1<JsonT, JsonT> f) {
         return f.apply(get(index)).affix().fold(x -> assoc(index, x), this::fail);
     }
 
-    public final JsonT updateIn(final Function<JsonT, JsonT> f, Object... keys) {
+    public final JsonT updateIn(final Function1<JsonT, JsonT> f, Object... keys) {
         return f.apply(getIn(keys)).affix().fold(x -> assocIn(x, keys), this::fail);
     }
 
-    public final <A, B> JsonT updateIn (final Function<A, B> f, final Convert<Json, A> from, final Convert<B, Json> to, Object... keys) {
+    public final <A, B> JsonT updateIn (final Function1<A, B> f, final Convert<Json, A> from, final Convert<B, Json> to, Object... keys) {
         return getIn(keys)
                 .affix()
                 .flatMap(from::convert)
@@ -304,12 +302,12 @@ public class JsonT {
         return merge(that.transform());
     }
 
-    public final <A, B> JsonT update(final String key, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
+    public final <A, B> JsonT update(final String key, final Function1<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
         return consume(get(key).as(g), v -> assoc(key, v));
     }
 
-    public final <A, B> JsonT update(final int index, final Function<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
+    public final <A, B> JsonT update(final int index, final Function1<A, B> f, final Convert<Json, A> to, final Convert<B, Json> from) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
         return consume(get(index).as(g), v -> assoc(index, v));
     }
@@ -370,7 +368,7 @@ public class JsonT {
         return Either.right(init);
     }
 
-    public final <A> Either<String, Json> validate (final Function<Entry<JsonT>, Either<String, JsonT>> f) {
+    public final <A> Either<String, Json> validate (final Function1<Entry<JsonT>, Either<String, JsonT>> f) {
         return null;
     }
 }

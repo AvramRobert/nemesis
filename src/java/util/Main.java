@@ -84,23 +84,33 @@ public class Main {
     }
 
     public static void main (String... args) {
-        final Convert<Point, Json> POINT_TO_JSON = Derivator.writer(Point.class);
-        final Convert<Json, Point> JSON_TO_POINT = Derivator.reader(Point.class);
-        final Point point = new Point(1L, 2L);
+//        final Convert<Point, Json> POINT_TO_JSON = Derivator.writer(Point.class);
+//        final Convert<Json, Point> JSON_TO_POINT = Derivator.reader(Point.class);
+//        final Point point = new Point(1L, 2L);
+//
+//        final Convert<Line, Json> LINE_TO_JSON = Derivator.writer(Line.class);
+//        final Convert<Json, Line> JSON_TO_LINE = Derivator.reader(Line.class);
+//        final Line line = new Line (new Point (2L, 1L), new Point(4L, 5L), 1, "Bobbeh");
+//
+//        final Convert<Spline, Json> SPLINE_TO_JSON = Derivator.writer(Spline.class);
+//        final Convert<Json, Spline> JSON_TO_SPLINE = Derivator.reader(Spline.class);
+//        final Spline spline = new Spline (
+//          "Archibald",
+//          Arrays.asList(new Point(1L, 2L), new Point (3L, 4L), new Point(4L, 6L), new Point (9L, 8L)));
+//
+//        var x = SPLINE_TO_JSON.convert(spline);
+//        Debug.println(x);
+//        Debug.println(x.flatMap(JSON_TO_SPLINE::convert));
 
-        final Convert<Line, Json> LINE_TO_JSON = Derivator.writer(Line.class);
-        final Convert<Json, Line> JSON_TO_LINE = Derivator.reader(Line.class);
-        final Line line = new Line (new Point (2L, 1L), new Point(4L, 5L), 1, "Bobbeh");
 
-        final Convert<Spline, Json> SPLINE_TO_JSON = Derivator.writer(Spline.class);
-        final Convert<Json, Spline> JSON_TO_SPLINE = Derivator.reader(Spline.class);
-        final Spline spline = new Spline (
-          "Archibald",
-          Arrays.asList(new Point(1L, 2L), new Point (3L, 4L), new Point(4L, 6L), new Point (9L, 8L)));
-
-        var x = SPLINE_TO_JSON.convert(spline);
-        Debug.println(x);
-        Debug.println(x.flatMap(JSON_TO_SPLINE::convert));
-
+        Ops.parse("{ \"a\" : 1 }")
+          .fold(5L, (entry, b) -> entry.value.as(JSON_TO_LONG).map(z -> z + b))
+        .fold(x -> {
+            Debug.println(x.toString());
+            return null;
+        }, x ->{
+            Debug.println(x);
+            return null;
+        });
     }
 }
