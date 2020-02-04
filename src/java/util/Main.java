@@ -1,11 +1,7 @@
 package util;
 
 import json.Ops;
-import json.coerce.Convert;
-import json.experimental.Derivator;
-import json.data.Json;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static json.coerce.DefaultConverters.*;
@@ -104,13 +100,7 @@ public class Main {
 
 
         Ops.parse("{ \"a\" : 1 }")
-          .fold(5L, (entry, b) -> entry.value.as(JSON_TO_LONG).map(z -> z + b))
-        .fold(x -> {
-            Debug.println(x.toString());
-            return null;
-        }, x ->{
-            Debug.println(x);
-            return null;
-        });
+          .reduceObj(5L, (b, key, value) -> value.as(JSON_TO_LONG).map(z -> z + b))
+          .consume(Debug::println, Debug::println);
     }
 }

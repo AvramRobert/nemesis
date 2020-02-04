@@ -10,6 +10,11 @@ public class Right<E, R> implements Either<E, R> {
     }
 
     @Override
+    public void consume(Functions.Consumer1<R> f, Functions.Consumer1<E> g) {
+        f.apply(value);
+    }
+
+    @Override
     public <B> B fold(Function1<R, B> f, Function1<E, B> g) {
         return f.apply(value);
     }

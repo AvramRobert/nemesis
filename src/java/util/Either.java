@@ -1,5 +1,5 @@
 package util;
-import util.Functions.Function1;
+import static util.Functions.*;
 
 public interface Either<E, R> {
 
@@ -10,6 +10,8 @@ public interface Either<E, R> {
     static <ER, C> Either<ER, C> left(final ER e) {
         return new Left<>(e);
     }
+
+    void consume (final Consumer1<R> f, final Consumer1<E> g);
 
     <B> B fold(final Function1<R, B> f, final Function1<E, B> g);
 

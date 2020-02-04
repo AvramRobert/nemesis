@@ -20,6 +20,11 @@ public class Left<E, R> implements Either<E, R> {
     }
 
     @Override
+    public void consume(Functions.Consumer1<R> f, Functions.Consumer1<E> g) {
+        g.apply(error);
+    }
+
+    @Override
     public <B> Either<E, B> flatMap(Function1<R, Either<E, B>> f) {
         return (Left<E, B>) this;
     }
