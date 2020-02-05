@@ -6,7 +6,7 @@
   (:import json.data.Json
            (json.data JNum JString JObj JArr JEmpty JBool JNull)
            (io.lacuna.bifurcan List Map)
-           (java.util.function Function)))
+           (util Functions$Function1)))
 
 (declare gen-arr gen-map)
 
@@ -147,5 +147,5 @@
   (vec (keyseq form)))
 
 (defn function [fn]
-  (reify Function
+  (reify Functions$Function1
     (apply [_ a] (fn a))))
