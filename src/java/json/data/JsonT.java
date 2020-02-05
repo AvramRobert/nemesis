@@ -54,25 +54,27 @@ public class JsonT {
         return Either.left(String.format(msg, params));
     }
 
-    private final Optional<Json> lookup (final String key) {
+    private Optional<Json> lookup (final String key) {
         return jobj().value.get(escape(key));
     }
 
-    private final Map<String, Json> insert (final String key, final Json value) {
+    private Map<String, Json> insert (final String key, final Json value) {
         return jobj().value.put(escape(key), value);
     }
 
-    private final List<Json> replace (final long index, final Json value) {
+    private List<Json> replace (final long index, final Json value) {
         return (List<Json>) jarr().value.update(index, x -> value);
     }
 
-    private final Convert<Object, String> defaultStringConvert = this::coerceString;
+    private Convert<Object, String> defaultStringConvert = this::coerceString;
 
-    private final Convert<Object, Json> defaultJsonConvert = this::coerceJson;
+    private Convert<Object, Json> defaultJsonConvert = this::coerceJson;
 
-    private final String escape (final String s) {
+    private String escape (final String s) {
         return String.format("\"%s\"", s);
     }
+
+    private String unescape (final String s) { return s.replace("\"", ""); }
 
     private <A> JsonT consume (final Either<String, A> comp, final Function1<A, JsonT> f) {
         return comp.fold(f, this::fail);
@@ -140,6 +142,16 @@ public class JsonT {
         else if (value.type == JsonObject) return assocInObj(value.transform(), toAssoc, depth, keys);
         else if (value.type == JsonArray)  return assocInArr(value.transform(), toAssoc, depth, keys);
         else return left("Cannot associate into `%s`. It is not a structure.", toAssoc);
+    }
+
+    private Either<String, Json> subwalk (final IEntry<String, Json> entry,
+                                          final Function2<String, JsonT, Either<String, JsonT>> f) {
+        final String key  = unescape(entry.key());
+        final JsonT value = entry.value().transform();
+        if (value.json.type == JsonObject) {
+            return value.traverse(f);
+        }
+        else return f.apply(key, value).flatMap(JsonT::affix);
     }
 
     public final JsonT get (final String key) {
@@ -314,7 +326,7 @@ public class JsonT {
         A start = init;
         if (json.type == JsonObject) {
             for (IEntry<String, Json> e: jobj ().value.entries()) {
-                final Either<String, A> res = f.apply(start, e.key(), e.value().transform());
+                final Either<String, A> res = f.apply(start, unescape(e.key()), e.value().transform());
                 if (res.isRight()) start     = res.value();
                 else return Either.left(res.error());
             }
@@ -339,35 +351,16 @@ public class JsonT {
         else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
     }
 
-    private <A> Either<String, A> subwalk (final A init,
-                                           final IEntry<String, Json> entry,
-                                           final Function3<A, String, JsonT, Either<String, A>> f,
-                                           final Function2<String, A, A> g) {
-        final String key  = entry.key();
-        final JsonT value = entry.value().transform();
-        if (value.json.type == JsonObject) {
-            final Either<String, A> inter = value.foldWalk(init, f, g);
-            return inter.map(a -> g.apply(key, a));
-        }
-        else return f.apply(init, key, value);
-    }
-
-    public final <A> Either<String, A> foldWalk (final A init,
-                                                 final Function3<A, String, JsonT, Either<String, A>> f,
-                                                 final Function2<String, A, A> g) {
-        A start = init;
+    public final Either<String, Json> traverse (final Function2<String, JsonT, Either<String, JsonT>> f) {
+        final HashMap<String, Json> hm = new HashMap<>();
         if (json.type == JsonObject) {
-            for (IEntry<String, Json> e: jobj().value.entries()) {
-                final Either<String, A> res = subwalk(start, e, f, g);
-                if (res.isRight()) start = res.value();
-                else return Either.left(res.error());
+            for (IEntry<String, Json> e : jobj().value) {
+                final Either<String, Json> result = subwalk(e, f);
+                if (result.isRight()) result.consume(json -> hm.put(e.key(), json), x -> {});
+                else return Either.left(result.error());
             }
         }
-        else return Either.left(String.format("Cannot walk over json type `%s`.", json.type));
-        return Either.right(start);
-    }
-
-    public final <A> Either<String, Json> validate (final Function2<String, JsonT, Either<String, JsonT>> f) {
-        return null;
+        else return Either.left(String.format("Cannot traverse over json type `%s`.", json.type));
+        return Either.right(new JObj(Map.from(hm)));
     }
 }

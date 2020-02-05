@@ -99,8 +99,12 @@ public class Main {
 //        Debug.println(x.flatMap(JSON_TO_SPLINE::convert));
 
 
-        Ops.parse("{ \"a\" : 1 }")
-          .reduceObj(5L, (b, key, value) -> value.as(JSON_TO_LONG).map(z -> z + b))
-          .consume(Debug::println, Debug::println);
+        Ops.parse("{ \"a\" : 1, \"b\" : {\"c\" : 3}}")
+          .traverse((k, v) -> {
+              if (k.equals("a")) return v.as(JSON_TO_LONG).map(l -> v);
+              else if (k.equals("c")) return v.as(JSON_TO_LONG).map(l -> v);
+              else return Either.right(v)   ;
+          })
+        .consume(Debug::println, Debug::println);
     }
 }
