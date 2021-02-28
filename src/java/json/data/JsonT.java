@@ -202,7 +202,7 @@ public class JsonT {
         }
     }
 
-    public final JsonT dissoc(final String... keys) {
+    public final JsonT remove(final String... keys) {
         if (json.type == JsonObject) {
             Map<String, Json> map = jobj().value;
             for (String key: keys) {
@@ -221,7 +221,7 @@ public class JsonT {
         }
     }
 
-    public final JsonT insert(final String key, final Json value) {
+    public final JsonT insert(final Json value, final String key) {
         if (json.type == JsonObject || json.type == JsonEmpty) {
             return succeed(new JObj(assoc(key, value)));
         } else {
@@ -229,7 +229,7 @@ public class JsonT {
         }
     }
 
-    public final JsonT insert(final int index, final Json value) {
+    public final JsonT insert(final Json value, final int index) {
         if (json.type == JsonArray) {
             return succeed(new JArr((List<Json>) jarr().value.update(index, x -> value)));
         } else {
@@ -251,44 +251,40 @@ public class JsonT {
         else return to.convert(value).map(x -> insertIn(x, keys)).fold(x -> x, this::fail);
     }
 
-    public final <A> JsonT insert(final String key, final A value) {
-        return insert(key, value, defaultJsonConvert);
+    public final <A> JsonT insert(final A value, final String key) { return insert(value, defaultJsonConvert, key); }
+
+    public final <A> JsonT insert (final A value, final int index) { return insert(value, defaultJsonConvert, index); }
+
+    public final <A> JsonT insert(final A value, final Convert<A, Json> w, final String key) {
+        return consume(w.convert(value), v -> insert(v, key));
     }
 
-    public final <A> JsonT insert(final int index, final A value) {
-        return insert(index, value, defaultJsonConvert);
+    public final <A> JsonT insert(final A value, final Convert<A, Json> w, final int index) {
+        return consume(w.convert(value), v -> insert(v, index));
     }
 
-    public final <A> JsonT insert(final String key, final A value, final Convert<A, Json> w) {
-        return consume(w.convert(value), v -> insert(key, v));
+    public final JsonT update(final Function1<JsonT, JsonT> f, final String key) {
+        return f.apply(get(key)).affix().fold(x -> insert(x, key), this::fail);
     }
 
-    public final <A> JsonT insert(final int index, final A value, final Convert<A, Json> w) {
-        return consume(w.convert(value), v -> insert(index, v));
+    public final JsonT update(final Function1<JsonT, JsonT> f, final int index) {
+        return f.apply(get(index)).affix().fold(x -> insert(x, index), this::fail);
     }
 
-    public final JsonT update(final String key, final Function1<JsonT, JsonT> f) {
-        return f.apply(get(key)).affix().fold(x -> insert(key, x), this::fail);
-    }
-
-    public final JsonT update(final int index, final Function1<JsonT, JsonT> f) {
-        return f.apply(get(index)).affix().fold(x -> insert(index, x), this::fail);
-    }
-
-    public final <A, B> JsonT update(final String key,
-                                     final Function1<A, B> f,
+    public final <A, B> JsonT update(final Function1<A, B> f,
                                      final Convert<Json, A> to,
-                                     final Convert<B, Json> from) {
+                                     final Convert<B, Json> from,
+                                     final String key) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
-        return consume(get(key).as(g), v -> insert(key, v));
+        return consume(get(key).as(g), v -> insert(v, key));
     }
 
-    public final <A, B> JsonT update(final int index,
-                                     final Function1<A, B> f,
+    public final <A, B> JsonT update(final Function1<A, B> f,
                                      final Convert<Json, A> to,
-                                     final Convert<B, Json> from) {
+                                     final Convert<B, Json> from,
+                                     final int index) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
-        return consume(get(index).as(g), v -> insert(index, v));
+        return consume(get(index).as(g), v -> insert(v, index));
     }
 
     public final JsonT updateIn(final Function1<JsonT, JsonT> f, Object... keys) {

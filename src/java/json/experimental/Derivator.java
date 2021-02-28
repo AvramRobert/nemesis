@@ -69,7 +69,7 @@ public class Derivator {
             final Field field = fields[i];
             final Either<String, Json> result = coerceToJson(field, value);
             if (result.isRight()) {
-                obj = obj.insert(field.getName(), result.value());
+                obj = obj.insert(result.value(), field.getName());
             } else return Either.left(result.error());
         }
         return obj.affix();

@@ -3,10 +3,10 @@ package json;
 import json.coerce.Convert;
 import json.coerce.ObjectConverter;
 import json.data.*;
-import util.Either;
 import json.parser.Parser;
+import util.Either;
 
-public class Ops {
+public class JsonOps {
 
     public static Json empty() {
         return JEmpty.instance;

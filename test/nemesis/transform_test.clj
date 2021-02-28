@@ -21,7 +21,7 @@
                                       :max-elements 3})
             key        (gen/not-empty gen/string-alphanumeric)]
     (let [n-associatee (clj->nem associatee)
-          computed     (transform #(.insert % key n-associatee) json-clj)
+          computed     (transform #(.insert % n-associatee key) json-clj)
           expected     (assoc json-clj key associatee)]
       (is (= expected computed)))))
 
@@ -59,7 +59,7 @@
           amount   (rand-int (count all-keys))
           keys     (->> all-keys (shuffle) (take amount))
           n-keys   (into-array String keys)
-          computed (transform #(.dissoc % n-keys) json-clj)
+          computed (transform #(.remove % n-keys) json-clj)
           expected (apply dissoc json-clj keys)]
       (is (= expected computed)))))
 
@@ -96,13 +96,13 @@
           elem     (json-clj key)
           updates {:map {:clj #(assoc % new-key new-value)
                          :nem (fn [tree]
-                                (.update tree key (function #(.insert % new-key new-value))))}
+                                (.update tree (function #(.insert % new-value new-key)) key))}
                    :vec {:clj #(assoc % 0 new-value)
                          :nem (fn [tree]
-                                (.update tree key (function #(.insert % 0 new-value))))}
+                                (.update tree (function #(.insert % new-value 0)) key))}
                    :scalar {:clj #(inc %)
                             :nem (fn [tree]
-                                   (.update tree key (function #(inc %)) DefaultConverters/JSON_TO_LONG DefaultConverters/LONG_TO_JSON))}}
+                                   (.update tree (function #(inc %)) DefaultConverters/JSON_TO_LONG DefaultConverters/LONG_TO_JSON key))}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])
@@ -125,10 +125,10 @@
           elem     (get-in json-clj keys)
           updates {:map {:clj #(assoc % new-key new-value)
                          :nem (fn [tree]
-                                (.updateIn tree (function #(.insert % new-key new-value)) n-keys))}
+                                (.updateIn tree (function #(.insert % new-value new-key)) n-keys))}
                    :vec {:clj #(assoc % 0 new-value)
                          :nem (fn [tree]
-                                (.updateIn tree (function #(.insert % 0 new-value)) n-keys))}
+                                (.updateIn tree (function #(.insert % new-value 0)) n-keys))}
                    :scalar {:clj inc
                             :nem (fn [tree]
                                    (.updateIn tree (function inc) DefaultConverters/JSON_TO_LONG DefaultConverters/LONG_TO_JSON n-keys))}}

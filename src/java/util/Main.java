@@ -1,6 +1,6 @@
 package util;
 
-import json.Ops;
+import json.JsonOps;
 
 import java.util.List;
 
@@ -99,7 +99,7 @@ public class Main {
 //        Debug.println(x.flatMap(JSON_TO_SPLINE::convert));
 
 
-        Ops.parse("{ \"a\" : 1, \"b\" : {\"c\" : 3}}")
+        JsonOps.parse("{ \"a\" : 1, \"b\" : {\"c\" : 3}}")
           .traverse((k, v) -> {
               if (k.equals("a")) return v.as(JSON_TO_LONG).map(l -> v);
               else if (k.equals("c")) return v.as(JSON_TO_LONG).map(l -> v);
