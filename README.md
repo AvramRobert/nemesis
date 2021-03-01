@@ -18,7 +18,7 @@ For a list of the things that currently may or may not work, take a look at the 
 
 ```java
 import static nemesis.json.JsonOps.*;
-import static nemesis.coerce.DefaultConvers.JSON_TO_LONG;
+import static nemesis.coerce.DefaultConverters.JSON_TO_LONG;
 
 public static void main (String... args) {
     var json1 = "{ \"hello\" : \"world\" }";

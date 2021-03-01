@@ -1,5 +1,5 @@
 package json.data;
 
 public enum JType {
-    JsonEmpty, JsonNumber, JsonString, JsonArray, JsonObject, JsonNull, JsonBool
+    JsonNumber, JsonString, JsonArray, JsonObject, JsonNull, JsonBool
 }

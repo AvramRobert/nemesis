@@ -1,7 +1,7 @@
 package json.data;
 
 public abstract class Json {
-    JType type;
+    public JType type;
 
     public JsonT transform() {
         return new JsonT(this);

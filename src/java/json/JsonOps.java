@@ -12,9 +12,7 @@ public class JsonOps {
 
     public  static In in (final Object... path) { return JsonT.in(path); }
 
-    public static Json empty() {
-        return JEmpty.instance;
-    }
+    public static final Json empty = JObj.empty;
 
     public static Either<String, Json> eparse (final String text) {
         return Parser.parse(text);

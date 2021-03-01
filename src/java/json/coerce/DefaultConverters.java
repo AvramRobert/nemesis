@@ -1,13 +1,9 @@
 package json.coerce;
-import io.lacuna.bifurcan.IList;
 import json.data.*;
-import util.Colls;
+import util.Collections;
 import util.Either;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class DefaultConverters {
 
@@ -120,6 +116,6 @@ public class DefaultConverters {
     };
 
     public static <A> Convert <List<A>, Json> listFrom(final Convert<A, Json> f) {
-        return list -> Colls.traversel_(list, f::convert).map(JArr::new);
+        return list -> Collections.traversel_(list, f::convert).map(JArr::new);
     }
 }

@@ -1,13 +1,11 @@
 package json.experimental;
 
-import json.JsonOps;
 import json.coerce.Convert;
 import json.data.JArr;
 import json.data.JObj;
 import json.data.Json;
 import json.data.JsonT;
-import util.Colls;
-import util.Debug;
+import util.Collections;
 import util.Either;
 
 import static json.JsonOps.*;
@@ -38,7 +36,7 @@ public class Derivator {
         } else if (type.contains("java.util.list")) { // this is idiotic;
             // this also doesn't work properly. At least not directly. I can derive the `Object` contents, but I can't derive its proper class due to erasure.
             // so instantiation is not concrete
-            return jsont.as(JSON_TO_LIST).flatMap(list -> Colls.traversel(list, a -> reader(Object.class).convert(a)));
+            return jsont.as(JSON_TO_LIST).flatMap(list -> Collections.traversel(list, a -> reader(Object.class).convert(a)));
         } else return jsont.affix().flatMap(j -> reader(clazz).convert(j));
     }
 
@@ -66,7 +64,7 @@ public class Derivator {
 
     private static <A> Either<String, Json> objectWriter(final A value) {
         final Field[] fields = value.getClass().getDeclaredFields();
-        JsonT obj = JObj.empty().transform();
+        JsonT obj = JObj.empty.transform();
         for (int i = 0; i < fields.length; i++) {
             final Field field = fields[i];
             final Either<String, Json> result = coerceToJson(field, value);

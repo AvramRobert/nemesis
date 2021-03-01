@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Function;
 
-public class Colls {
+public class Collections {
 
     public static <E, K1, K2, A, B> Either<E, Map<K2, B>> traversem(final java.util.HashMap<K1, A> kvs, final Function<K1, Either<E, K2>> kf, final Function<A, Either<E, B>> vf) {
         final HashMap<K2, B> map = new HashMap<>();

@@ -31,7 +31,5 @@ public final class JObj extends Json {
         }
     }
 
-    public static JObj empty() {
-        return new JObj(Map.from(new HashMap<>()));
-    }
+    public static final JObj empty = new JObj(Map.from(new HashMap<>()));
 }

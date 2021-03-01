@@ -15,7 +15,7 @@ public class Parser {
     private final boolean SUCCESSFUL = true;
     private final boolean FAILED = false;
     private String failure = "";
-    private Json result = JEmpty.instance;
+    private Json result = JObj.empty;
 
     // == PARSING TEXT INFO == //
     private final String text;

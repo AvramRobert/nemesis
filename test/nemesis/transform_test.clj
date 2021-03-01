@@ -13,29 +13,45 @@
           expected json-clj]
       (is (= expected computed)))))
 
+(defspec empty-association 100
+  (for-all [key   (gen/not-empty gen/string-alphanumeric)
+            value  gen/small-integer]
+    (let [json-clj {}
+          computed (transform (insert-j value [key]) json-clj)
+          expected (assoc json-clj key value)]
+      (is (= expected computed)))))
+
+(defspec empty-deep-association 100
+  (for-all [keys   (gen/not-empty (gen/list (gen/not-empty gen/string-alphanumeric)))
+            value  gen/small-integer]
+    (let [json-clj {}
+          computed (transform (insert-j value keys) json-clj)
+          expected (assoc-in json-clj keys value)]
+      (is (= expected computed)))))
+
 (defspec association 100
-  (for-all [json-clj   (gen-map {:max-depth    2
-                                 :max-elements 3})
-            associatee (gen-clj-json {:max-depth    2
-                                      :max-elements 3})
-            key        (gen/not-empty gen/string-alphanumeric)]
-    (let [n-associatee (clj->nem associatee)
-          computed     (transform (insert-j n-associatee [key]) json-clj)
-          expected     (assoc json-clj key associatee)]
+  (for-all [json-clj      (gen-map {:max-depth    2
+                                    :max-elements 3})
+            clj-to-insert (gen-clj-json {:max-depth    2
+                                         :max-elements 3})
+            key           (gen/not-empty gen/string-alphanumeric)]
+    (let [nem-to-insert (clj->nem clj-to-insert)
+          computed      (transform (insert-j nem-to-insert [key]) json-clj)
+          expected      (assoc json-clj key clj-to-insert)]
       (is (= expected computed)))))
 
 (defspec deep-association-create 100
-  (for-all [json-clj   (gen-map {:max-depth    2
-                                 :max-elements 3})
-            associatee (gen-clj-json {:max-depth    2
-                                      :max-elements 3})
-            keys       (-> gen/string-alphanumeric
-                           (gen/not-empty)
-                           (gen/vector)
-                           (gen/not-empty))]
-    (let [n-associatee (clj->nem associatee)
-          computed     (transform (insert-j n-associatee keys) json-clj)
-          expected     (assoc-in json-clj keys associatee)]
+  (for-all [json-clj      (gen-map {:max-depth    2
+                                    :max-elements 3})
+            clj-to-insert (gen-clj-json {:max-depth    2
+                                         :max-elements 3})
+            keys          (-> gen/string-alphanumeric
+                              (gen/not-empty)
+                              (gen/vector)
+                              (gen/not-empty))]
+    (let [nem-to-insert (clj->nem clj-to-insert)
+          computed      (transform (insert-j nem-to-insert keys) json-clj)
+          expected      (assoc-in json-clj keys clj-to-insert)]
       (is (= expected computed)))))
 
 (defspec deep-association-replace 100

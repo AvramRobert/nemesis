@@ -8,7 +8,7 @@ import util.Either;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
-import static util.Colls.*;
+import static util.Collections.*;
 import static util.Functions.*;
 import static json.data.JType.*;
 
@@ -38,17 +38,16 @@ public class JsonT {
     public JsonT(final String error) {
         this.error = error;
         this.success = false;
-        this.json = JEmpty.instance;
+        this.json = node;
     }
 
-    public JObj jobj () {
+    private JObj jobj () {
         return (JObj) json;
     }
 
     private JArr jarr() {
         return (JArr) json;
     }
-
 
     private JsonT succeed(final Json json) {
         return new JsonT(json);
@@ -99,6 +98,7 @@ public class JsonT {
         else return Either.left(String.format("Value `%s` is not of type String", value.toString()));
     }
 
+    @SuppressWarnings("unchecked")
     private <A> Either<String, Json> coerceJson(final A value) {
         if (value instanceof Number) {
             return Either.right(new JNum((Number) value));
@@ -147,7 +147,6 @@ public class JsonT {
 
     private Either<String, Json> assocInRec(final Json value, final Json toAssoc, final int depth, final Object... keys) {
         if      (depth >= keys.length)     return Either.right(toAssoc);
-        else if (value.type == JsonEmpty)  return assocInObj(value.transform(), toAssoc, depth, keys);
         else if (value.type == JsonObject) return assocInObj(value.transform(), toAssoc, depth, keys);
         else if (value.type == JsonArray)  return assocInArr(value.transform(), toAssoc, depth, keys);
         else return left("Cannot insert into `%s`. It is not a structure.", toAssoc);
@@ -167,11 +166,19 @@ public class JsonT {
                 final Object k = path[depth];
                 final JsonT tempTree = tree;
                 if (tree.json.type == JsonObject) {
-                    tree = tree.consume(coerceString(k), key -> tempTree.lookupKey(key).map(this::succeed).orElse(fail("Key `%s` not found", key)));
+                    tree = tree.consume(coerceString(k),
+                      key -> tempTree
+                        .lookupKey(key)
+                        .map(this::succeed)
+                        .orElse(fail("Key `%s` not found", key)));
                     depth ++;
                 }
                 else if (tree.json.type == JsonArray) {
-                    tree = tree.consume(coerceLong(k), index -> tempTree.lookupIndex(index).map(this::succeed).orElse(fail("Index if `%n` does not exist", index)));
+                    tree = tree.consume(coerceLong(k),
+                      index -> tempTree
+                        .lookupIndex(index)
+                        .map(this::succeed)
+                        .orElse(fail("Index if `%n` does not exist", index)));
                     depth ++;
                 }
                 else return fail("Cannot get `%s` in structure `%s`", k, json.toString());
@@ -192,9 +199,6 @@ public class JsonT {
                 }
             }
             return succeed(new JObj(map));
-        }
-        else if (json.type == JsonEmpty) {
-            return this;
         }
         else {
             return fail("Cannot remove keys `%s` from `%s`.", Arrays.toString(keys), json);
@@ -236,15 +240,6 @@ public class JsonT {
             if (that.json.type == JsonObject) {
                 return succeed(new JObj(jobj().value.merge(that.jobj().value, (a, b) -> b)));
             }
-            else if (that.json.type == JsonEmpty) {
-                return this;
-            }
-            else return that.affix().fold(j -> fail("%s is not a JSON object", j), this::fail);
-        }
-        else if (json.type == JsonEmpty) {
-            if (that.json.type == JsonObject) {
-                return that;
-            }
             else return that.affix().fold(j -> fail("%s is not a JSON object", j), this::fail);
         }
         else return fail("%s is not a JSON object", json);
@@ -252,11 +247,6 @@ public class JsonT {
 
     public final JsonT merge (final Json that) {
         return merge(that.transform());
-    }
-
-    public final Either<String, Json> affix() {
-        if (success) return Either.right(json);
-        else return Either.left(error);
     }
 
     public final <A> Either<String, A> as(final Convert<Json, A> f) {
@@ -291,6 +281,11 @@ public class JsonT {
             return Either.right(start);
         }
         else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
+    }
+
+    public final Either<String, Json> affix() {
+        if (success) return Either.right(json);
+        else return Either.left(error);
     }
 
     public static In in(final Object... path) {

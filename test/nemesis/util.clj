@@ -4,10 +4,11 @@
             [clojure.string :refer [join]]
             [clojure.pprint :refer [pprint]])
   (:import json.data.Json
-           (json.data JNum JString JObj JArr JEmpty JBool JNull JsonT)
+           (json.data JNum JString JObj JArr JBool JNull JsonT JType)
            (io.lacuna.bifurcan List Map)
            (util Functions$Function1)
-           (json JsonOps)))
+           (json JsonOps)
+           (json.parser Parser)))
 
 (declare gen-arr gen-map)
 
@@ -37,7 +38,7 @@
                       (.put m (str (.key e)) (.value e))) (Map.) form))]
     (cond
       (nil? form)       JNull/instance
-      (empty-map? form) JEmpty/instance
+      (empty-map? form) JObj/empty
       (number? form)    (JNum. form)
       (string? form)    (JString. (pr-str form))
       (keyword? form)   (JString. (name form))
@@ -136,7 +137,7 @@
   (json/generate-string clj))
 
 (defn json->nem [json]
-  (json.parser.Parser/parse json))
+  (Parser/parse json))
 
 (defn transform [f & cljs]
   (let [res (->> cljs (map clj->nem) (map #(.transform %)) (apply f) (.affix))]
