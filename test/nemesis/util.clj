@@ -4,9 +4,10 @@
             [clojure.string :refer [join]]
             [clojure.pprint :refer [pprint]])
   (:import json.data.Json
-           (json.data JNum JString JObj JArr JEmpty JBool JNull)
+           (json.data JNum JString JObj JArr JEmpty JBool JNull JsonT)
            (io.lacuna.bifurcan List Map)
-           (util Functions$Function1)))
+           (util Functions$Function1)
+           (json JsonOps)))
 
 (declare gen-arr gen-map)
 
@@ -149,3 +150,29 @@
 (defn function [fn]
   (reify Functions$Function1
     (apply [_ a] (fn a))))
+
+(defn in [args]
+  (JsonOps/in (into-array Object args)))
+
+(defn insert-j [value keys]
+  (fn [^JsonT json-t]
+    (.insert json-t value (in keys))))
+
+(defn remove-j [keys]
+  (fn [^JsonT json-t]
+    (.remove json-t (into-array String keys))))
+
+(defn get-j [keys]
+  (fn [^JsonT json-t]
+    (.get json-t (in keys))))
+
+(defn update-j
+  ([to fn-j from keys]
+   (fn [^JsonT json-t]
+     (.update json-t to (function fn-j) from (in keys))))
+  ([fn-j keys]
+   (fn [^JsonT json-t]
+     (.update json-t (function fn-j) (in keys)))))
+
+(defn merge-j [^JsonT a ^JsonT b]
+  (.merge a b))

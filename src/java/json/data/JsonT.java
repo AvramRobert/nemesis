@@ -14,6 +14,14 @@ import static json.data.JType.*;
 
 public class JsonT {
 
+    public final static class In {
+        final Object[] path;
+
+        public In(final Object[] path) {
+            this.path = path;
+        }
+    }
+
     private final Json json;
     private final boolean success;
     private final String error;
@@ -54,8 +62,12 @@ public class JsonT {
         return Either.left(String.format(msg, params));
     }
 
-    private Optional<Json> lookup (final String key) {
+    private Optional<Json> lookupKey(final String key) {
         return jobj().value.get(escape(key));
+    }
+
+    private Optional<Json> lookupIndex(final long index) {
+        return Optional.ofNullable(jarr().value.nth(index, null));
     }
 
     private Map<String, Json> assoc (final String key, final Json value) {
@@ -65,10 +77,6 @@ public class JsonT {
     private List<Json> replace (final long index, final Json value) {
         return (List<Json>) jarr().value.update(index, x -> value);
     }
-
-    private Convert<Object, String> defaultStringConvert = this::coerceString;
-
-    private Convert<Object, Json> defaultJsonConvert = this::coerceJson;
 
     private String escape (final String s) {
         return String.format("\"%s\"", s);
@@ -115,7 +123,7 @@ public class JsonT {
         final Either<String, String> skey = coerceString(keys[depth]);
         if (skey.isRight()) {
             final String key   = skey.value();
-            final Json value   = json.lookup(key).orElse(node);
+            final Json value   = json.lookupKey(key).orElse(node);
             return assocInRec(value, toAssoc, depth + 1, keys).map(x -> new JObj(json.assoc(key, x)));
         } else {
             return left("Key for json was expected to be a string: %s", skey.error());
@@ -139,61 +147,31 @@ public class JsonT {
 
     private Either<String, Json> assocInRec(final Json value, final Json toAssoc, final int depth, final Object... keys) {
         if      (depth >= keys.length)     return Either.right(toAssoc);
+        else if (value.type == JsonEmpty)  return assocInObj(value.transform(), toAssoc, depth, keys);
         else if (value.type == JsonObject) return assocInObj(value.transform(), toAssoc, depth, keys);
         else if (value.type == JsonArray)  return assocInArr(value.transform(), toAssoc, depth, keys);
         else return left("Cannot insert into `%s`. It is not a structure.", toAssoc);
     }
 
-    private Either<String, Json> subwalk (final IEntry<String, Json> entry,
-                                          final Function2<String, JsonT, Either<String, JsonT>> f) {
-        final String key  = unescape(entry.key());
-        final JsonT value = entry.value().transform();
-        if (value.json.type == JsonObject) {
-            return value.traverse(f);
-        }
-        else return f.apply(key, value).flatMap(JsonT::affix);
+    public final <A> Either<String, A> getAs(final Convert<Json, A> f, final In in) {
+        return get(in).as(f);
     }
 
-    public final JsonT get (final String key) {
-        if (json.type == JsonObject) {
-            return lookup(key).map(this::succeed).orElse(fail(String.format("Key `%s` not found", key)));
-        }
-        else return fail("Cannot lookup key `%s` in `%s`.", key, json);
-    }
-
-    public final JsonT get (final long index) {
-        if (json.type == JsonArray) {
-            final Json r = jarr().value.nth(index, null);
-            return (r != null) ? succeed(r) : fail("Index if `%n` does not exist", index);
-        }
-        else return fail("Cannot lookup index `%d` in `%s`.", index, json);
-    }
-
-    public final <A> Either<String, A> getAs (final Convert<Json, A> f, final long index) {
-        return get(index).as(f);
-    }
-
-    public final <A> Either<String, A> getAs(final Convert<Json, A> f, final String key) {
-        return get(key).as(f);
-    }
-
-    public final <A> Either<String, A> getInAs(final Convert<Json, A> f, Object... keys) {
-        return getIn(keys).as(f);
-    }
-
-    public final JsonT getIn (final Object... keys) {
+    public final JsonT get (final In in) {
         int depth = 0;
+        Object[] path = in.path;
         JsonT tree = this;
-        if (depth == keys.length) return this;
+        if (depth == path.length) return this;
         else {
-            while(depth < keys.length && tree.success) {
-                final Object k = keys[depth];
+            while(depth < path.length && tree.success) {
+                final Object k = path[depth];
+                final JsonT tempTree = tree;
                 if (tree.json.type == JsonObject) {
-                    tree = tree.consume(coerceString(k), tree::get);
+                    tree = tree.consume(coerceString(k), key -> tempTree.lookupKey(key).map(this::succeed).orElse(fail("Key `%s` not found", key)));
                     depth ++;
                 }
                 else if (tree.json.type == JsonArray) {
-                    tree = tree.consume(coerceLong(k), tree::get);
+                    tree = tree.consume(coerceLong(k), index -> tempTree.lookupIndex(index).map(this::succeed).orElse(fail("Index if `%n` does not exist", index)));
                     depth ++;
                 }
                 else return fail("Cannot get `%s` in structure `%s`", k, json.toString());
@@ -201,6 +179,8 @@ public class JsonT {
             return tree;
         }
     }
+
+    // TODO: remove (final In in) ?
 
     public final JsonT remove(final String... keys) {
         if (json.type == JsonObject) {
@@ -217,93 +197,53 @@ public class JsonT {
             return this;
         }
         else {
-            return fail("Cannot dissociate keys `%s` from `%s`.", Arrays.toString(keys), json);
+            return fail("Cannot remove keys `%s` from `%s`.", Arrays.toString(keys), json);
         }
     }
 
-    public final JsonT insert(final Json value, final String key) {
-        if (json.type == JsonObject || json.type == JsonEmpty) {
-            return succeed(new JObj(assoc(key, value)));
-        } else {
-            return fail("Cannot insert key `%s` into `%s`.", key, json);
-        }
+    public final JsonT insert(final Json value, final In in) {
+        if (in.path.length == 0) return this;
+        else return assocInRec(json, value, 0, in.path).fold(this::succeed, this::fail);
     }
 
-    public final JsonT insert(final Json value, final int index) {
-        if (json.type == JsonArray) {
-            return succeed(new JArr((List<Json>) jarr().value.update(index, x -> value)));
-        } else {
-            return fail("Cannot insert index `%d` into `%s`.", index, json);
-        }
+    public final <A> JsonT insert(final A value, final Convert<A, Json> to, final In in) {
+        if (in.path.length == 0) return this;
+        else return to.convert(value).map(x -> insert(x, in)).fold(x -> x, this::fail);
     }
 
-    public final JsonT insertIn(final Json value, final Object... keys) {
-        if (keys.length == 0) return this;
-        else return assocInRec(json, value, 0, keys).fold(this::succeed, this::fail);
+    public final <A> JsonT insert(final A value, final In in) {
+        return insert(value, this::coerceJson, in);
     }
 
-    public final <A> JsonT insertIn(final A value, final Object... keys) {
-        return insertIn(value, defaultJsonConvert, keys);
+    public final JsonT update(final Function1<JsonT, JsonT> f, final In in) {
+        return consume(f.apply(get(in)).affix(), v -> insert(v, in));
     }
 
-    public final <A> JsonT insertIn(final A value, final Convert<A, Json> to, final Object... keys) {
-        if (keys.length == 0) return this;
-        else return to.convert(value).map(x -> insertIn(x, keys)).fold(x -> x, this::fail);
+    public final <A, B> JsonT update(final Convert<Json, A> to, final Function1<A, B> f, final In in) {
+        return consume(get(in).as(to).map(f), v -> insert(v, in));
     }
 
-    public final <A> JsonT insert(final A value, final String key) { return insert(value, defaultJsonConvert, key); }
-
-    public final <A> JsonT insert (final A value, final int index) { return insert(value, defaultJsonConvert, index); }
-
-    public final <A> JsonT insert(final A value, final Convert<A, Json> w, final String key) {
-        return consume(w.convert(value), v -> insert(v, key));
-    }
-
-    public final <A> JsonT insert(final A value, final Convert<A, Json> w, final int index) {
-        return consume(w.convert(value), v -> insert(v, index));
-    }
-
-    public final JsonT update(final Function1<JsonT, JsonT> f, final String key) {
-        return f.apply(get(key)).affix().fold(x -> insert(x, key), this::fail);
-    }
-
-    public final JsonT update(final Function1<JsonT, JsonT> f, final int index) {
-        return f.apply(get(index)).affix().fold(x -> insert(x, index), this::fail);
-    }
-
-    public final <A, B> JsonT update(final Function1<A, B> f,
-                                     final Convert<Json, A> to,
+    public final <A, B> JsonT update(final Convert<Json, A> to,
+                                     final Function1<A, B> f,
                                      final Convert<B, Json> from,
-                                     final String key) {
+                                     final In in) {
         final Convert<Json, Json> g = to.compose(f).compose(from);
-        return consume(get(key).as(g), v -> insert(v, key));
-    }
-
-    public final <A, B> JsonT update(final Function1<A, B> f,
-                                     final Convert<Json, A> to,
-                                     final Convert<B, Json> from,
-                                     final int index) {
-        final Convert<Json, Json> g = to.compose(f).compose(from);
-        return consume(get(index).as(g), v -> insert(v, index));
-    }
-
-    public final JsonT updateIn(final Function1<JsonT, JsonT> f, Object... keys) {
-        return f.apply(getIn(keys)).affix().fold(x -> insertIn(x, keys), this::fail);
-    }
-
-    public final <A, B> JsonT updateIn (final Function1<A, B> f, final Convert<Json, A> from, final Convert<B, Json> to, Object... keys) {
-        return getIn(keys)
-                .affix()
-                .flatMap(from::convert)
-                .map(f)
-                .flatMap(to::convert)
-                .fold(j -> insertIn(j, keys), this::fail);
+        return consume(get(in).as(g), v -> insert(v, in));
     }
 
     public final JsonT merge (final JsonT that) {
         if (json.type == JsonObject) {
             if (that.json.type == JsonObject) {
                 return succeed(new JObj(jobj().value.merge(that.jobj().value, (a, b) -> b)));
+            }
+            else if (that.json.type == JsonEmpty) {
+                return this;
+            }
+            else return that.affix().fold(j -> fail("%s is not a JSON object", j), this::fail);
+        }
+        else if (json.type == JsonEmpty) {
+            if (that.json.type == JsonObject) {
+                return that;
             }
             else return that.affix().fold(j -> fail("%s is not a JSON object", j), this::fail);
         }
@@ -353,16 +293,7 @@ public class JsonT {
         else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
     }
 
-    public final Either<String, Json> traverse (final Function2<String, JsonT, Either<String, JsonT>> f) {
-        final HashMap<String, Json> hm = new HashMap<>();
-        if (json.type == JsonObject) {
-            for (IEntry<String, Json> e : jobj().value) {
-                final Either<String, Json> result = subwalk(e, f);
-                if (result.isRight()) result.consume(json -> hm.put(e.key(), json), x -> {});
-                else return Either.left(result.error());
-            }
-        }
-        else return Either.left(String.format("Cannot traverse over json type `%s`.", json.type));
-        return Either.right(new JObj(Map.from(hm)));
+    public static In in(final Object... path) {
+        return new In(path);
     }
 }

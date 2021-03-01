@@ -17,30 +17,37 @@ For a list of the things that currently may or may not work, take a look at the 
 ## Usage
 
 ```java
-import nemesis.json.JsonOps;
+import static nemesis.json.JsonOps.*;
+import static nemesis.coerce.DefaultConvers.JSON_TO_LONG;
 
 public static void main (String... args) {
     var json1 = "{ \"hello\" : \"world\" }";
     var json2 = "{ \"numbers\" : [{ \"first\" : 1 }, { \"second\" : 2 }] }";
-    
-    var modified = JsonOps
-    .parse(json1)
-    .insert("Mark", "Oh-Hai")
-    .insertIn("value", "Deep", "Nested", "Structure")
-    .remove("hello")
-    .merge(JsonOps.parse(json2))
-    .updateIn((n: Integer) -> n + 1, "numbers", 1, "second")
-    .affix()
-    .stringify()
 
-    System.out.println(modified);
-}
+    var modified = parse(json1)
+         .insert("Mark", in("Oh-Hai"))
+         .insert("value", in("Deep", "Nested", "Structure"))
+         .remove("hello")
+         .merge(parse(json2))
+         .update(JSON_TO_LONG, a -> a + 1, in("numbers", 1, "second"))
+         .affix()
+         .map(json -> json.stringify());
 
-// "{ \"Oh-Hai\" : \"Mark\",
-//    \"Deep\" : { \"Nested\" : { \"Structure\" : \"value\" }}
-//    \"numbers\" : [{ \"first\" : 1 }, { \"second\" : 3 }] }
+     System.out.println(modified);
+ }
+//    {
+//        "Deep":{
+//          "Nested":{
+//            "Structure":"value"
+//              }
+//          },
+//        "numbers":[
+//          { "first":1 },
+//          { "second":3 }
+//          ],
+//        "Oh-Hai":"Mark"
+//    }
 ```
-
 See [API](./docs/api.md) for more details and examples.
 ## License
 

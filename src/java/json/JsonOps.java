@@ -6,7 +6,11 @@ import json.data.*;
 import json.parser.Parser;
 import util.Either;
 
+import static json.data.JsonT.*;
+
 public class JsonOps {
+
+    public  static In in (final Object... path) { return JsonT.in(path); }
 
     public static Json empty() {
         return JEmpty.instance;

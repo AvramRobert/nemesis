@@ -4,8 +4,7 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (json.data JsonT JNum)
-           (json.coerce DefaultConverters)))
+  (:import (json.coerce DefaultConverters)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-clj-json {:max-depth    2
@@ -21,7 +20,7 @@
                                       :max-elements 3})
             key        (gen/not-empty gen/string-alphanumeric)]
     (let [n-associatee (clj->nem associatee)
-          computed     (transform #(.insert % n-associatee key) json-clj)
+          computed     (transform (insert-j n-associatee [key]) json-clj)
           expected     (assoc json-clj key associatee)]
       (is (= expected computed)))))
 
@@ -34,9 +33,8 @@
                            (gen/not-empty)
                            (gen/vector)
                            (gen/not-empty))]
-    (let [n-keys       (into-array Object keys)
-          n-associatee (clj->nem associatee)
-          computed     (transform #(.insertIn % n-associatee n-keys) json-clj)
+    (let [n-associatee (clj->nem associatee)
+          computed     (transform (insert-j n-associatee keys) json-clj)
           expected     (assoc-in json-clj keys associatee)]
       (is (= expected computed)))))
 
@@ -47,8 +45,7 @@
                                       :max-elements 3})]
     (let [keys         (rand-keyseq json-clj)
           n-associatee (clj->nem associatee)
-          n-keys       (into-array Object keys)
-          computed     (transform #(.insertIn % n-associatee n-keys) json-clj)
+          computed     (transform (insert-j n-associatee keys) json-clj)
           expected     (assoc-in json-clj keys associatee)]
       (is (= expected computed)))))
 
@@ -58,8 +55,7 @@
     (let [all-keys (keys json-clj)
           amount   (rand-int (count all-keys))
           keys     (->> all-keys (shuffle) (take amount))
-          n-keys   (into-array String keys)
-          computed (transform #(.remove % n-keys) json-clj)
+          computed (transform (remove-j keys) json-clj)
           expected (apply dissoc json-clj keys)]
       (is (= expected computed)))))
 
@@ -70,8 +66,8 @@
                                               :max-elements 3}))]
     (let [key        (-> json-clj (keys) (rand-nth))
           index      (rand-int (count arr-clj))
-          computed-m (transform #(.get ^JsonT % ^String key) json-clj)
-          computed-a (transform #(.get ^JsonT % ^Long index) arr-clj)
+          computed-m (transform (get-j [key]) json-clj)
+          computed-a (transform (get-j [index]) arr-clj)
           expected-m (get json-clj key)
           expected-a (get arr-clj index)]
       (is (= expected-m computed-m))
@@ -81,28 +77,27 @@
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
                                               :max-elements 3}))]
     (let [keys     (rand-keyseq json-clj)
-          n-keys   (into-array Object keys)
-          computed (transform #(.getIn % n-keys) json-clj)
+          computed (transform (get-j keys) json-clj)
           expected (get-in json-clj keys)]
       (is (= expected computed)))))
 
 (defspec updating 100
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
                                               :max-elements 3
-                                              :scalars      [gen/int]}))
+                                              :scalars      [gen/small-integer]}))
             new-key   gen-string-alpha
             new-value gen/nat]
     (let [key      (-> json-clj (keys) (rand-nth))
           elem     (json-clj key)
           updates {:map {:clj #(assoc % new-key new-value)
-                         :nem (fn [tree]
-                                (.update tree (function #(.insert % new-value new-key)) key))}
+                         :nem  (update-j (insert-j new-value [new-key]) [key]) }
                    :vec {:clj #(assoc % 0 new-value)
-                         :nem (fn [tree]
-                                (.update tree (function #(.insert % new-value 0)) key))}
+                         :nem  (update-j (insert-j new-value [0]) [key])}
                    :scalar {:clj #(inc %)
-                            :nem (fn [tree]
-                                   (.update tree (function #(inc %)) DefaultConverters/JSON_TO_LONG DefaultConverters/LONG_TO_JSON key))}}
+                            :nem (update-j DefaultConverters/JSON_TO_LONG
+                                           inc
+                                           DefaultConverters/LONG_TO_JSON
+                                           [key])}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])
@@ -121,17 +116,16 @@
             new-key   gen-string-alpha
             new-value gen/nat]
     (let [keys     (rand-keyseq json-clj)
-          n-keys   (into-array Object keys)
           elem     (get-in json-clj keys)
           updates {:map {:clj #(assoc % new-key new-value)
-                         :nem (fn [tree]
-                                (.updateIn tree (function #(.insert % new-value new-key)) n-keys))}
+                         :nem (update-j (insert-j new-value [new-key]) keys)}
                    :vec {:clj #(assoc % 0 new-value)
-                         :nem (fn [tree]
-                                (.updateIn tree (function #(.insert % new-value 0)) n-keys))}
+                         :nem (update-j (insert-j new-value [0]) keys)}
                    :scalar {:clj inc
-                            :nem (fn [tree]
-                                   (.updateIn tree (function inc) DefaultConverters/JSON_TO_LONG DefaultConverters/LONG_TO_JSON n-keys))}}
+                            :nem (update-j DefaultConverters/JSON_TO_LONG
+                                           inc
+                                           DefaultConverters/LONG_TO_JSON
+                                           keys)}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])
@@ -148,6 +142,6 @@
                                                 :max-elements 3}))
             json-clj-2 (gen/not-empty (gen-map {:max-depth    2
                                                 :max-elements 3}))]
-    (let [computed (transform (fn [a b] (.merge a b)) json-clj-1 json-clj-2)
+    (let [computed (transform merge-j json-clj-1 json-clj-2)
           expected (merge json-clj-1 json-clj-2)]
       (is (= expected computed)))))

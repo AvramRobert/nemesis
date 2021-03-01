@@ -1,5 +1,6 @@
 package json.experimental;
 
+import json.JsonOps;
 import json.coerce.Convert;
 import json.data.JArr;
 import json.data.JObj;
@@ -9,6 +10,7 @@ import util.Colls;
 import util.Debug;
 import util.Either;
 
+import static json.JsonOps.*;
 import static json.coerce.DefaultConverters.*;
 
 import java.lang.reflect.Field;
@@ -69,7 +71,7 @@ public class Derivator {
             final Field field = fields[i];
             final Either<String, Json> result = coerceToJson(field, value);
             if (result.isRight()) {
-                obj = obj.insert(result.value(), field.getName());
+                obj = obj.insert(result.value(), in(field.getName()));
             } else return Either.left(result.error());
         }
         return obj.affix();
@@ -112,7 +114,7 @@ public class Derivator {
 
                 for (int i = 0; i < fields.length; i++) {
                     final Class<?> attClazz = fields[i].getType();
-                    final Either<String, ?> result = coerceFromJson(attClazz, jsonT.get(fields[i].getName()));
+                    final Either<String, ?> result = coerceFromJson(attClazz, jsonT.get(in(fields[i].getName())));
                     types[i] = attClazz;
                     if (result.isRight()) values[i] = result.value();
                     else return Either.left(result.error());
