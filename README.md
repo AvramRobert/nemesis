@@ -9,6 +9,8 @@ that should be coerced to some domain-object. (_think Jackson JsonNode, but bett
 
 It is, as such, somewhat of a nemesis to most other JSON libraries.  
 
+For a slightly more detailed introduction and rationale, please take a look [here](docs/intro.md). 
+
 ## Disclaimer
 **STILL IN ACTIVE DEVELOPMENT**  
 For a list of the things that currently may or may not work, take a look at the [current feature set](./docs/featureset.md).
