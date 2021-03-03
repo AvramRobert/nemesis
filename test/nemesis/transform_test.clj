@@ -161,3 +161,5 @@
     (let [computed (transform merge-j json-clj-1 json-clj-2)
           expected (merge json-clj-1 json-clj-2)]
       (is (= expected computed)))))
+
+;; FIXME: Test for inserting random java types that are somewhat conceptually equivalent to json (ex: Map<String, ?> or List<?>)

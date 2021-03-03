@@ -61,6 +61,13 @@ public class JsonT {
         return Either.left(String.format(msg, params));
     }
 
+    private String escape (final String s) {
+        return String.format("\"%s\"", s);
+    }
+
+    private String unescape (final String s) { return s.replace("\"", ""); }
+
+
     private Optional<Json> lookupKey(final String key) {
         return jobj().value.get(escape(key));
     }
@@ -77,12 +84,6 @@ public class JsonT {
         return (List<Json>) jarr().value.update(index, x -> value);
     }
 
-    private String escape (final String s) {
-        return String.format("\"%s\"", s);
-    }
-
-    private String unescape (final String s) { return s.replace("\"", ""); }
-
     private <A> JsonT consume (final Either<String, A> comp, final Function1<A, JsonT> f) {
         return comp.fold(f, this::fail);
     }
@@ -98,6 +99,7 @@ public class JsonT {
         else return Either.left(String.format("Value `%s` is not of type String", value.toString()));
     }
 
+    // this is may get deeply recursive
     @SuppressWarnings("unchecked")
     private <A> Either<String, Json> coerceJson(final A value) {
         if (value instanceof Number) {
@@ -109,12 +111,12 @@ public class JsonT {
             return Either.right(bool ? JBool.jtrue : JBool.jfalse);
         } else if (value == null) {
             return Either.right(JNull.instance);
-        } else if (value instanceof java.util.HashMap) {
-            final HashMap<Object, Object> map = (HashMap<Object, Object>) value;
-            return traversem(map, this::coerceString, this::coerceJson).map(JObj::new); // this is mutually recursive -- may not be that good
+        } else if (value instanceof java.util.Map) {
+            final java.util.Map<Object, Object> map = (java.util.Map<Object, Object>) value;
+            return traversem(map, s -> coerceString(s).map(this::escape), this::coerceJson).map(JObj::new);
         } else if (value instanceof java.util.List) {
             final java.util.List<Object> list = (java.util.List<Object>) value;
-            return traversel(list, this::coerceJson).map(l -> new JArr(List.from(l))); // this is mutually recursive -- may not be that good
+            return traversel(list, this::coerceJson).map(l -> new JArr(List.from(l)));
         } else
             return Either.left(String.format("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value));
     }

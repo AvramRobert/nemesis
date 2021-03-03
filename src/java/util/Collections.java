@@ -9,17 +9,15 @@ import java.util.function.Function;
 
 public class Collections {
 
-    public static <E, K1, K2, A, B> Either<E, Map<K2, B>> traversem(final java.util.HashMap<K1, A> kvs, final Function<K1, Either<E, K2>> kf, final Function<A, Either<E, B>> vf) {
+    public static <E, K1, K2, A, B> Either<E, Map<K2, B>> traversem(final java.util.Map<K1, A> kvs, final Function<K1, Either<E, K2>> kf, final Function<A, Either<E, B>> vf) {
         final HashMap<K2, B> map = new HashMap<>();
         for (java.util.Map.Entry<K1, A> entry : kvs.entrySet()) {
             final Either<E, B> res = kf
               .apply(entry.getKey())
-              .flatMap(k -> {
-                  return vf.apply(entry.getValue()).map(v -> {
-                      map.put(k, v);
-                      return v;
-                  });
-              });
+              .flatMap(k -> vf.apply(entry.getValue()).map(v -> {
+                  map.put(k, v);
+                  return v;
+              }));
             if (res.isLeft()) return Either.left(res.error());
         }
         return Either.right(Map.from(map));
@@ -37,13 +35,5 @@ public class Collections {
 
     public static <E, A, B> Either<E, List<B>> traversel_(final java.util.List<A> as, final Function<A, Either<E, B>> f) {
         return traversel(as, f).map(List::from);
-    }
-
-    public static <E, A> Either<E, java.util.List<A>> sequencel (final java.util.List<Either<E, A>> as) {
-        return traversel(as, x -> x);
-    }
-
-    public static <E, A> Either<E, List<A>> sequencel_(final java.util.List<Either<E, A>> as) {
-        return sequencel(as).map(List::from);
     }
 }
