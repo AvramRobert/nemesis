@@ -67,7 +67,6 @@ public class JsonT {
 
     private String unescape (final String s) { return s.replace("\"", ""); }
 
-
     private Optional<Json> lookupKey(final String key) {
         return jobj().value.get(escape(key));
     }

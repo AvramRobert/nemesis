@@ -19,7 +19,7 @@
   "~7 ms"
   (c/with-progress-reporting (c/bench (JsonParser/parseString json))))
 
-(defn parser-typed [json]
+(defn parser-nemesis [json]
   "~6 ms"
   (c/with-progress-reporting (c/bench (json.parser.Parser/parse json))))
 
@@ -36,5 +36,5 @@
       (String.)
       (f)))
 
-#_(deftest run-benchmark
-  (benchmark parser-play))
+(deftest run-benchmark
+  (benchmark parser-nemesis))

@@ -403,22 +403,19 @@ public class Parser {
 
     private boolean consumeAny() {
         skip();
-        final char current = text.charAt(cursor);
-        if      (number(current))      return consumeNumber(cursor);
-        else if (current == O_BRACKET) return consumeArr();
-        else if (current == O_CURLY)   return consumeObj();
-        else if (current == QUOTE)     return consumeString();
-        else if (current == N)         return consumeNull();
-        else if (current == T)         return consumeTrue();
-        else if (current == F)         return consumeFalse();
-        else if (current == MINUS)     return consumeSignedNumber();
-        else if (current == PLUS)      return consumeSignedNumber();
-        else                           return unexpectedEnd(JSON, current);
-    }
-
-    private boolean consume() {
-        skip();
-        if (cursor < length) return consumeAny();
+        if (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (number(current))           return consumeNumber(cursor);
+            else if (current == O_BRACKET) return consumeArr();
+            else if (current == O_CURLY)   return consumeObj();
+            else if (current == QUOTE)     return consumeString();
+            else if (current == N)         return consumeNull();
+            else if (current == T)         return consumeTrue();
+            else if (current == F)         return consumeFalse();
+            else if (current == MINUS)     return consumeSignedNumber();
+            else if (current == PLUS)      return consumeSignedNumber();
+            else                           return unexpectedEnd(JSON, current);
+        }
         else return abruptEnd(JSON);
     }
 
@@ -427,7 +424,7 @@ public class Parser {
         if (input.isEmpty()) return Either.left("No input to parse.");
         else {
             try {
-                if (p.consume()) return Either.right(p.result);
+                if (p.consumeAny()) return Either.right(p.result);
                 else return Either.left(p.failure);
             } catch (Exception e) {
                 e.printStackTrace();
