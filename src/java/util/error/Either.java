@@ -1,5 +1,5 @@
-package util;
-import static util.Functions.*;
+package util.error;
+import static util.function.Functions.*;
 
 public interface Either<E, R> {
 

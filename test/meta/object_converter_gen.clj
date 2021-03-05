@@ -8,7 +8,7 @@
   import io.lacuna.bifurcan.Maps.Entry;
   import json.data.JObj;
   import json.data.Json;
-  import util.Either;
+  import util.error.Either;
   import java.util.Arrays;
 
   public class ObjectConverter<A> {

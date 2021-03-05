@@ -3,7 +3,7 @@ package json.parser;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.data.*;
-import util.Either;
+import util.error.Either;
 
 import java.util.ArrayList;
 import java.util.Arrays;

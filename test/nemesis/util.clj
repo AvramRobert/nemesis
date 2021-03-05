@@ -4,9 +4,9 @@
             [clojure.string :refer [join]]
             [clojure.pprint :refer [pprint]])
   (:import json.data.Json
-           (json.data JNum JString JObj JArr JBool JNull JsonT JType)
+           (json.data JNum JString JObj JArr JBool JNull JsonT)
            (io.lacuna.bifurcan List Map)
-           (util Functions$Function1)
+           (util.function Functions$Function1)
            (json JsonOps)
            (json.parser Parser)))
 

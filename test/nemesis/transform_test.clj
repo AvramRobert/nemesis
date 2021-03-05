@@ -153,7 +153,7 @@
           expected (update-in json-clj keys (f :clj))]
       (is (= expected computed)))))
 
-(defspec merging 100
+(defspec merging-objects 100
   (for-all [json-clj-1 (gen/not-empty (gen-map {:max-depth    2
                                                 :max-elements 3}))
             json-clj-2 (gen/not-empty (gen-map {:max-depth    2
@@ -161,5 +161,14 @@
     (let [computed (transform merge-j json-clj-1 json-clj-2)
           expected (merge json-clj-1 json-clj-2)]
       (is (= expected computed)))))
+
+(defspec merging-arrays 100
+  (for-all [json-clj-1 (gen/not-empty (gen-arr {:max-depth    2
+                                                :max-elements 3}))
+            json-clj-2 (gen/not-empty (gen-arr {:max-depth    2
+                                                :max-elements 3}))]
+           (let [computed (transform merge-j json-clj-1 json-clj-2)
+                 expected (concat json-clj-1 json-clj-2)]
+             (is (= expected computed)))))
 
 ;; FIXME: Test for inserting random java types that are somewhat conceptually equivalent to json (ex: Map<String, ?> or List<?>)

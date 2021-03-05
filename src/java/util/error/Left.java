@@ -1,6 +1,7 @@
-package util;
+package util.error;
 
-import util.Functions.Function1;
+import util.function.Functions;
+import util.function.Functions.Function1;
 
 public class Left<E, R> implements Either<E, R> {
     public final E error;

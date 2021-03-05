@@ -4,8 +4,8 @@
 
 (def class-def
   "package json.coerce;
-  import static util.Functions.*;
-  import util.Either;
+  import static util.function.Functions.*;
+  import util.error.Either;
   import json.data.Json;
   import json.data.JsonT;
 

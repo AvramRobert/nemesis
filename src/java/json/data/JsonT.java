@@ -4,13 +4,16 @@ import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.coerce.Convert;
-import util.Either;
+import util.error.Either;
+
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Optional;
-import static util.Collections.*;
-import static util.Functions.*;
-import static json.data.JType.*;
+import static util.function.Reducers.*;
+import static json.data.JType.JsonArray;
+import static json.data.JType.JsonObject;
+import static util.misc.Collections.traversel;
+import static util.misc.Collections.traversem;
+import static util.function.Functions.*;
 
 public class JsonT {
 
@@ -211,6 +214,12 @@ public class JsonT {
         else return assocInRec(json, value, 0, in.path).fold(this::succeed, this::fail);
     }
 
+    public final JsonT insert(final JsonT value, final In in) {
+        final Either<String, Json> affixed = value.affix();
+        if (affixed.isRight()) return insert(affixed, in);
+        else return fail("Cannot insert invalid json: ", affixed.error());
+    }
+
     public final <A> JsonT insert(final A value, final Convert<A, Json> to, final In in) {
         if (in.path.length == 0) return this;
         else return to.convert(value).map(x -> insert(x, in)).fold(x -> x, this::fail);
@@ -236,7 +245,6 @@ public class JsonT {
         return consume(get(in).as(g), v -> insert(v, in));
     }
 
-    // FIXME: Support for JsonArray aswell?
     public final JsonT merge (final JsonT that) {
         if (json.type == JsonObject) {
             if (that.json.type == JsonObject) {
@@ -244,7 +252,13 @@ public class JsonT {
             }
             else return that.affix().fold(j -> fail("%s is not a JSON object", j), this::fail);
         }
-        else return fail("%s is not a JSON object", json);
+        else if (json.type == JsonArray) {
+            if (that.json.type == JsonArray) {
+                return succeed(new JArr((List<Json>) jarr().value.concat(that.jarr().value)));
+            }
+            else return that.affix().fold(j -> fail("%s is not a JSON array", j), this::fail);
+        }
+        else return fail("%s is neither a JSON object nor a JSON array", json);
     }
 
     public final JsonT merge (final Json that) {
@@ -255,22 +269,21 @@ public class JsonT {
         return f.convert(json);
     }
 
-    public final <A> Either<String, A> reduceObj (final A init,
-                                                  final Function3<A, String, JsonT, Either<String, A>> f) {
+    public final <A> Either<String, A> reduceObj(final A init,
+                                                 final Function3<A, String, JsonT, Either<String, A>> f) {
         A start = init;
         if (json.type == JsonObject) {
-            for (IEntry<String, Json> e: jobj ().value.entries()) {
+            for (IEntry<String, Json> e : jobj().value.entries()) {
                 final Either<String, A> res = f.apply(start, unescape(e.key()), e.value().transform());
-                if (res.isRight()) start     = res.value();
+                if (res.isRight()) start = res.value();
                 else return Either.left(res.error());
             }
             return Either.right(start);
-        }
-        else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
+        } else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
     }
 
-    public final <A> Either<String, A> reduceArr (final A init,
-                                                  final Function3<A, Integer, JsonT, Either<String, A>> f) {
+    public final <A> Either<String, A> reduceArr(final A init,
+                                                 final Function3<A, Integer, JsonT, Either<String, A>> f) {
         A start = init;
         if (json.type == JsonArray) {
             int i = 0;
@@ -281,8 +294,17 @@ public class JsonT {
                 else return Either.left(res.error());
             }
             return Either.right(start);
-        }
-        else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
+        } else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
+    }
+
+    public final <A> JsonT reduceObjJson(final A init,
+                                         final Function3<A, String, JsonT, JsonT> f) {
+        return null;
+    }
+
+    public final <A> JsonT reduceArrJson(final A init,
+                                         final Function3<A, Integer, JsonT, JsonT> f) {
+        return null;
     }
 
     public final Either<String, Json> affix() {

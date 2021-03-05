@@ -5,8 +5,8 @@ import json.data.JArr;
 import json.data.JObj;
 import json.data.Json;
 import json.data.JsonT;
-import util.Collections;
-import util.Either;
+import util.misc.Collections;
+import util.error.Either;
 
 import static json.JsonOps.*;
 import static json.Converters.*;

@@ -1,7 +1,8 @@
-package util;
+package util.misc;
 
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
+import util.error.Either;
 
 import java.util.ArrayList;
 import java.util.HashMap;

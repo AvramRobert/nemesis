@@ -5,7 +5,7 @@ import json.coerce.JsonConverter;
 import json.coerce.ObjectConverter;
 import json.data.*;
 import json.parser.Parser;
-import util.Either;
+import util.error.Either;
 
 import static json.data.JsonT.*;
 

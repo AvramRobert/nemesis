@@ -1,9 +1,9 @@
 package json.coerce;
 
-import util.Either;
-import util.Left;
-import util.Right;
-import util.Functions.Function1;
+import util.error.Either;
+import util.error.Left;
+import util.error.Right;
+import util.function.Functions.Function1;
 
 @FunctionalInterface
 public interface Convert <A, B> {

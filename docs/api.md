@@ -227,21 +227,27 @@ jsonT
 
 ###  Merging
 
-Two `JsonT`s can be merged together.
+Two `JsonT`s can be merged together if they're both either JSON objects or arrays respectively.
 
-**Note: This only works on JSON objects.**
-
+**Note:**
 ```java
-JsonT jsonT2 = parse("{ \"you\" : \"good\" }");
+JsonT jsonObj1 = parse("{ \"oh\" : \"my\" }");
+JsonT jsonObj2 = parse ("{ \"well\" : \"hi\" }")
 
-jsonT.merge(jsonT2);
+JsonT jsonArr1 = parse("[1, 2, 3, 4]");
+JsonT jsonArr2 = parse("[5, 6, 7, 8]");
+
+jsonObj1.merge(jsonObj2);
+jsonArr1.merge(jsonArr2);
 ```
 
 ```json
 {
-  "hello": "world",
-  "you": "good"
+  "oh": "my",
+  "well": "hi"
 }
+
+[1, 2, 3, 4, 5, 6, 7, 8]
 ```
 
 ### Casting
@@ -286,8 +292,110 @@ Convert<Json, Greeting> converter = json ->
 
 ### Reducing
 
-// TODO:
+Any `JsonT` can be reduced over shallowly for both JSON objects and JSON arrays.
 
+#### Objects
+
+Object reduction occurs at the upper-most entry level and doesn't recursively traverse down the structure. 
+
+For tree-wise traversal, please take a look [here](api.md#traversing)
+ 
+The reducing function receives the intermediate result, the entry's key and its value as a `JsonT`.
+
+* **With conversion**
+
+    One can reduce and convert every element to some value `B`. This implicitly forces the reduction function
+    to unconditionally expect a return of `Either<String, A>`.
+    
+    Signature: 
+```java
+Function3<A, String, JsonT, Either<String, A>>
+```
+```java
+import nemesis.json.Converters.JSON_TO_STRING;
+
+jsonT.reduceObj("Greeting:", (inter, key, jsonValue) -> {
+    return jsonValue.as(JSON_TO_STRING).map(value -> inter + " " + key + " " + value);
+});
+```
+
+```java
+"Greeting: hello world"
+``` 
+
+* **Without conversion**
+
+    A reduction can be performed without the need of conversion. This implicitly forces the reduction function
+    to unconditionally expect a return of `JsonT`.
+    
+    Signature: 
+```java
+Function3<A, String, JsonT, JsonT>
+```
+```java
+
+JsonT json = parse("{ \"value\" : { \"first\" : 1 } }");
+
+json.reduceObjJson(empty.transform(), (inter, key, jsonValue) -> {
+    return inter.insert(key, jsonValue.get(in("first")));
+});
+```
+
+```json
+{ "value" : 1 }
+```
+
+#### Arrays
+
+Array reduction only occurs at the sequence level and doesn't recursively traverse down the structure.
+
+For tree-wise traversal, please take a look [here](api.md#traversing)
+
+The reducing function receives the intermediate result, the current element's index and the element's value as `JsonT`.
+
+* **With conversion**
+
+    One can reduce and convert every element to some value `B`. This implicitly forces the reduction function
+    to unconditionally expect a return of `Either<String, A>`.
+    
+    Signature: 
+```java
+Function3<A, Integer, JsonT, Either<String, A>>
+```
+    
+```java
+import nemesis.json.Converters.JSON_TO_INT;
+
+JsonT json = parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
+
+json.reduceArr(0, (inter, index, jsonValue) -> {
+    jsonValue.get(in("value")).as(JSON_TO_INT).map(x -> x + inter);
+});
+```
+
+* **Without conversion**
+
+    A reduction can be performed without the need of conversion. This implicitly forces the reduction function
+    to unconditionally expect a return of `JsonT`.
+
+    Signature: 
+```java
+Function3<A, Integer, JsonT, JsonT>
+```
+```java
+JsonT json = parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
+
+json.reduceArrJson(empty.transform(), (inter, index, jsonValue) -> {
+    inter.insert(jsonValue.get(in("value")), index);
+});
+```
+
+```json
+[1, 2, 3, 4]
+```
+## Traversing
+
+**NOT YET SUPPORTED**
 
 ### Creating
 
