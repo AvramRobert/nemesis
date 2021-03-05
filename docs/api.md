@@ -14,7 +14,7 @@
     * [Casting](api.md#casting)
     * [Reducing](api.md#reducing)
     * [Traversing](api.md#traversing) (not supported yet)
-    * [Terminating](api.md#terminating--affixing-structure)
+    * [Affixing](api.md#terminating--affixing-structure)
 1. [Converting](api.md#converting)
     * [JSON to Object conversion](api.md#json-converters)
     * [Object to JSON conversion](api.md#object-converters)
@@ -113,7 +113,9 @@ jsonT
     .insert("bla", in("field-3"))
     .insert(null, in("field-4"))
     .insert(Arrays.asList(1, 2, 3, 4)), in("field-5"))
-    .insert(Map.of("a", "b"), in("field-6"));
+    .insert(new int[]{1, 2, 3, 4}, in("field-6"))
+    .insert(new HashSet(Arrays.asList(1, 2, 3, 4)), in("field-7"))
+    .insert(Map.of("a", "b"), in("field-8"));
 ```
 
 ```json
@@ -129,10 +131,21 @@ jsonT
     3,
     4
   ],
-  "field-6": {
+  "field-6": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "field-7": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "field-8": {
     "a": "b"
   }
-
 ```
 #### Arbitrary values
 
@@ -273,26 +286,30 @@ jsonArr1.merge(jsonArr2);
 
 ### Casting
 
+A `JsonT` can be materialised to a concrete type `A` provided a `Convert<Json, A>` instance for that type.
+
+For more information on `Convert`, take a look [here](api.md#converting).
+
 #### Casting to JSON types
 
-A `JsonT` can be materialised to a concrete type `A` provided a `Convert<Json, A>` instance.
+Converters for basic JSON types can be found in `nemesis.json.Converters`
 
-**Note: Converters for JSON types can be found in `nemesis.json.Converters`**
+A list of all default converters can be found [here](api.md#default-json-converters).
+
 ```java
 import static nemesis.json.Converters.JSON_TO_STRING;
 
 jsonT.get(in("hello")).as(JSON_TO_STRING); // Either<String, String>
 ```
 or
-
 ```java
 jsonT.getAs(JSON_TO_STRING, in("hello")); // Either<String, String>
 ```
 
 #### Casting to arbitrary types
 
-Like [previously](api.md#casting-to-json-types) mentioned, any `JsonT` can be coerced to an arbitrary type `A` given
-that one constructs an `Convert<Json, A>` instance for that type.
+Like [previously](api.md#casting) mentioned, any `JsonT` can be coerced to an arbitrary type `A` given
+that one constructs a `Convert<Json, A>` instance for that type.
 
 Luckily, there's help for that. More in [custom converters](api.md#json-converters).
 
@@ -307,7 +324,7 @@ static class Greeting {
 
 Convert<Json, Greeting> converter = json ->
     convert(json)
-        .with(json -> json.get("hello").as(JSON_TO_STRING), 
+        .with(json -> json.getAs(JSON_TO_STRING, in("hello")).as(), 
               value -> new Greeting(value));
 ```
 
@@ -320,15 +337,11 @@ Any `JsonT` can be reduced shallowly for both JSON objects and JSON arrays.
 Object reduction occurs at the upper-most level of entries and doesn't recursively traverse down the structure. 
 
 For tree-wise traversal, please take a look [here](api.md#traversing).
- 
-The reducing function receives the intermediate result, the entry's key and its value as a `JsonT`.
 
-* **With conversion**
+Because the reduction may very well need to coerce the inner `JsonT` to some concrete type, the reduction function
+is required to enforce a return of `Either<String, A>`.
 
-    One can reduce and convert every element to some value `B`. This implicitly forces the reduction function
-    to unconditionally expect a return of `Either<String, A>`.
-    
-    Signature: 
+Signature: 
 ```java
 Function3<A, String, JsonT, Either<String, A>>
 ```
@@ -344,28 +357,6 @@ jsonT.reduceObj("Greeting:", (inter, key, jsonValue) -> {
 "Greeting: hello world"
 ``` 
 
-* **Without conversion**
-
-    A reduction can be performed without the need of conversion. This implicitly forces the reduction function
-    to unconditionally expect a return of `JsonT`.
-    
-    Signature: 
-```java
-Function3<A, String, JsonT, JsonT>
-```
-```java
-
-JsonT json = parse("{ \"value\" : { \"first\" : 1 } }");
-
-json.reduceObjJson(empty.transform(), (inter, key, jsonValue) -> {
-    return inter.insert(key, jsonValue.get(in("first")));
-});
-```
-
-```json
-{ "value" : 1 }
-```
-
 #### Arrays
 
 Array reduction only occurs at the sequence level and doesn't recursively traverse down the structure.
@@ -374,12 +365,10 @@ For tree-wise traversal, please take a look [here](api.md#traversing).
 
 The reducing function receives the intermediate result, the current element's index and the element's value as `JsonT`.
 
-* **With conversion**
+Because the reduction may very well need to coerce the inner `JsonT` to some concrete type, the reduction function
+is required to enforce a return of `Either<String, A>`.
 
-    One can reduce and convert every element to some value `B`. This implicitly forces the reduction function
-    to unconditionally expect a return of `Either<String, A>`.
-    
-    Signature: 
+Signature: 
 ```java
 Function3<A, Integer, JsonT, Either<String, A>>
 ```
@@ -390,30 +379,10 @@ import nemesis.json.Converters.JSON_TO_INT;
 JsonT json = parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
 
 json.reduceArr(0, (inter, index, jsonValue) -> {
-    jsonValue.get(in("value")).as(JSON_TO_INT).map(x -> x + inter);
+    return jsonValue.getAs(JSON_TO_INT, in("value")).map(x -> x + inter);
 });
 ```
 
-* **Without conversion**
-
-    A reduction can be performed without the need of conversion. This implicitly forces the reduction function
-    to unconditionally expect a return of `JsonT`.
-
-    Signature: 
-```java
-Function3<A, Integer, JsonT, JsonT>
-```
-```java
-JsonT json = parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
-
-json.reduceArrJson(empty.transform(), (inter, index, jsonValue) -> {
-    inter.insert(jsonValue.get(in("value")), index);
-});
-```
-
-```json
-[1, 2, 3, 4]
-```
 ### Traversing
 
 **NOT YET SUPPORTED**
@@ -430,7 +399,7 @@ empty.transform().insert("hello", "world");
 { "hello" : "world" }
 ```
 
-### Terminating / Affixing structure
+### Affixing
 
 To materialise a `JsonT` to a concrete `Json` type, it's transformation has to be terminated.
 
@@ -452,6 +421,22 @@ Converting `Json` to an arbitrary type `A` is done by defining an instance of `C
 #### Default Json Converters
 
 For the most basic of JSON types, _nemesis_ already provides converters in `nemesis.json.Converters`.
+
+Here's a list:
+
+* `JSON_TO_INT` -> `Convert<Json, Int>`
+* `JSON_TO_LONG` -> `Convert<Json, Long>`
+* `JSON_TO_DOUBLE` -> `Convert<Json, Double>`
+* `JSON_TO_FLOAT` -> `Convert<Json, Float>`
+* `JSON_TO_STRING` -> `Convert<Json, String>`
+* `JSON_TO_BOOLEAN` -> `Convert<Json, Boolean>`
+* `JSON_TO_NULL`    -> `Convert<Json, Void>`
+* `JSON_TO_LIST`    -> `Convert<Json, List<Json>>`
+* `JSON_TO_SET`    -> `Convert<Json, Set<Json>>`
+* `listOf(Convert<Json, A>)` -> `Convert<Json, List<A>>`
+* `setOf(Convert<Json, A>)` -> `Convert<Json, Set<A>>`
+* `mapOf(Convert<Json, A>)`  -> `Convert<Json, Map<String, A>>`
+* `optionalOf(Convert<Json, A>)` -> `Convert<Json, Optional<A>>`
 
 #### Custom Json Converters
 
@@ -531,6 +516,22 @@ Convert<Json, Figure> figure = json ->
 
 For the most basic of JSON types, _nemesis_ already provides converters in `nemesis.json.Converters`.
 
+Here's a list:
+
+* `INT_TO_JSON` -> `Convert<Int, Json>`
+* `LONG_TO_JSON` -> `Convert<Long, Json>`
+* `DOUBLE_TO_JSON` -> `Convert<Double, Json>`
+* `FLOAT_TO_JSON` -> `Convert<Float, Json>`
+* `STRING_TO_JSON` -> `Convert<String, Json>`
+* `BOOLEAN_TO_JSON` -> `Convert<Boolean, Json>`
+* `NULL_TO_JSON`    -> `Convert<Void, Json>`
+* `LIST_TO_JSON`    -> `Convert<List<Json>, Json>`
+* `SET_TO_JSON` -> `Convert<Set<Json>, Json>`
+* `listFrom(Convert<A, Json>)` -> `Convert<List<A>, Json>`
+* `setFrom(Convert<A, Json>`) -> `Convert<Set<A>, Json>`
+* `mapFrom(Convert<A, Json>)` -> `Convert<Map<String, A>, Json>`
+* `optionalFrom(Convert<A, Json>)` -> `Convert<Optional<A>, Json>`
+
 #### Custom Object Converters
 
 When it comes to creating your own, _nemesis_ provides some help.
@@ -599,7 +600,7 @@ Convert<Figure, Json> jfigure = figure ->
 
 ### Automatic converter derivation
 
-I just can't be bothered right now.
+I just can't be bothered.
 
 ## Error Handling
 

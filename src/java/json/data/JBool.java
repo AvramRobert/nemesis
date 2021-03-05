@@ -1,7 +1,6 @@
 package json.data;
 
 public class JBool extends Json {
-    final JType type;
     public final boolean value;
 
     public JBool(final boolean value) {

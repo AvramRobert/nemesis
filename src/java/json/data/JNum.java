@@ -1,7 +1,6 @@
 package json.data;
 
 public class JNum extends Json {
-    final JType type;
     public final Number value;
     public JNum(final Number value) {
         this.value = value;

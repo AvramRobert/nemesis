@@ -12,7 +12,6 @@
 
 * API improvements
 * Complete documentation 
-* Reflective derivation of converters for object coercion (currently experimental)
 
 ### Planned
 

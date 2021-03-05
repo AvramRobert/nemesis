@@ -4,15 +4,20 @@ import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 import json.coerce.Convert;
+import json.coerce.General;
 import util.error.Either;
 
 import java.util.Arrays;
 import java.util.Optional;
+
+import static json.coerce.General.coerceLong;
+import static json.coerce.General.coerceString;
 import static json.data.JType.JsonArray;
 import static json.data.JType.JsonObject;
-import static util.misc.Collections.traversel;
-import static util.misc.Collections.traversem;
-import static util.function.Functions.*;
+import static util.function.Functions.Function1;
+import static util.function.Functions.Function3;
+import static util.misc.Strings.escape;
+import static util.misc.Strings.unescape;
 
 public class JsonT {
 
@@ -63,12 +68,6 @@ public class JsonT {
         return Either.left(String.format(msg, params));
     }
 
-    private String escape (final String s) {
-        return String.format("\"%s\"", s);
-    }
-
-    private String unescape (final String s) { return s.replace("\"", ""); }
-
     private Optional<Json> lookupKey(final String key) {
         return jobj().value.get(escape(key));
     }
@@ -87,38 +86,6 @@ public class JsonT {
 
     private <A> JsonT consume (final Either<String, A> comp, final Function1<A, JsonT> f) {
         return comp.fold(f, this::fail);
-    }
-
-    private <A> Either<String, Long> coerceLong(final A value) {
-        if (value instanceof Long) return Either.right((Long) value);
-        else if (value instanceof Integer) return Either.right(Integer.toUnsignedLong((Integer) value));
-        else return Either.left(String.format("Value `%s` is not of type Long", value.toString()));
-    }
-
-    private <A> Either<String, String> coerceString(final A value) {
-        if (value instanceof String) return Either.right((String) value);
-        else return Either.left(String.format("Value `%s` is not of type String", value.toString()));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <A> Either<String, Json> coerceJson(final A value) {
-        if (value instanceof Number) {
-            return Either.right(new JNum((Number) value));
-        } else if (value instanceof String) {
-            return Either.right(new JString((String) value));
-        } else if (value instanceof Boolean) {
-            final boolean bool = (Boolean) value;
-            return Either.right(bool ? JBool.jtrue : JBool.jfalse);
-        } else if (value == null) {
-            return Either.right(JNull.instance);
-        } else if (value instanceof java.util.Map) {
-            final java.util.Map<Object, Object> map = (java.util.Map<Object, Object>) value;
-            return traversem(map, s -> coerceString(s).map(this::escape), this::coerceJson).map(JObj::new);
-        } else if (value instanceof java.util.List) {
-            final java.util.List<Object> list = (java.util.List<Object>) value;
-            return traversel(list, this::coerceJson).map(l -> new JArr(List.from(l)));
-        } else
-            return Either.left(String.format("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value));
     }
 
     private Either<String, Json> assocInObj(final JsonT json, final Json toAssoc, final int depth, final Object... keys) {
@@ -224,7 +191,7 @@ public class JsonT {
     }
 
     public final <A> JsonT insert(final A value, final In in) {
-        return insert(value, this::coerceJson, in);
+        return insert(value, General::coerceJson, in);
     }
 
     public final JsonT update(final Function1<JsonT, JsonT> f, final In in) {
@@ -293,16 +260,6 @@ public class JsonT {
             }
             return Either.right(start);
         } else return Either.left(String.format("Cannot reduce over json type `%s`.", json.type));
-    }
-
-    public final <A> JsonT reduceObjJson(final A init,
-                                         final Function3<A, String, JsonT, JsonT> f) {
-        return null;
-    }
-
-    public final <A> JsonT reduceArrJson(final A init,
-                                         final Function3<A, Integer, JsonT, JsonT> f) {
-        return null;
     }
 
     public final Either<String, Json> affix() {
