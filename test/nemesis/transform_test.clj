@@ -4,7 +4,7 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (json.coerce DefaultConverters)))
+  (:import (json Converters)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-clj-json {:max-depth    2
@@ -110,9 +110,9 @@
                    :vec {:clj #(assoc % 0 new-value)
                          :nem  (update-j (insert-j new-value [0]) [key])}
                    :scalar {:clj #(inc %)
-                            :nem (update-j DefaultConverters/JSON_TO_LONG
+                            :nem (update-j Converters/JSON_TO_LONG
                                            inc
-                                           DefaultConverters/LONG_TO_JSON
+                                           Converters/LONG_TO_JSON
                                            [key])}}
           f        (fn [api]
                      (cond
@@ -138,9 +138,9 @@
                    :vec {:clj #(assoc % 0 new-value)
                          :nem (update-j (insert-j new-value [0]) keys)}
                    :scalar {:clj inc
-                            :nem (update-j DefaultConverters/JSON_TO_LONG
+                            :nem (update-j Converters/JSON_TO_LONG
                                            inc
-                                           DefaultConverters/LONG_TO_JSON
+                                           Converters/LONG_TO_JSON
                                            keys)}}
           f        (fn [api]
                      (cond

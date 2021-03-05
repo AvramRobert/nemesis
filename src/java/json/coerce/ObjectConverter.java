@@ -4,17 +4,29 @@ import io.lacuna.bifurcan.Map;
 import io.lacuna.bifurcan.Maps.Entry;
 import json.data.JObj;
 import json.data.Json;
+import util.Either;
 
 import java.util.Arrays;
 
 public class ObjectConverter<A> {
-    private final Entry<String, Json> entry(final String key, final Json value) {
+    private final A a;
+
+    private Entry<String, Json> entry(final String key, final Json value) {
         return new Entry<>("\"" + key + "\"", value);
     }
 
     @SafeVarargs
-    private final JObj mapFrom(final Entry<String, Json>... entries) {
+    private JObj mapFrom(final Entry<String, Json>... entries) {
         return new JObj(Map.from(Arrays.asList(entries)));
+    }
+
+    public ObjectConverter(final A a) {
+        this.a = a;
+    }
+
+    public final Either<String, Json> with(final String key0, final Convert<A, Json> f0,
+                                           final String key1, final Convert<A, Json> f1) {
+        return f0.convert(a).flatMap(t0 -> f1.convert(a).map(t1 -> mapFrom(entry(key0, t0), entry(key1, t1))));
     }
 
     public final Convert<A, Json> object(final String key0, final Convert<A, Json> f0) {

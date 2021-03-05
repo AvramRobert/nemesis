@@ -38,6 +38,6 @@ changes are allowed to happen. These emphasise two properties:
     
     Changes are only "materialised" after a particular function has been called which "terminates" the transformation. 
     
-    That function then returns an `nemesis.util.Either<String, Json>`, which signals its outcome, either success or failure.
-    (Yes, the error is truly a `String`. Don't worry it contains more info than you may expect.)
+    That function then returns an `nemesis.util.Either<String, Json>`, which signals its outcome, either success or failure.\
+    (Yes, the error is truly a `String`. Don't worry, it contains more info than you may expect.)
     

@@ -11,12 +11,12 @@
   import java.util.Arrays;
 
   public class ObjectConverter<A> {
-    private final Entry<String, Json> entry(final String key, final Json value) {
+    private Entry<String, Json> entry(final String key, final Json value) {
       return new Entry<>(\"\\\"\" + key + \"\\\"\", value);
     }
 
     @SafeVarargs
-    private final JObj mapFrom(final Entry<String, Json>... entries) {
+    private JObj mapFrom(final Entry<String, Json>... entries) {
       return new JObj(Map.from(Arrays.asList(entries)));
     }
 

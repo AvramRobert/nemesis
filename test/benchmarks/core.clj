@@ -36,5 +36,5 @@
       (String.)
       (f)))
 
-(deftest run-benchmark
+#_(deftest run-benchmark
   (benchmark parser-nemesis))

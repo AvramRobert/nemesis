@@ -236,6 +236,7 @@ public class JsonT {
         return consume(get(in).as(g), v -> insert(v, in));
     }
 
+    // FIXME: Support for JsonArray aswell?
     public final JsonT merge (final JsonT that) {
         if (json.type == JsonObject) {
             if (that.json.type == JsonObject) {

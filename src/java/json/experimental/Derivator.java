@@ -9,7 +9,7 @@ import util.Collections;
 import util.Either;
 
 import static json.JsonOps.*;
-import static json.coerce.DefaultConverters.*;
+import static json.Converters.*;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

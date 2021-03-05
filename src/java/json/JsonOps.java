@@ -25,9 +25,19 @@ public class JsonOps {
     public static <A> Either<String, A> parseAs(final Convert<Json, A> f, final String text) {
         return parse(text).as(f);
     }
-    public static <A> ObjectConverter<A> objectConverter() {
-        return new ObjectConverter<>();
+
+    public static <A> ObjectConverter<A> convert(final A a) {
+        return new ObjectConverter<>(a);
     }
+
+    // FIXME:
+    // Make both the object and json converters keepers of the `A` and `Json` types
+    // rename the primitives `with`
+    // make them all return their respective conversion types and not the `Convert` instance
+    // derive the current form of the objectConverter based on the new one
+    // Define `convert` functions here that
+    // Let the users specify the lambda.
+    // eg: Convert<Json, String> = json -> convert(json).with(...);
 
     public static String asString(final Json json) {
         return json.toString();

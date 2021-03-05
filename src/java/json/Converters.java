@@ -1,11 +1,12 @@
-package json.coerce;
+package json;
+import json.coerce.Convert;
 import json.data.*;
 import util.Collections;
 import util.Either;
 
 import java.util.*;
 
-public class DefaultConverters {
+public class Converters {
 
     public final <A> Convert<Json, Optional<A>> optional(final Convert<Json, A> f) {
         return json -> f.convert(json).fold(a -> Either.right(Optional.of(a)), x -> Either.right(Optional.empty()));
