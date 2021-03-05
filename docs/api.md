@@ -1,5 +1,26 @@
 # Nemesis API
 
+## Table of contents
+
+1. [Types and classes](api.md#types-and-classes-to-expect)
+1. [Parsing](api.md#parsing)
+1. [Transforming](api.md#transforming)
+    * [Inserting](api.md#inserting)
+    * [Removing](api.md#removing)
+    * [Updating](api.md#updating)
+    * [Retrieving](api.md#retrieving)
+    * [Merging](api.md#merging)
+    * [Creating](api.md#creating)
+    * [Casting](api.md#casting)
+    * [Reducing](api.md#reducing)
+    * [Traversing](api.md#traversing) (not supported yet)
+    * [Terminating](api.md#terminating--affixing-structure)
+1. [Converting](api.md#converting)
+    * [JSON to Object conversion](api.md#json-converters)
+    * [Object to JSON conversion](api.md#object-converters)
+    * [Automatic conversion](api.md#automatic-converter-derivation) (not supported)
+1. [Error handling](api.md#error-handling)
+
 ## Types and classes to expect
 
 ### `Json`
@@ -292,13 +313,13 @@ Convert<Json, Greeting> converter = json ->
 
 ### Reducing
 
-Any `JsonT` can be reduced over shallowly for both JSON objects and JSON arrays.
+Any `JsonT` can be reduced shallowly for both JSON objects and JSON arrays.
 
 #### Objects
 
-Object reduction occurs at the upper-most entry level and doesn't recursively traverse down the structure. 
+Object reduction occurs at the upper-most level of entries and doesn't recursively traverse down the structure. 
 
-For tree-wise traversal, please take a look [here](api.md#traversing)
+For tree-wise traversal, please take a look [here](api.md#traversing).
  
 The reducing function receives the intermediate result, the entry's key and its value as a `JsonT`.
 
@@ -349,7 +370,7 @@ json.reduceObjJson(empty.transform(), (inter, key, jsonValue) -> {
 
 Array reduction only occurs at the sequence level and doesn't recursively traverse down the structure.
 
-For tree-wise traversal, please take a look [here](api.md#traversing)
+For tree-wise traversal, please take a look [here](api.md#traversing).
 
 The reducing function receives the intermediate result, the current element's index and the element's value as `JsonT`.
 
@@ -393,7 +414,7 @@ json.reduceArrJson(empty.transform(), (inter, index, jsonValue) -> {
 ```json
 [1, 2, 3, 4]
 ```
-## Traversing
+### Traversing
 
 **NOT YET SUPPORTED**
 

@@ -8,7 +8,6 @@ import util.error.Either;
 
 import java.util.Arrays;
 import java.util.Optional;
-import static util.function.Reducers.*;
 import static json.data.JType.JsonArray;
 import static json.data.JType.JsonObject;
 import static util.misc.Collections.traversel;
@@ -101,7 +100,6 @@ public class JsonT {
         else return Either.left(String.format("Value `%s` is not of type String", value.toString()));
     }
 
-    // this is may get deeply recursive
     @SuppressWarnings("unchecked")
     private <A> Either<String, Json> coerceJson(final A value) {
         if (value instanceof Number) {
