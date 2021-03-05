@@ -1,6 +1,7 @@
 package json;
 
 import json.coerce.Convert;
+import json.coerce.JsonConverter;
 import json.coerce.ObjectConverter;
 import json.data.*;
 import json.parser.Parser;
@@ -30,20 +31,13 @@ public class JsonOps {
         return new ObjectConverter<>(a);
     }
 
-    // FIXME:
-    // Make both the object and json converters keepers of the `A` and `Json` types
-    // rename the primitives `with`
-    // make them all return their respective conversion types and not the `Convert` instance
-    // derive the current form of the objectConverter based on the new one
-    // Define `convert` functions here that
-    // Let the users specify the lambda.
-    // eg: Convert<Json, String> = json -> convert(json).with(...);
+    public static JsonConverter convert(final Json json) { return new JsonConverter(json); }
 
     public static String asString(final Json json) {
         return json.toString();
     }
 
-    public static <A> Either<String, Json> asJson (final Convert<A, Json> f, final A value) {
+    public static <A> Either<String, Json> asJson (final A value, final Convert<A, Json> f) {
         return f.convert(value);
     }
 }

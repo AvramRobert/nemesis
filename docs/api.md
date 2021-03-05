@@ -7,9 +7,16 @@
 
 ### `JsonT`
    * Type representing a json currently undergoing transformation.
+   * Supports the primary manipulative functions.
+   * Not a fixed JSON, transformation has to be terminated to get a `Json` out of it. (see [here](api.md#terminating--affixing-structure)).
+
+### `Either<A, B>`
+   * Left-biased disjunctive type used for representing successful and erroneous computations.
+   * The left-hand side is seen as the error type, whilst the right-hand side as the success type.
 
 ### `Convert<A, B>`
    * An interface describing the safe conversion from a type `A` to a type `B`.
+   * Equivalent to `Function<A, Either<String, B>>`
    
 ### `JsonConverter<A>`
    * A helper class to aid in writing `Convert<Json, A>` instances for json objects.
@@ -17,18 +24,30 @@
 ### `ObjectConverter<A>`
    * A helper class to aid in writing `Convert<A, Json>` instances for arbitrary objects.
 
-### `Either<A, B>`
-   * Left-biased disjunctive type used for representing successful and erroneous computations.
-   * The left-hand side is seen as the error type, whilst the right-hand side as the success type.
-
 ## Parsing
 
-Parsing reads directly into a `JsonT`.
+### To `JsonT`
+
+Generally, parsing reads directly into a `JsonT`.
 
 ```java
 import static nemesis.json.JsonOps.*;
 
 parse("{ \"hello\" : \"world\" }") // JsonT
+```
+
+### To an abitrary type
+
+You can however also parse directly to an arbitrary type `A`, given an instance of `Convert<Json, A>`.
+
+Luckily, there's help for that. More in [custom converters](api.md#json-converters).
+
+```java
+
+final String myJson = ...;
+final Convert<Json, MyType> myTypeConverter = ...;
+
+parseAs(myTypeConverter, myJson);
 ```
 
 ## Transforming
@@ -73,7 +92,7 @@ jsonT
     .insert("bla", in("field-3"))
     .insert(null, in("field-4"))
     .insert(Arrays.asList(1, 2, 3, 4)), in("field-5"))
-    .insert(Map.of("a", "b"), in("field-6"))
+    .insert(Map.of("a", "b"), in("field-6"));
 ```
 
 ```json
@@ -114,10 +133,10 @@ static class Point {
     }
 }
 
-Convert<Point, Json> pointConverter = 
-    point -> convert(point)
+Convert<Point, Json> pointConverter = point -> 
+            convert(point)
                 .with("a", p -> INT_TO_JSON.convert(p.a),
-                      "b", p -> INT_TO_JSON.convert(p.b))
+                      "b", p -> INT_TO_JSON.convert(p.b));
 
 jsonT.insert(new Point(1, 1), pointConverter, in("point"))
 ```
@@ -164,7 +183,7 @@ Entries can only be deleted at the top level. (Support for removal at arbitrary 
 ```java
 jsonT
     .insert(1, in("value"))
-    .remove("hello", "value")
+    .remove("hello", "value");
 ```
 
 ```json
@@ -182,7 +201,7 @@ import static nemesis.json.Converters.JSON_TO_INT;
 
 jsonT
     .insert(1, in("one", "level")
-    .update(JSON_TO_INT, n -> n + 1, in("one", "level"))
+    .update(JSON_TO_INT, n -> n + 1, in("one", "level"));
 ```
 
 ```json
@@ -203,7 +222,7 @@ Values can be retrieved from any level and any structure.
 ```json
 jsonT
   .insert(Arrays.asList(1, 2, 3), in("one", "level"))
-  .get(in("one", "level", 2))
+  .get(in("one", "level", 2));
 ```
 
 ###  Merging
@@ -213,9 +232,9 @@ Two `JsonT`s can be merged together.
 **Note: This only works on JSON objects.**
 
 ```java
-JsonT jsonT2 = parse("{ \"you\" : \"good\" }")
+JsonT jsonT2 = parse("{ \"you\" : \"good\" }");
 
-jsonT.merge(jsonT2)
+jsonT.merge(jsonT2);
 ```
 
 ```json
@@ -236,6 +255,11 @@ A `JsonT` can be materialised to a concrete type `A` provided a `Convert<Json, A
 import static nemesis.json.Converters.JSON_TO_STRING;
 
 jsonT.get(in("hello")).as(JSON_TO_STRING); // Either<String, String>
+```
+or
+
+```java
+jsonT.getAs(JSON_TO_STRING, in("hello")); // Either<String, String>
 ```
 
 #### Casting to arbitrary types
@@ -277,7 +301,7 @@ empty.transform().insert("hello", "world");
 { "hello" : "world" }
 ```
 
-### Terminating
+### Terminating / Affixing structure
 
 To materialise a `JsonT` to a concrete `Json` type, it's transformation has to be terminated.
 
@@ -441,7 +465,7 @@ Convert<Line, Json> jline = line ->
 
 Convert<Figure, Json> jfigure = figure ->
     convert(figure)
-        .with("lines", f -> listFrom(line).convert(f.lines));
+        .with("lines", f -> listFrom(jline).convert(f.lines));
 ```
 
 ### Automatic converter derivation
@@ -462,7 +486,7 @@ The `Either` data structure is a left-biased version of the typical one you may 
    
 Either is a simple data type or interface, that has two implementations (often called `Left` and `Right`).   
 The idea behind it is that, whilst the interface itself represents two things at the same time, 
-a concrete instance of it can _either_ only be one instantiation or the other (`Left` or `Right`), but not both at the same time.
+a concrete instance of it can _either_ only be one or the other (`Left` or `Right`), but not both at the same time.
 
 It thus represents a _disjuction_ and is fairly handy for abstractly describing two things at the same time,
 that at runtime break down to just one. For example, explicitly denoting that a function may fail or succeed
