@@ -1,4 +1,4 @@
-package json.data;
+package json.model;
 
 public final class JString extends Json {
     public final String value;

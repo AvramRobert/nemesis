@@ -1,4 +1,4 @@
-package json.data;
+package json.model;
 
 public class JBool extends Json {
     public final boolean value;

@@ -1,4 +1,4 @@
-package json.data;
+package json.model;
 
 public class JNum extends Json {
     public final Number value;

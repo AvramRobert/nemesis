@@ -172,3 +172,4 @@
              (is (= expected computed)))))
 
 ;; FIXME: Test for inserting random java types that are somewhat conceptually equivalent to json (ex: Map<String, ?> or List<?>)
+;; FIXME: Test for failure cohesion, i.e. if it fails once, any subsequent operation should not be performed.

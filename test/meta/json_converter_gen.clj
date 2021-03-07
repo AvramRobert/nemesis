@@ -6,8 +6,8 @@
   "package json.coerce;
   import static util.function.Functions.*;
   import util.error.Either;
-  import json.data.Json;
-  import json.data.JsonT;
+  import json.model.Json;
+  import json.model.JsonT;
 
   public class JsonConverter {
     private final Json json;

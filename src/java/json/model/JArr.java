@@ -1,4 +1,4 @@
-package json.data;
+package json.model;
 
 import io.lacuna.bifurcan.List;
 

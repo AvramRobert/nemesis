@@ -3,8 +3,7 @@
             [clojure.test.check.generators :as gen]
             [clojure.string :refer [join]]
             [clojure.pprint :refer [pprint]])
-  (:import json.data.Json
-           (json.data JNum JString JObj JArr JBool JNull JsonT)
+  (:import (json.model Json JNum JString JObj JArr JBool JNull JsonT)
            (io.lacuna.bifurcan List Map)
            (util.function Functions$Function1)
            (json JsonOps)

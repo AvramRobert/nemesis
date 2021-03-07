@@ -1,7 +1,7 @@
 package json.coerce;
 
 import io.lacuna.bifurcan.List;
-import json.data.*;
+import json.model.*;
 import util.error.Either;
 import util.misc.Strings;
 
@@ -12,12 +12,12 @@ public class General {
     public static <A> Either<String, Long> coerceLong(final A value) {
         if (value instanceof Long) return Either.right((Long) value);
         else if (value instanceof Integer) return Either.right(Integer.toUnsignedLong((Integer) value));
-        else return Either.left(String.format("Value `%s` is not of type Long", value.toString()));
+        else return Either.left("Value `%s` is not of type Long", value.toString());
     }
 
     public static <A> Either<String, String> coerceString(final A value) {
         if (value instanceof String) return Either.right((String) value);
-        else return Either.left(String.format("Value `%s` is not of type String", value.toString()));
+        else return Either.left("Value `%s` is not of type String", value.toString());
     }
 
     @SuppressWarnings("unchecked")
@@ -68,6 +68,6 @@ public class General {
             return traverseSet(set, General::coerceJson).map(l -> new JArr(List.from(l)));
         }
         else
-            return Either.left(String.format("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value));
+            return Either.left("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value);
     }
 }

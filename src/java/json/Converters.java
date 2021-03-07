@@ -1,9 +1,8 @@
 package json;
 
 import io.lacuna.bifurcan.IEntry;
-import io.lacuna.bifurcan.Sets;
 import json.coerce.Convert;
-import json.data.*;
+import json.model.*;
 import util.error.Either;
 import util.misc.Collection;
 import util.misc.Strings;

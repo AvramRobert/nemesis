@@ -3,15 +3,16 @@ package json;
 import json.coerce.Convert;
 import json.coerce.JsonConverter;
 import json.coerce.ObjectConverter;
-import json.data.*;
+import json.model.In;
+import json.model.JObj;
+import json.model.Json;
+import json.model.JsonT;
 import json.parser.Parser;
 import util.error.Either;
 
-import static json.data.JsonT.*;
-
 public class JsonOps {
 
-    public  static In in (final Object... path) { return JsonT.in(path); }
+    public  static In in (final Object... path) { return new In(path); }
 
     public static final Json empty = JObj.empty;
 

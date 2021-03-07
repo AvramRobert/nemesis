@@ -11,6 +11,10 @@ public interface Either<E, R> {
         return new Left<>(e);
     }
 
+    static <A> Either<String, A> left (final String msg, Object... params) {
+        return Either.left(String.format(msg, params));
+    }
+
     void consume (final Consumer1<R> f, final Consumer1<E> g);
 
     <B> B fold(final Function1<R, B> f, final Function1<E, B> g);

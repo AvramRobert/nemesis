@@ -1,4 +1,4 @@
-package json.data;
+package json.model;
 
 public class JNull extends Json {
     private JNull() {

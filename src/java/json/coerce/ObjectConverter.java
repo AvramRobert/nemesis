@@ -2,8 +2,8 @@ package json.coerce;
 
 import io.lacuna.bifurcan.Map;
 import io.lacuna.bifurcan.Maps.Entry;
-import json.data.JObj;
-import json.data.Json;
+import json.model.JObj;
+import json.model.Json;
 import util.error.Either;
 
 import java.util.Arrays;
