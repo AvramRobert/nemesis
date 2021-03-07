@@ -1,10 +1,14 @@
 package json.model;
 
 public final class In {
-    final boolean isEmpty;
-    final Object[] path;
+    public final boolean isEmpty;
+    public final Object[] path;
     public In(final Object[] path) {
         this.path = path;
         isEmpty = this.path.length == 0;
+    }
+
+    public final Object[] getPath() {
+        return path;
     }
 }

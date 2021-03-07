@@ -1,23 +1,21 @@
-(ns nemesis.util
-  (:require [cheshire.core :as json]
-            [clojure.test.check.generators :as gen]
-            [clojure.string :refer [join]]
+(ns nemesis.util.conversion
+  (:require [clojure.test :refer :all]
+            [cheshire.core :as json]
             [clojure.pprint :refer [pprint]])
-  (:import (json.model Json JNum JString JObj JArr JBool JNull JsonT)
+  (:import (json.model Json JNum JString JObj JArr JBool JNull)
            (io.lacuna.bifurcan List Map)
-           (util.function Functions$Function1)
+           (json.parser Parser)
+           (json.model JsonT)
            (json JsonOps)
-           (json.parser Parser)))
-
-(declare gen-arr gen-map)
+           (util.function Functions$Function1)))
 
 (deftype WEntry [key value])
 (deftype WMap [entries])
 
-(defn wentry? [e]
+(defn- wentry? [e]
   (instance? WEntry e))
 
-(defn wmap? [m]
+(defn- wmap? [m]
   (instance? WMap m))
 
 (defn- walker [f clj]
@@ -56,72 +54,6 @@
          (not-empty form)) (let [i (rand-int (count form))]
                              (cons i (lazy-seq (keyseq (nth form i)))))
     :else '()))
-
-
-(defn- deeper [{:keys [depth]
-                :or {depth 0}
-                :as opts}]
-  (assoc opts :depth (inc depth)))
-
-(def gen-double
-  (gen/double* {:infinite? false
-                :NaN?      false}))
-
-(def gen-nil
-  (gen/return nil))
-
-(def gen-string-alpha
-  (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
-
-(def ^:private default-scalars
-  [gen/int
-   gen-nil
-   gen-double
-   gen/boolean
-   gen-string-alpha
-   gen/string-alphanumeric])
-
-(defn gen-arr [{:keys [depth max-depth max-elements scalars]
-                :or {depth   0
-                     scalars default-scalars}
-                :as opts}]
-  (letfn [(rec-arr [scalars]
-            (gen/vector (gen/one-of [scalars
-                                     (gen-arr (deeper opts))
-                                     (gen-map (deeper opts))]) 0 max-elements))]
-    (if (> depth max-depth)
-      (gen/vector (gen/one-of scalars))
-      (rec-arr (gen/recursive-gen rec-arr (gen/one-of scalars))))))
-
-(defn gen-map [{:keys [depth max-depth max-elements scalars]
-                :or {depth   0
-                     scalars default-scalars}
-                :as opts}]
-  (letfn [(rec-map [scalars]
-            (gen/map gen-string-alpha
-                     (gen/one-of [scalars
-                                  (gen-arr (deeper opts))
-                                  (gen-map (deeper opts))])
-                     {:max-elements max-elements}))]
-    (if (> depth max-depth)
-      (gen/map gen-string-alpha (gen/one-of scalars))
-      (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
-
-(defn gen-clj-json [{:keys [scalars]
-                     :or   {scalars default-scalars}
-                     :as   opts}]
-  (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
-
-(def gen-faulty-json-string
-  (->> [(gen/return " ")
-        (gen/return "\n")
-        (gen/return "[{}")
-        (gen/return "{[]")
-        (gen/return "{\"A:")]
-       (gen/one-of)
-       (gen/vector)
-       (gen/not-empty)
-       (gen/fmap join)))
 
 (defn clj->nem [clj]
   (walker coerce clj))

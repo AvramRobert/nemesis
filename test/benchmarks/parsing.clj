@@ -1,4 +1,4 @@
-(ns benchmarks.core
+(ns benchmarks.parsing
   (:require [criterium.core :as c]
             [cheshire.core :as j]
             [clojure.test :refer [deftest]]

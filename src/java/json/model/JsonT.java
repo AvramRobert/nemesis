@@ -224,6 +224,7 @@ public class JsonT {
         else return blindRemove(keys);
     }
 
+    // FIXME: Don't allow nulls
     public final JsonT insert(final Json value, final In in) {
         if (failed || in.isEmpty) return this;
         else return blindInsert(value, in);

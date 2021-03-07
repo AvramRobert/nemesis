@@ -35,14 +35,6 @@ public class General {
         } else if (value == null) {
             return Either.right(JNull.instance);
 
-        } else if (value instanceof java.util.Map) {
-            final java.util.Map<Object, Object> map = (java.util.Map<Object, Object>) value;
-            return traverseMap(map, s -> coerceString(s).map(Strings::escape), General::coerceJson).map(JObj::new);
-
-        } else if (value instanceof java.util.List) {
-            final java.util.List<Object> list = (java.util.List<Object>) value;
-            return traverseList(list, General::coerceJson).map(l -> new JArr(List.from(l)));
-
         } else if (value instanceof Integer[]) {
             final Integer[] array = (Integer[]) value;
             return traverseArray(array, General::coerceJson).map(l -> new JArr(List.from(l)));
@@ -62,6 +54,14 @@ public class General {
         } else if (value instanceof Object[]) {
             final Object[] array = (Object[]) value;
             return traverseArray(array, General::coerceJson).map(l -> new JArr(List.from(l)));
+
+        } else if (value instanceof java.util.Map) {
+            final java.util.Map<Object, Object> map = (java.util.Map<Object, Object>) value;
+            return traverseMap(map, s -> coerceString(s).map(Strings::escape), General::coerceJson).map(JObj::new);
+
+        } else if (value instanceof java.util.List) {
+            final java.util.List<Object> list = (java.util.List<Object>) value;
+            return traverseList(list, General::coerceJson).map(l -> new JArr(List.from(l)));
 
         } else if (value instanceof java.util.Set) {
             final java.util.Set<Object> set = (java.util.Set<Object>) value;

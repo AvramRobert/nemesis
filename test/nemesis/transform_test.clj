@@ -1,13 +1,14 @@
 (ns nemesis.transform_test
   (:require [clojure.test :refer :all]
-            [nemesis.util :refer :all]
+            [nemesis.util.generators :refer :all]
+            [nemesis.util.conversion :refer :all]
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
   (:import (json Converters)))
 
 (defspec isomorphism 100
-  (for-all [json-clj (gen-clj-json {:max-depth    2
+  (for-all [json-clj (gen-json {:max-depth        2
                                     :max-elements 3})]
     (let [computed (-> json-clj (clj->nem) (nem->clj))
           expected json-clj]
@@ -32,7 +33,7 @@
 (defspec association 100
   (for-all [json-clj      (gen-map {:max-depth    2
                                     :max-elements 3})
-            clj-to-insert (gen-clj-json {:max-depth    2
+            clj-to-insert (gen-json {:max-depth        2
                                          :max-elements 3})
             key           (gen/not-empty gen/string-alphanumeric)]
     (let [nem-to-insert (clj->nem clj-to-insert)
@@ -43,7 +44,7 @@
 (defspec deep-association-create 100
   (for-all [json-clj      (gen-map {:max-depth    2
                                     :max-elements 3})
-            clj-to-insert (gen-clj-json {:max-depth    2
+            clj-to-insert (gen-json {:max-depth        2
                                          :max-elements 3})
             keys          (-> gen/string-alphanumeric
                               (gen/not-empty)
@@ -57,7 +58,7 @@
 (defspec deep-association-replace 100
   (for-all [json-clj   (gen/not-empty (gen-map {:max-depth    2
                                                 :max-elements 3}))
-            associatee (gen-clj-json {:max-depth    2
+            associatee (gen-json {:max-depth        2
                                       :max-elements 3})]
     (let [keys         (rand-keyseq json-clj)
           n-associatee (clj->nem associatee)
