@@ -10,6 +10,7 @@ pom.xml.asc
 .hgignore
 .hg/
 .idea
+*.iml
 
 # Compiled class file
 *.class
