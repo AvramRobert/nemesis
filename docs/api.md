@@ -57,11 +57,11 @@ import static nemesis.json.JsonOps.*;
 parse("{ \"hello\" : \"world\" }") // JsonT
 ```
 
-### To an abitrary type
+### To an arbitrary type
 
-You can however also parse directly to an arbitrary type `A`, given an instance of `Convert<Json, A>`.
+You can however also parse directly to an arbitrary type `A`, given an instance of `Convert<Json, A>` for that type.
 
-Luckily, there's help for that. More in [custom converters](api.md#json-converters).
+For more information on `Convert`, take a look [here](api.md#converting).
 
 ```java
 
@@ -82,9 +82,9 @@ JsonT jsonT = parse("{ \"hello\" : \"world\" }")
 
 ### Inserting
 
-#### `JsonT` nodes
+#### `Json` or `JsonT`
 
-The simplest insertion is of raw `JsonT` nodes.
+The simplest insertion is of either `Json` or `JsonT` values.
 
 ```java
 
@@ -102,9 +102,9 @@ jsonT.insert(jsonT2, in("node"));
 }
 ```
 
-#### Json-compliant values
+#### Raw values
 
-Any raw json-compliant value can be directly inserted into a `JsonT`.
+Any raw values can be directly inserted into a `JsonT`, **as long as they are part of the JSON specification**.
 
 ```java
 jsonT
@@ -151,7 +151,7 @@ jsonT
 
 For arbitrary types, you'll have to provide a `Convert<A, Json>` instance. 
 
-Luckily, there's help for that. More in [custom converters](api.md#object-converters).
+For more information on `Convert`, take a look [here](api.md#converting).
 
 ```java
 import static nemesis.json.coerce.ObjectConverter.object;
@@ -210,7 +210,7 @@ jsonT.insert(true, in("is", "this", "deep", "enough"))
 
 ### Removing
 
-Entries can only be deleted at the top level. (Support for removal at arbitrary nestedness)
+Entries can only be deleted at the top level. (Support for removal at arbitrary nestedness is on the way)
 
 **Note: This only works on JSON objects.**
 
@@ -311,7 +311,7 @@ jsonT.getAs(JSON_TO_STRING, in("hello")); // Either<String, String>
 Like [previously](api.md#casting) mentioned, any `JsonT` can be coerced to an arbitrary type `A` given
 that one constructs a `Convert<Json, A>` instance for that type.
 
-Luckily, there's help for that. More in [custom converters](api.md#json-converters).
+For more information on `Convert`, take a look [here](api.md#converting).
 
 ```java
 static class Greeting {
