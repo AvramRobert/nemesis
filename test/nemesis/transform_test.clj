@@ -8,8 +8,8 @@
   (:import (json Converters)))
 
 (defspec isomorphism 100
-  (for-all [json-clj (gen-json {:max-depth        2
-                                    :max-elements 3})]
+  (for-all [json-clj (gen-json {:max-depth    2
+                                :max-elements 3})]
     (let [computed (-> json-clj (clj->nem) (nem->clj))
           expected json-clj]
       (is (= expected computed)))))
@@ -102,7 +102,7 @@
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
                                               :max-elements 3
                                               :scalars      [gen/small-integer]}))
-            new-key   gen-string-alpha
+            new-key   gen-string
             new-value gen/nat]
     (let [key      (-> json-clj (keys) (rand-nth))
           elem     (json-clj key)
@@ -130,7 +130,7 @@
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
                                               :max-elements 3
                                               :scalars      [gen/int]}))
-            new-key   gen-string-alpha
+            new-key   gen-string
             new-value gen/nat]
     (let [keys     (rand-keyseq json-clj)
           elem     (get-in json-clj keys)

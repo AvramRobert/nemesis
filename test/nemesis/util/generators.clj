@@ -5,11 +5,6 @@
 
 (declare gen-arr gen-map)
 
-(defn- deeper [{:keys [depth]
-                :or {depth 0}
-                :as opts}]
-  (assoc opts :depth (inc depth)))
-
 (defmacro do-gen [binding & body]
   (let [[[n# b#] & bound] (->> binding (destructure) (partition 2) (reverse))]
     (reduce
@@ -29,16 +24,15 @@
 (def gen-nil
   (gen/return nil))
 
-(def gen-string-alpha
+(def gen-string
   (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
 
 (def ^:private default-scalars
-  [gen/small-integer
-   gen-nil
+  [gen-int
    gen-double
-   gen/boolean
-   gen-string-alpha
-   gen/string-alphanumeric])
+   gen-bool
+   gen-nil
+   gen-string])
 
 (defn gen-path [{:keys [min-depth max-depth]
                  :or   {min-depth 1
@@ -47,38 +41,47 @@
     (gen/resize 10 (gen/not-empty gen/string-alphanumeric))
     min-depth max-depth))
 
-(defn gen-arr [{:keys [depth max-depth max-elements scalars]
-                :or {depth   0
-                     max-depth 1
-                     max-elements 5
-                     scalars default-scalars}
-                :as opts}]
-  (letfn [(rec-arr [scalars]
-            (gen/vector (gen/one-of [scalars
-                                     (gen-arr (deeper opts))
-                                     (gen-map (deeper opts))]) 0 max-elements))]
-    (if (> depth max-depth)
+(defn- inc-depth [opts]
+  (update opts :current-depth #(-> % (or 0) (inc))))
+
+(defn gen-arr [{:keys [max-depth max-elements scalars]
+                :or   {max-depth    1
+                       max-elements 5
+                       scalars      default-scalars}
+                :as   opts}]
+  (let [current-depth (:current-depth opts 0)               ; track the current-depth to avoid generating very deep json
+        rec-arr       (fn [scalars]
+                        (gen/vector (gen/one-of [scalars
+                                                 (gen-arr (inc-depth opts))
+                                                 (gen-map (inc-depth opts))]) 0 max-elements))]
+    (if (> current-depth max-depth)
       (gen/vector (gen/one-of scalars))
       (rec-arr (gen/recursive-gen rec-arr (gen/one-of scalars))))))
 
-(defn gen-map [{:keys [depth max-depth max-elements scalars]
-                :or {depth   0
-                     max-depth 1
-                     max-elements 5
-                     scalars default-scalars}
-                :as opts}]
-  (letfn [(rec-map [scalars]
-            (gen/map gen-string-alpha
-                     (gen/one-of [scalars
-                                  (gen-arr (deeper opts))
-                                  (gen-map (deeper opts))])
-                     {:max-elements max-elements}))]
-    (if (> depth max-depth)
-      (gen/map gen-string-alpha (gen/one-of scalars))
+(defn gen-map [{:keys [max-depth
+                       max-elements
+                       scalars]
+                :or   {max-depth    1
+                       max-elements 5
+                       scalars      default-scalars}
+                :as   opts}]
+  (let [current-depth (:current-depth opts 0)               ; track the current-depth to avoid generating very deep json
+        rec-map       (fn [scalars]
+                        (gen/map gen-string
+                                 (gen/one-of [scalars
+                                              (gen-arr (inc-depth opts))
+                                              (gen-map (inc-depth opts))])
+                                 {:max-elements max-elements}))]
+    (if (> current-depth max-depth)
+      (gen/map gen-string (gen/one-of scalars))
       (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
-(defn gen-json [{:keys [scalars]
-                 :or   {scalars default-scalars}
+(defn gen-json [{:keys [scalars
+                        max-depth
+                        max-elements]
+                 :or   {scalars default-scalars
+                        max-depth 1
+                        max-elements 5}
                  :as   opts}]
   (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
 

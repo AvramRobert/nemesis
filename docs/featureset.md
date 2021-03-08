@@ -12,6 +12,7 @@
 
 * API improvements
 * Complete documentation 
+* Bug fixes
 
 ### Planned
 

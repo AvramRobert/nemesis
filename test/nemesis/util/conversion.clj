@@ -7,7 +7,8 @@
            (json.parser Parser)
            (json.model JsonT)
            (json JsonOps)
-           (util.function Functions$Function1)))
+           (util.function Functions$Function1)
+           (java.util ArrayList HashMap HashSet)))
 
 (deftype WEntry [key value])
 (deftype WMap [entries])
@@ -54,6 +55,13 @@
          (not-empty form)) (let [i (rand-int (count form))]
                              (cons i (lazy-seq (keyseq (nth form i)))))
     :else '()))
+
+(defn clj->java [clj]
+  (cond
+    (vector? clj) (->> clj (mapv clj->java) (ArrayList.))
+    (map? clj)    (->> clj (mapv (juxt key (comp clj->java val))) (into {}) (HashMap.))
+    (set? clj)    (->> clj (mapv clj->java) (HashSet.))
+    :else         clj))
 
 (defn clj->nem [clj]
   (walker coerce clj))
