@@ -41,6 +41,19 @@
     (gen/resize 10 (gen/not-empty gen/string-alphanumeric))
     min-depth max-depth))
 
+(defn- make-path-gen [path json]
+  (letfn [(empty-coll? [v] (and (coll? v) (empty? v)))
+          (bind-with [gen-pick]
+            (gen/bind gen-pick #(make-path-gen (conj path %) (get json %))))]
+    (cond
+      (empty-coll? json)  (gen/return path)
+      (vector? json)      (bind-with (gen/choose 0 (dec (count json))))
+      (map? json)         (bind-with (gen/elements (keys json)))
+      :else               (gen/return path))))
+
+(defn gen-path-from [json]
+  (make-path-gen [] json))
+
 (defn- inc-depth [opts]
   (update opts :current-depth #(-> % (or 0) (inc))))
 
