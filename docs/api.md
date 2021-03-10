@@ -90,7 +90,7 @@ The simplest insertion is of either `Json` or `JsonT` values.
 
 JsonT jsonT2 = parse("{ \"a\" : 1 }");
 
-jsonT.insert(jsonT2, in("node"));
+jsonT.insertJson(jsonT2, in("node"));
 ```
 
 ```json
@@ -108,14 +108,14 @@ Any raw values can be directly inserted into a `JsonT`, **as long as they are pa
 
 ```java
 jsonT
-    .insert(1, in("field-1"))
-    .insert(true, in("field-2"))
-    .insert("bla", in("field-3"))
-    .insert(null, in("field-4"))
-    .insert(Arrays.asList(1, 2, 3, 4)), in("field-5"))
-    .insert(new int[]{1, 2, 3, 4}, in("field-6"))
-    .insert(new HashSet(Arrays.asList(1, 2, 3, 4)), in("field-7"))
-    .insert(Map.of("a", "b"), in("field-8"));
+    .insertValue(1, in("field-1"))
+    .insertValue(true, in("field-2"))
+    .insertValue("bla", in("field-3"))
+    .insertValue(null, in("field-4"))
+    .insertValue(Arrays.asList(1, 2, 3, 4)), in("field-5"))
+    .insertValue(new int[]{1, 2, 3, 4}, in("field-6"))
+    .insertValue(new HashSet(Arrays.asList(1, 2, 3, 4)), in("field-7"))
+    .insertValue(Map.of("a", "b"), in("field-8"));
 ```
 
 ```json
@@ -172,7 +172,7 @@ Convert<Point, Json> pointConverter = point ->
                 .with("a", p -> INT_TO_JSON.convert(p.a),
                       "b", p -> INT_TO_JSON.convert(p.b));
 
-jsonT.insert(new Point(1, 1), pointConverter, in("point"))
+jsonT.insertValue(new Point(1, 1), pointConverter, in("point"))
 ```
 
 ```json
@@ -192,7 +192,7 @@ Values can be inserted with arbitrary nestedness. Structure will automatically b
 **Note: This only works on JSON objects.**
 
 ```java
-jsonT.insert(true, in("is", "this", "deep", "enough"))
+jsonT.insertValue(true, in("is", "this", "deep", "enough"))
 ```
 
 ```json
@@ -216,7 +216,7 @@ Entries can only be deleted at the top level. (Support for removal at arbitrary 
 
 ```java
 jsonT
-    .insert(1, in("value"))
+    .insertValue(1, in("value"))
     .remove("hello", "value");
 ```
 
@@ -234,8 +234,8 @@ Can either be performed directly on a `JsonT` node or on a proper type `A`, prov
 import static nemesis.json.Converters.JSON_TO_INT;
 
 jsonT
-    .insert(1, in("one", "level")
-    .update(JSON_TO_INT, n -> n + 1, in("one", "level"));
+    .insertValue(1, in("one", "level")
+    .updateValue(JSON_TO_INT, n -> n + 1, in("one", "level"));
 ```
 
 ```json
@@ -249,14 +249,30 @@ jsonT
 
 ### Retrieving
 
-Values can be retrieved from any level and any structure.
+
+#### `Json`
+JSON can be retrieved from any level and any structure.
 
 **Note: This returns a `JsonT` to leverage safety and further composition.**
 
-```json
+```java
 jsonT
-  .insert(Arrays.asList(1, 2, 3), in("one", "level"))
-  .get(in("one", "level", 2));
+  .insertValue(Arrays.asList(1, 2, 3), in("one", "level"))
+  .getJson(in("one", "level", 2));
+```
+
+#### Values
+Values of any type `A` can be retrieved from any level and any structure, provided a `Convert<Json, A>` for that type.
+
+For more information on `Convert`, take a look [here](api.md#converting).
+
+```java
+import static nemesis.json.Converters.*;
+
+jsonT
+  .insertValue(true, in("one", "level"))
+  .getValue(JSON_TO_BOOL, in("one", "level", 2));
+  
 ```
 
 ###  Merging
@@ -271,8 +287,8 @@ JsonT jsonObj2 = parse ("{ \"well\" : \"hi\" }")
 JsonT jsonArr1 = parse("[1, 2, 3, 4]");
 JsonT jsonArr2 = parse("[5, 6, 7, 8]");
 
-jsonObj1.merge(jsonObj2);
-jsonArr1.merge(jsonArr2);
+jsonObj1.mergeJson(jsonObj2);
+jsonArr1.mergeJson(jsonArr2);
 ```
 
 ```json
@@ -299,11 +315,11 @@ A list of all default converters can be found [here](api.md#default-json-convert
 ```java
 import static nemesis.json.Converters.JSON_TO_STRING;
 
-jsonT.get(in("hello")).as(JSON_TO_STRING); // Either<String, String>
+jsonT.getJson(in("hello")).as(JSON_TO_STRING); // Either<String, String>
 ```
 or
 ```java
-jsonT.getAs(JSON_TO_STRING, in("hello")); // Either<String, String>
+jsonT.getValue(JSON_TO_STRING, in("hello")); // Either<String, String>
 ```
 
 #### Casting to arbitrary types
@@ -324,7 +340,7 @@ static class Greeting {
 
 Convert<Json, Greeting> converter = json ->
     convert(json)
-        .with(json -> json.getAs(JSON_TO_STRING, in("hello")).as(), 
+        .with(json  -> json.getValue(JSON_TO_STRING, in("hello")), 
               value -> new Greeting(value));
 ```
 
@@ -392,7 +408,7 @@ json.reduceArr(0, (inter, index, jsonValue) -> {
 Json's can be manually created from an empty node.
 
 ```java
-empty.transform().insert("hello", "world");
+empty.transform().insertValue("hello", "world");
 ```
 
 ```json
@@ -494,19 +510,19 @@ static class Figure {
 
 Convert<Json, Coord> coord = json ->
     convert(json)
-        .with(js -> js.get("s").as(JSON_TO_INT),
-              js -> js.get("e").as(JSON_TO_INT),
+        .with(js -> js.getValue(JSON_TO_INT, in("s")),
+              js -> js.getValue(JSON_TO_INT, in("e")),
               (s, e) -> new Coord(s, e));
 
 Convert<Json, Line> line = json ->
     convert(json)
-        .with(js -> js.get("x").as(coord),
-              js -> js.get("y").as(coord),
+        .with(js -> js.getValue(coord, in("x")),
+              js -> js.getValue(coord, in("y")),
               (x, y) -> new Line(x, y));
 
 Convert<Json, Figure> figure = json ->
     convert(json))
-        .with(js -> js.get("lines").as(listOf(line)),
+        .with(js    -> js.getValue(listOf(line), in("lines")),
               lines -> new Figure(lines));
 ```
 

@@ -27,11 +27,11 @@ public static void main (String... args) {
     var json2 = "{ \"numbers\" : [{ \"first\" : 1 }, { \"second\" : 2 }] }";
 
     var modified = parse(json1)
-         .insert("Mark", in("Oh-Hai"))
-         .insert("value", in("Deep", "Nested", "Structure"))
+         .insertValue("Mark", in("Oh-Hai"))
+         .insertValue("value", in("Deep", "Nested", "Structure"))
          .remove("hello")
-         .merge(parse(json2))
-         .update(JSON_TO_LONG, a -> a + 1, in("numbers", 1, "second"))
+         .mergeJson(parse(json2))
+         .updateValue(JSON_TO_LONG, a -> a + 1, in("numbers", 1, "second"))
          .affix()
          .map(json -> json.stringify());
 

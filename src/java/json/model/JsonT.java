@@ -205,13 +205,13 @@ public class JsonT {
         } else return left(String.format("Cannot reduce over json type `%s`.", json.type));
     }
 
-    public final JsonT get (final In in) {
+    public final JsonT getJson(final In in) {
         if (failed || in.isEmpty) return this;
         else return blindGet(in);
     }
 
-    public final <A> Either<String, A> getAs(final Convert<Json, A> f, final In in) {
-        return get(in).as(f);
+    public final <A> Either<String, A> getValue(final Convert<Json, A> f, final In in) {
+        return getJson(in).as(f);
     }
 
     // TODO: remove (final In in) ?
@@ -224,28 +224,27 @@ public class JsonT {
         else return blindRemove(keys);
     }
 
-    // FIXME: Don't allow nulls
-    public final JsonT insert(final Json value, final In in) {
+    public final JsonT insertJson(final Json value, final In in) {
         if (failed || in.isEmpty) return this;
         else return blindInsert(value, in);
     }
 
-    public final JsonT insert(final JsonT value, final In in) {
+    public final JsonT insertJson(final JsonT value, final In in) {
         if (failed || in.isEmpty) return this;
-        if (value.failed) return fail("Cannot insert invalid json: ", value.error);
+        else if (value.failed) return fail("Cannot insert; Invalid JSON: %s", value.error);
         else return blindInsert(value.json, in);
     }
 
-    public final <A> JsonT insert(final A value, final Convert<A, Json> to, final In in) {
+    public final <A> JsonT insertValue(final A value, final Convert<A, Json> to, final In in) {
         if (failed || in.isEmpty) return this;
         else return blindInsertConverted(value, to, in);
         }
 
-    public final <A> JsonT insert(final A value, final In in) {
-        return insert(value, General::coerceJson, in);
+    public final <A> JsonT insertValue(final A value, final In in) {
+        return insertValue(value, General::coerceJson, in);
     }
 
-    public final JsonT update(final Function1<JsonT, JsonT> f, final In in) {
+    public final JsonT updateJson(final Function1<JsonT, JsonT> f, final In in) {
         if (failed || in.isEmpty) return this;
         else {
             final JsonT result = f.apply(blindGet(in));
@@ -254,10 +253,10 @@ public class JsonT {
         }
     }
 
-    public final <A, B> JsonT update(final Convert<Json, A> to,
-                                     final Function1<A, B> f,
-                                     final Convert<B, Json> from,
-                                     final In in) {
+    public final <A, B> JsonT updateValue(final Convert<Json, A> to,
+                                          final Function1<A, B> f,
+                                          final Convert<B, Json> from,
+                                          final In in) {
         if (failed || in.isEmpty) return this;
         else {
             final Convert<Json, Json> g = to.compose(f).compose(from);
@@ -267,17 +266,19 @@ public class JsonT {
         }
     }
 
-    public final <A, B> JsonT update(final Convert<Json, A> to, final Function1<A, B> f, final In in) {
-        return update(to, f, General::coerceJson, in);
+    public final <A, B> JsonT updateValue(final Convert<Json, A> to, final Function1<A, B> f, final In in) {
+        return updateValue(to, f, General::coerceJson, in);
     }
 
-    public final JsonT merge (final JsonT that) {
+    // TODO: Add mergeValue(final A a) {} -> where a is coerced using some separate coerce collection function?
+
+    public final JsonT mergeJson (final JsonT that) {
         if (failed) return this;
         else if (that.failed) return fail("Cannot merge: %s", that.error);
         else return blindMerge(that.json);
     }
 
-    public final JsonT merge (final Json that) {
+    public final JsonT mergeJson (final Json that) {
         if (failed) return this;
         else return blindMerge(that);
     }

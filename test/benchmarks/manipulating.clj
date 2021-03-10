@@ -14,17 +14,23 @@
 (defn insert-json [jsons]
   (let [result ^JsonT (reduce
                         (fn [nem {:keys [in json]}]
-                          (.insert nem json in)) empty-json-t jsons)]
+                          (.insertJson nem json in)) empty-json-t jsons)]
+    (.affix result)))
+
+(defn insert-val [jsons]
+  (let [result ^JsonT (reduce
+                        (fn [nem {:keys [in json]}]
+                          (.insertValue nem json in)) empty-json-t jsons)]
     (.affix result)))
 
 (defn lookup-json [jsons]
   (doseq [{:keys [^In in ^Json json]} jsons]
-    (-> json (.transform) (.get in) (.affix))))
+    (-> json (.transform) (.getJson in) (.affix))))
 
 (defn merge-json [jsons]
-  (let [result JsonT (reduce
+  (let [result ^JsonT (reduce
                        (fn [json-a json-b]
-                         (.merge json-a json-b)) empty-json-t jsons)]
+                         (.mergeJson json-a json-b)) empty-json-t jsons)]
     (.affix result)))
 
 (defn gen-insertion-with [f]
@@ -61,7 +67,7 @@
     :operation insert-json
     :samples   (gen/sample (gen-insertion-with clj->nem) SAMPLE-SIZE)}
    {:name      "Inserting raw values"
-    :operation insert-json
+    :operation insert-val
     :samples   (gen/sample (gen-insertion-with clj->java) SAMPLE-SIZE)}
    {:name      "Lookups"
     :operation lookup-json

@@ -18,7 +18,7 @@
   (for-all [key   (gen/not-empty gen/string-alphanumeric)
             value  gen/small-integer]
     (let [json-clj {}
-          computed (transform (insert-j value [key]) json-clj)
+          computed (transform (insert-jval value [key]) json-clj)
           expected (assoc json-clj key value)]
       (is (= expected computed)))))
 
@@ -26,7 +26,7 @@
   (for-all [keys   (gen/not-empty (gen/list (gen/not-empty gen/string-alphanumeric)))
             value  gen/small-integer]
     (let [json-clj {}
-          computed (transform (insert-j value keys) json-clj)
+          computed (transform (insert-jval value keys) json-clj)
           expected (assoc-in json-clj keys value)]
       (is (= expected computed)))))
 
@@ -56,14 +56,14 @@
       (is (= expected computed)))))
 
 (defspec deep-association-replace 100
-  (for-all [json-clj   (gen/not-empty (gen-map {:max-depth    2
-                                                :max-elements 3}))
-            associatee (gen-json {:max-depth        2
-                                      :max-elements 3})]
-    (let [keys         (rand-keyseq json-clj)
-          n-associatee (clj->nem associatee)
-          computed     (transform (insert-j n-associatee keys) json-clj)
-          expected     (assoc-in json-clj keys associatee)]
+  (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
+                                              :max-elements 3}))
+            new-json (gen-json {:max-depth    2
+                                :max-elements 3})]
+    (let [keys          (rand-keyseq json-clj)
+          nem-to-insert (clj->nem new-json)
+          computed      (transform (insert-j nem-to-insert keys) json-clj)
+          expected      (assoc-in json-clj keys new-json)]
       (is (= expected computed)))))
 
 (defspec dissociation 100
@@ -106,15 +106,15 @@
             new-value gen/nat]
     (let [key      (-> json-clj (keys) (rand-nth))
           elem     (json-clj key)
-          updates {:map {:clj #(assoc % new-key new-value)
-                         :nem  (update-j (insert-j new-value [new-key]) [key]) }
-                   :vec {:clj #(assoc % 0 new-value)
-                         :nem  (update-j (insert-j new-value [0]) [key])}
-                   :scalar {:clj #(inc %)
-                            :nem (update-j Converters/JSON_TO_LONG
-                                           inc
-                                           Converters/LONG_TO_JSON
-                                           [key])}}
+          updates  {:map    {:clj #(assoc % new-key new-value)
+                             :nem (update-j (insert-jval new-value [new-key]) [key])}
+                    :vec    {:clj #(assoc % 0 new-value)
+                             :nem (update-j (insert-jval new-value [0]) [key])}
+                    :scalar {:clj #(inc %)
+                             :nem (update-jval Converters/JSON_TO_LONG
+                                               inc
+                                               Converters/LONG_TO_JSON
+                                               [key])}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])
@@ -134,15 +134,15 @@
             new-value gen/nat]
     (let [keys     (rand-keyseq json-clj)
           elem     (get-in json-clj keys)
-          updates {:map {:clj #(assoc % new-key new-value)
-                         :nem (update-j (insert-j new-value [new-key]) keys)}
-                   :vec {:clj #(assoc % 0 new-value)
-                         :nem (update-j (insert-j new-value [0]) keys)}
-                   :scalar {:clj inc
-                            :nem (update-j Converters/JSON_TO_LONG
-                                           inc
-                                           Converters/LONG_TO_JSON
-                                           keys)}}
+          updates  {:map    {:clj #(assoc % new-key new-value)
+                             :nem (update-j (insert-jval new-value [new-key]) keys)}
+                    :vec    {:clj #(assoc % 0 new-value)
+                             :nem (update-j (insert-jval new-value [0]) keys)}
+                    :scalar {:clj inc
+                             :nem (update-jval Converters/JSON_TO_LONG
+                                               inc
+                                               Converters/LONG_TO_JSON
+                                               keys)}}
           f        (fn [api]
                      (cond
                        (map? elem)     (get-in updates [:map api])

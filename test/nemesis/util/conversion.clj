@@ -94,9 +94,13 @@
 (defn in [args]
   (JsonOps/in (into-array Object args)))
 
-(defn insert-j [value keys]
+(defn insert-j [json keys]
   (fn [^JsonT json-t]
-    (.insert json-t value (in keys))))
+    (.insertJson json-t json (in keys))))
+
+(defn insert-jval [value keys]
+  (fn [^JsonT json-t]
+    (.insertValue json-t value (in keys))))
 
 (defn remove-j [keys]
   (fn [^JsonT json-t]
@@ -104,15 +108,15 @@
 
 (defn get-j [keys]
   (fn [^JsonT json-t]
-    (.get json-t (in keys))))
+    (.getJson json-t (in keys))))
 
-(defn update-j
-  ([to fn-j from keys]
-   (fn [^JsonT json-t]
-     (.update json-t to (function fn-j) from (in keys))))
-  ([fn-j keys]
-   (fn [^JsonT json-t]
-     (.update json-t (function fn-j) (in keys)))))
+(defn update-j [fn-j keys]
+  (fn [^JsonT json-t]
+    (.updateJson json-t (function fn-j) (in keys))))
+
+(defn update-jval [to fn-val from keys]
+  (fn [^JsonT json-t]
+    (.updateValue json-t to (function fn-val) from (in keys))))
 
 (defn merge-j [^JsonT a ^JsonT b]
-  (.merge a b))
+  (.mergeJson a b))
