@@ -27,7 +27,7 @@
 (def gen-string
   (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
 
-(def ^:private default-scalars
+(def default-scalars
   [gen-int
    gen-double
    gen-bool
