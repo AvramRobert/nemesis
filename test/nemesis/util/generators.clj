@@ -57,8 +57,9 @@
 (defn- inc-depth [opts]
   (update opts :current-depth #(-> % (or 0) (inc))))
 
-(defn gen-arr [{:keys [max-depth max-elements scalars]
+(defn gen-arr [{:keys [max-depth min-elements max-elements scalars]
                 :or   {max-depth    1
+                       min-elements 0
                        max-elements 5
                        scalars      default-scalars}
                 :as   opts}]
@@ -66,27 +67,30 @@
         rec-arr       (fn [scalars]
                         (gen/vector (gen/one-of [scalars
                                                  (gen-arr (inc-depth opts))
-                                                 (gen-map (inc-depth opts))]) 0 max-elements))]
-    (if (> current-depth max-depth)
-      (gen/vector (gen/one-of scalars))
+                                                 (gen-map (inc-depth opts))]) min-elements max-elements))]
+    (if (>= current-depth max-depth)
+      (gen/vector (gen/one-of scalars) min-elements max-elements)
       (rec-arr (gen/recursive-gen rec-arr (gen/one-of scalars))))))
 
 (defn gen-map [{:keys [max-depth
+                       min-elements
                        max-elements
                        scalars]
                 :or   {max-depth    1
+                       min-elements 0
                        max-elements 5
                        scalars      default-scalars}
                 :as   opts}]
   (let [current-depth (:current-depth opts 0)               ; track the current-depth to avoid generating very deep json
+        map-opts      {:min-elements min-elements
+                       :max-elements max-elements}
         rec-map       (fn [scalars]
                         (gen/map gen-string
                                  (gen/one-of [scalars
                                               (gen-arr (inc-depth opts))
-                                              (gen-map (inc-depth opts))])
-                                 {:max-elements max-elements}))]
-    (if (> current-depth max-depth)
-      (gen/map gen-string (gen/one-of scalars))
+                                              (gen-map (inc-depth opts))]) map-opts))]
+    (if (>= current-depth max-depth)
+      (gen/map gen-string (gen/one-of scalars) map-opts)
       (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
 (defn gen-json [{:keys [scalars

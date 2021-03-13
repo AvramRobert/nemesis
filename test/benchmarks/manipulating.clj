@@ -3,31 +3,26 @@
             [nemesis.util.generators :refer :all]
             [nemesis.util.conversion :refer :all]
             [clojure.test.check.generators :as gen]
-            [criterium.core :as c])
-  (:import (json JsonOps Converters)
-           (json.model JsonT In Json)
-           (util.function Functions$Function1)
-           (json.coerce Convert)))
+            [benchmarks.util :as u])
+  (:import (json Converters)))
 
 (def ^:const SAMPLE-SIZE 5)
 
-(def empty-json-t (.transform JsonOps/empty))
+(defn assoc-in-non-empty [m keys val]
+  (if (empty? m) m (assoc-in m keys val)))
 
-(defn convert-from [scalar]
+(defn convertor [scalar]
   (cond
-    (int? scalar)     Converters/INT_TO_JSON
-    (double? scalar)  Converters/DOUBLE_TO_JSON
-    (string? scalar)  Converters/STRING_TO_JSON
-    (boolean? scalar) Converters/BOOLEAN_TO_JSON
-    (nil? scalar)     Converters/NULL_TO_JSON))
-
-(defn convert-to [scalar]
-  (cond
-    (int? scalar)     Converters/JSON_TO_INT
-    (double? scalar)  Converters/JSON_TO_DOUBLE
-    (string? scalar)  Converters/JSON_TO_STRING
-    (boolean? scalar) Converters/JSON_TO_BOOLEAN
-    (nil? scalar)     Converters/JSON_TO_NULL))
+    (int? scalar)     {:to   Converters/INT_TO_JSON
+                       :from Converters/JSON_TO_INT}
+    (double? scalar)  {:to   Converters/DOUBLE_TO_JSON
+                       :from Converters/JSON_TO_DOUBLE}
+    (string? scalar)  {:to   Converters/STRING_TO_JSON
+                      :from Converters/JSON_TO_STRING}
+    (boolean? scalar) {:to   Converters/BOOLEAN_TO_JSON
+                       :from Converters/JSON_TO_BOOLEAN}
+    (nil? scalar)     {:to   Converters/NULL_TO_JSON
+                       :from Converters/JSON_TO_NULL}))
 
 (defn update-fn [scalar]
   (cond
@@ -36,48 +31,48 @@
     (boolean? scalar) (comp str not)
     (nil? scalar)     str))
 
-(defn insert-json [jsons]
-  (let [result ^JsonT (reduce
-                        (fn [nem {:keys [in json]}]
-                          (.insertJson nem json in)) empty-json-t jsons)]
-    (.affix result)))
+(defn insert-json [{:keys [json value in]}]
+  (-> json (.transform) (.insertJson value in) (.affix)))
 
-(defn insert-val [jsons]
-  (let [result ^JsonT (reduce
-                        (fn [nem {:keys [in json]}]
-                          (.insertValue nem json in)) empty-json-t jsons)]
-    (.affix result)))
+(defn insert-any-val [{:keys [json value in]}]
+  (-> json (.transform) (.insertValue value in) (.affix)))
 
-(defn lookup-json [jsons]
-  (doseq [{:keys [^In in ^Json json]} jsons]
-    (-> json (.transform) (.getJson in) (.affix))))
+(defn insert-scalar-val [{:keys [json value to in]}]
+  (-> json (.transform) (.insertValue value to in) (.affix)))
 
-(defn merge-json [jsons]
-  (let [result ^JsonT (reduce
-                       (fn [json-a json-b]
-                         (.mergeJson json-a json-b)) empty-json-t jsons)]
-    (.affix result)))
+(defn lookup-json [{:keys [json in]}]
+  (-> json (.transform) (.getJson in) (.affix)))
 
-(defn update-json-partial [jsons]
-  (doseq [{:keys [^Json json
-                  ^Convert to
-                  ^In in
-                  ^Functions$Function1 fn]} jsons]
-    (-> json (.transform) (.updateValue to fn in) (.affix))))
+(defn lookup-scalar [{:keys [json from in]}]
+  (-> json (.transform) (.getValue from in)))
 
-(defn update-json-total [jsons]
-  (doseq [{:keys [^Json json
-                  ^Convert from
-                  ^Convert to
-                  ^In in
-                  ^Functions$Function1 fn]} jsons]
-    (-> json (.transform) (.updateValue to fn from in) (.affix))))
+(defn merge-json [{:keys [json value]}]
+  (-> json (.transform) (.mergeJson value) (.affix)))
+
+(defn update-json-partial [{:keys [json to in fn]}]
+  (-> json (.transform) (.updateValue to fn in) (.affix)))
+
+(defn update-json-total [{:keys [json from to in fn]}]
+  (-> json (.transform) (.updateValue to fn from in) (.affix)))
 
 (defn gen-insertion-with [f]
-  (do-gen [json (gen-json {})
-           path (gen-path {:max-depth 7})]
-    {:in   (in path)
-     :json (f json)}))
+  (do-gen [json  (gen-map {:max-depth    7
+                           :max-elements 3})
+           value (gen-json {})
+           path  (gen-path {:max-depth 7})]
+    {:in    (in path)
+     :json  (clj->nem json)
+     :value (f value)}))
+
+(def gen-scalar-insertion
+  (do-gen [json   (gen-map {:max-depth    7
+                            :max-elements 3})
+           scalar (gen/one-of default-scalars)
+           path   (gen-path {:max-depth 7})]
+    {:in    (in path)
+     :json  (clj->nem json)
+     :value scalar
+     :to    (-> scalar (convertor) (:to))}))
 
 (def gen-lookup
   (do-gen [json (gen-map {:max-depth    7
@@ -86,27 +81,47 @@
     {:in   (in path)
      :json (clj->nem json)}))
 
-(defn gen-merge-with [type]
-  (let [array (gen-arr {:max-depth 7
-                        :max-elements 3})
-        map   (gen-map {:max-depth 7
-                        :max-elements 3})]
-    (get {:array  (gen/fmap clj->nem array)
-          :object (gen/fmap clj->nem map)} type)))
+(def gen-scalar-lookup
+  (do-gen [json   (gen-map {:max-depth    7
+                            :max-elements 3})
+           path   (gen-path-from json)
+           scalar (gen/one-of default-scalars)]
+    {:in   (in path)
+     :from (-> scalar (convertor) (:from))
+     :json (clj->nem (assoc-in-non-empty json path scalar))}))
+
+(def gen-obj-merge
+  (do-gen [map1 (gen-map {:max-depth    7
+                          :max-elements 3})
+           map2 (gen-map {:max-depth    7
+                          :max-elements 3})]
+    {:json  (clj->nem map1)
+     :value (clj->nem map2)}))
+
+(def gen-arr-merge
+  (do-gen [arr1 (gen-arr {:max-depth    7
+                          :max-elements 3})
+           arr2 (gen-arr {:max-depth    7
+                          :max-elements 3})]
+    {:json  (clj->nem arr1)
+     :value (clj->nem arr2)}))
+
+(defn gen-merge-for [type]
+  (case type
+    :array gen-arr-merge
+    :object gen-obj-merge))
 
 (def gen-scalar-update
-  (do-gen [json  (gen-map {:max-depth    7
-                           :max-elements 3})
-           path  (gen-path-from json)
-           value (gen/one-of default-scalars)]
-    (let [f      (update-fn value)
-          value' (f value)
-          json'  (if (empty? path)
-                   json
-                   (assoc-in json path value))]
+  (do-gen [json   (gen-map {:max-depth    7
+                            :max-elements 3})
+           path   (gen-path-from json)
+           scalar (gen/one-of default-scalars)]
+    (let [f       (update-fn scalar)
+          scalar' (f scalar)
+          json'   (assoc-in-non-empty json path scalar)]
       {:json (clj->nem json')
-       :to   (convert-to value)
-       :from (convert-from value')
+       :to   (-> scalar (convertor) (:to))
+       :from (-> scalar' (convertor) (:from))
        :in   (in path)
        :fn   (function f)})))
 
@@ -115,25 +130,29 @@
 ;; where small depth = [0, 2], elements = [0, 10]
 ;;       medium depth = [3, 5], elements = [10, 20]
 ;;       large  depth = [5, 10], elements = [20, 25]
+
 (def default-tasks
   [{:name      "Insert json"
     :operation insert-json
     :samples   (gen/sample (gen-insertion-with clj->nem) SAMPLE-SIZE)}
    {:name      "Insert raw value with default convert"
-    :operation insert-val
+    :operation insert-any-val
     :samples   (gen/sample (gen-insertion-with clj->java) SAMPLE-SIZE)}
+   {:name      "Insert raw value with given convert"
+    :operation insert-scalar-val
+    :samples   (gen/sample gen-scalar-insertion SAMPLE-SIZE)}
    {:name      "Lookup json"
     :operation lookup-json
     :samples   (gen/sample gen-lookup SAMPLE-SIZE)}
    {:name      "Lookup raw value with given convert"
-    :operation lookup-json
-    :samples   (gen/sample gen-lookup SAMPLE-SIZE)}
+    :operation lookup-scalar
+    :samples   (gen/sample gen-scalar-lookup SAMPLE-SIZE)}
    {:name      "Merge json objects"
     :operation merge-json
-    :samples (gen/sample (gen-merge-with :object) SAMPLE-SIZE)}
+    :samples (gen/sample (gen-merge-for :object) SAMPLE-SIZE)}
    {:name      "Merge json arrays"
     :operation merge-json
-    :samples (gen/sample (gen-merge-with :array) SAMPLE-SIZE)}
+    :samples (gen/sample (gen-merge-for :array) SAMPLE-SIZE)}
    {:name      "Update with partial given convert"
     :operation update-json-partial
     :samples (gen/sample gen-scalar-update SAMPLE-SIZE)}
@@ -141,9 +160,9 @@
     :operation update-json-total
     :samples (gen/sample gen-scalar-update SAMPLE-SIZE)}])
 
-(defn benchmark! [tasks]
-  (doseq [{name   :name
-           op     :operation
-           sample :samples} tasks]
-    (println "Benchmarking: " name)
-    (c/bench (op sample))))
+(defn benchmark! [& tasks]
+  (doseq [task tasks]
+    (-> task (u/benchmark-compound) (u/show-result) (println))))
+
+(deftest run-benchmark
+  (apply benchmark! default-tasks))
