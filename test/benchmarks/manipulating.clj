@@ -13,8 +13,8 @@
 
 (defn convertor [scalar]
   (cond
-    (int? scalar)     {:to   Converters/INT_TO_JSON
-                       :from Converters/JSON_TO_INT}
+    (int? scalar)     {:to   Converters/LONG_TO_JSON
+                       :from Converters/JSON_TO_LONG}
     (double? scalar)  {:to   Converters/DOUBLE_TO_JSON
                        :from Converters/JSON_TO_DOUBLE}
     (string? scalar)  {:to   Converters/STRING_TO_JSON
@@ -27,7 +27,7 @@
 (defn update-fn [scalar]
   (cond
     (number? scalar)  (comp str inc)
-    (string? scalar)  count
+    (string? scalar)  (comp long count)
     (boolean? scalar) (comp str not)
     (nil? scalar)     str))
 
@@ -49,11 +49,11 @@
 (defn merge-json [{:keys [json value]}]
   (-> json (.transform) (.mergeJson value) (.affix)))
 
-(defn update-json-partial [{:keys [json to in fn]}]
-  (-> json (.transform) (.updateValue to fn in) (.affix)))
+(defn update-json-partial [{:keys [json from fn in]}]
+  (-> json (.transform) (.updateValue from fn in) (.affix)))
 
-(defn update-json-total [{:keys [json from to in fn]}]
-  (-> json (.transform) (.updateValue to fn from in) (.affix)))
+(defn update-json-total [{:keys [json from fn to in]}]
+  (-> json (.transform) (.updateValue from fn to in) (.affix)))
 
 (defn gen-insertion-with [f]
   (do-gen [json  (gen-map {:max-depth    7
@@ -115,13 +115,12 @@
   (do-gen [json   (gen-map {:max-depth    7
                             :max-elements 3})
            path   (gen-path-from json)
-           scalar (gen/one-of default-scalars)]
+           scalar (gen/one-of [gen-string])]
     (let [f       (update-fn scalar)
-          scalar' (f scalar)
           json'   (assoc-in-non-empty json path scalar)]
       {:json (clj->nem json')
-       :to   (-> scalar (convertor) (:to))
-       :from (-> scalar' (convertor) (:from))
+       :from (-> scalar (convertor) (:from))
+       :to   (-> scalar (f) (convertor) (:to))
        :in   (in path)
        :fn   (function f)})))
 
@@ -149,20 +148,20 @@
     :samples   (gen/sample gen-scalar-lookup SAMPLE-SIZE)}
    {:name      "Merge json objects"
     :operation merge-json
-    :samples (gen/sample (gen-merge-for :object) SAMPLE-SIZE)}
+    :samples   (gen/sample (gen-merge-for :object) SAMPLE-SIZE)}
    {:name      "Merge json arrays"
     :operation merge-json
-    :samples (gen/sample (gen-merge-for :array) SAMPLE-SIZE)}
+    :samples   (gen/sample (gen-merge-for :array) SAMPLE-SIZE)}
    {:name      "Update with partial given convert"
     :operation update-json-partial
-    :samples (gen/sample gen-scalar-update SAMPLE-SIZE)}
+    :samples   (gen/sample gen-scalar-update SAMPLE-SIZE)}
    {:name      "Update with total given convert"
     :operation update-json-total
-    :samples (gen/sample gen-scalar-update SAMPLE-SIZE)}])
+    :samples   (gen/sample gen-scalar-update SAMPLE-SIZE)}])
 
 (defn benchmark! [& tasks]
   (doseq [task tasks]
     (-> task (u/benchmark-compound) (u/show-result) (println))))
 
-(deftest run-benchmark
+#_(deftest run-benchmark
   (apply benchmark! default-tasks))

@@ -253,13 +253,13 @@ public class JsonT {
         }
     }
 
-    public final <A, B> JsonT updateValue(final Convert<Json, A> to,
+    public final <A, B> JsonT updateValue(final Convert<Json, A> from,
                                           final Function1<A, B> f,
-                                          final Convert<B, Json> from,
+                                          final Convert<B, Json> to,
                                           final In in) {
         if (failed || in.isEmpty) return this;
         else {
-            final Convert<Json, Json> g = to.compose(f).compose(from);
+            final Convert<Json, Json> g = from.compose(f).compose(to);
             final Either<String, Json> result = blindGet(in).as(g);
             if (result.isLeft()) return fail("Could not apply update. Error: %s", result.error());
             else return blindInsert(result.value(), in);
