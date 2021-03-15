@@ -34,7 +34,7 @@
   (for-all [json-clj      (gen-map {:max-depth    2
                                     :max-elements 3})
             clj-to-insert (gen-json {:max-depth        2
-                                         :max-elements 3})
+                                     :max-elements 3})
             key           (gen/not-empty gen/string-alphanumeric)]
     (let [nem-to-insert (clj->nem clj-to-insert)
           computed      (transform (insert-j nem-to-insert [key]) json-clj)
@@ -155,19 +155,23 @@
       (is (= expected computed)))))
 
 (defspec merging-objects 100
-  (for-all [json-clj-1 (gen/not-empty (gen-map {:max-depth    2
-                                                :max-elements 3}))
-            json-clj-2 (gen/not-empty (gen-map {:max-depth    2
-                                                :max-elements 3}))]
+  (for-all [json-clj-1 (gen-map {:max-depth    2
+                                 :min-elements 1
+                                 :max-elements 3})
+            json-clj-2 (gen-map {:max-depth    2
+                                 :min-elements 1
+                                 :max-elements 3})]
     (let [computed (transform merge-j json-clj-1 json-clj-2)
           expected (merge json-clj-1 json-clj-2)]
       (is (= expected computed)))))
 
 (defspec merging-arrays 100
-  (for-all [json-clj-1 (gen/not-empty (gen-arr {:max-depth    2
-                                                :max-elements 3}))
-            json-clj-2 (gen/not-empty (gen-arr {:max-depth    2
-                                                :max-elements 3}))]
+  (for-all [json-clj-1 (gen-arr {:max-depth    2
+                                 :min-elements 1
+                                 :max-elements 3})
+            json-clj-2 (gen-arr {:max-depth    2
+                                 :min-elements 1
+                                 :max-elements 3})]
            (let [computed (transform merge-j json-clj-1 json-clj-2)
                  expected (concat json-clj-1 json-clj-2)]
              (is (= expected computed)))))

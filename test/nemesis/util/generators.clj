@@ -57,26 +57,40 @@
 (defn- inc-depth [opts]
   (update opts :current-depth #(-> % (or 0) (inc))))
 
-(defn gen-arr [{:keys [max-depth min-elements max-elements scalars]
-                :or   {max-depth    1
+(defn gen-arr [{:keys [min-depth
+                       max-depth
+                       min-elements
+                       max-elements
+                       scalars]
+                :or   {min-depth    0
+                       max-depth    1
                        min-elements 0
                        max-elements 5
                        scalars      default-scalars}
                 :as   opts}]
   (let [current-depth (:current-depth opts 0)               ; track the current-depth to avoid generating very deep json
         rec-arr       (fn [scalars]
-                        (gen/vector (gen/one-of [scalars
-                                                 (gen-arr (inc-depth opts))
-                                                 (gen-map (inc-depth opts))]) min-elements max-elements))]
-    (if (>= current-depth max-depth)
-      (gen/vector (gen/one-of scalars) min-elements max-elements)
-      (rec-arr (gen/recursive-gen rec-arr (gen/one-of scalars))))))
+                        (if (<= current-depth min-depth)
+                          (gen/vector (gen-map (inc-depth opts)) min-elements max-elements)
+                          (gen/vector (gen/one-of [scalars
+                                                   (gen-arr (inc-depth opts))
+                                                   (gen-map (inc-depth opts))]) min-elements max-elements)))]
+    (cond
+      (> min-depth max-depth)      (gen-arr (assoc opts :max-depth min-depth))
+      (>= current-depth max-depth) (gen/vector (gen/one-of scalars) min-elements max-elements)
+      :else                        (rec-arr (gen/recursive-gen rec-arr (gen/one-of scalars))))))
 
-(defn gen-map [{:keys [max-depth
+;; Even the array generator could actually pick between a map or an array generator in its 'min-depth' case.
+;; Making it however default to a map generator guarantees its termination.
+;; Otherwise, if it gets both, then assuming `one-of`s probability distribution is equal, it would have a 0.5 chance of terminating
+;; The other 0.5 being it will continuously create arrays, never going 1 level deeper.
+(defn gen-map [{:keys [min-depth
+                       max-depth
                        min-elements
                        max-elements
                        scalars]
-                :or   {max-depth    1
+                :or   {min-depth    0
+                       max-depth    1
                        min-elements 0
                        max-elements 5
                        scalars      default-scalars}
@@ -85,13 +99,16 @@
         map-opts      {:min-elements min-elements
                        :max-elements max-elements}
         rec-map       (fn [scalars]
-                        (gen/map gen-string
-                                 (gen/one-of [scalars
-                                              (gen-arr (inc-depth opts))
-                                              (gen-map (inc-depth opts))]) map-opts))]
-    (if (>= current-depth max-depth)
-      (gen/map gen-string (gen/one-of scalars) map-opts)
-      (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
+                        (if (<= current-depth min-depth)
+                          (gen/map gen-string (gen/one-of [(gen-arr opts)
+                                                           (gen-map (inc-depth opts))]) map-opts)
+                          (gen/map gen-string (gen/one-of [scalars
+                                                           (gen-arr (inc-depth opts))
+                                                           (gen-map (inc-depth opts))]) map-opts)))]
+    (cond
+      (> min-depth max-depth)      (gen-map (assoc opts :max-depth min-depth))
+      (>= current-depth max-depth) (gen/map gen-string (gen/one-of scalars) map-opts)
+      :else                        (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
 (defn gen-json [{:keys [scalars
                         max-depth
