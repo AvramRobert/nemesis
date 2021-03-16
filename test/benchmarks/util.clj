@@ -32,9 +32,9 @@
   "Benchmarks an operation against a number samples and returns their mean."
   (let [name      (:name task)
         operation (:operation task)
-        samples   (:samples task)
+        sampler   (:sampler task)
         _         (println "Benchmarking: " name)]
-    (->> samples
+    (->> (sampler)
          (mapv #(bench-task! operation %))
          (stats)
          (label-with name))))

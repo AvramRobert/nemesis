@@ -55,20 +55,18 @@
 (defn update-json-total [{:keys [json from fn to in]}]
   (-> json (.transform) (.updateValue from fn to in) (.affix)))
 
-(defn gen-insertion-with [f]
-  (do-gen [json  (gen-map {:max-depth    7
-                           :max-elements 3})
+(defn gen-insertion-as [f opts]
+  (do-gen [json  (gen-map opts)
            value (gen-json {})
-           path  (gen-path {:max-depth 7})]
+           path  (gen-path {:max-depth 3})]
     {:in    (in path)
      :json  (clj->nem json)
      :value (f value)}))
 
-(def gen-scalar-insertion
-  (do-gen [json   (gen-map {:max-depth    7
-                            :max-elements 3})
+(defn gen-scalar-insertion [opts]
+  (do-gen [json   (gen-map opts)
            scalar (gen/one-of default-scalars)
-           path   (gen-path {:max-depth 7})]
+           path   (gen-path {:max-depth 3})]
     {:in    (in path)
      :json  (clj->nem json)
      :value scalar
@@ -130,16 +128,56 @@
 ;;       medium depth = [3, 5], elements = [10, 20]
 ;;       large  depth = [5, 10], elements = [20, 25]
 
+(def insertion-tasks
+  (let [low    {:densities {0 {:min-elements 5
+                               :max-elements 10}
+                            1 {:min-elements 1
+                               :max-elements 3}}}
+        medium {:densities {0 {:min-elements 10
+                               :max-elements 15}
+                            1 {:min-elements 5
+                               :max-elements 10}}}
+        high   {:densities {0 {:min-elements 10
+                               :max-elements 15}
+                            1 {:min-elements 10
+                               :max-elements 15}
+                            2  {:min-elements 5
+                                :max-elements 10}}}]
+    [{:name      "Insert Json (low overhead)"
+      :operation insert-json
+      :sampler   #(gen/sample (gen-insertion-as clj->nem low) SAMPLE-SIZE)}
+     {:name      "Insert Json (medium overhead)"
+      :operation insert-json
+      :sampler   #(gen/sample (gen-insertion-as clj->nem medium) SAMPLE-SIZE)}
+     {:name      "Insert Json (high overhead)"
+      :operation insert-json
+      :sampler   #(gen/sample (gen-insertion-as clj->nem high) SAMPLE-SIZE)}
+
+     ;{:name      "Insert raw value with default conversion (low overhead)"
+     ; :operation insert-any-val
+     ; :sampler   #(gen/sample (gen-insertion-as clj->java low) SAMPLE-SIZE)}
+     ;{:name      "Insert raw value with default conversion (medium overhead)"
+     ; :operation insert-any-val
+     ; :sampler   #(gen/sample (gen-insertion-as clj->java medium) SAMPLE-SIZE)}
+     ;{:name      "Insert raw value with default conversion (high overhead)"
+     ; :operation insert-any-val
+     ; :sampler   #(gen/sample (gen-insertion-as clj->java high) SAMPLE-SIZE)}
+     ;
+     ;{:name      "Insert raw value with provided conversion (low overhead)"
+     ; :operation insert-any-val
+     ; :sampler   #(gen/sample (gen-scalar-insertion low) SAMPLE-SIZE)}
+     ;{:name      "Insert raw value with provided conversion (medium overhead)"
+     ; :operation insert-any-val
+     ; :sampler   #(gen/sample (gen-scalar-insertion medium) SAMPLE-SIZE)}
+     ;{:name      "Insert raw value with provided conversion (high overhead)"
+     ; :operation insert-any-val
+     ; :sampler   #(gen/sample (gen-scalar-insertion high) SAMPLE-SIZE)}
+     ;
+     ]))
+
 (def default-tasks
-  [{:name      "Insert json"
-    :operation insert-json
-    :samples   (gen/sample (gen-insertion-with clj->nem) SAMPLE-SIZE)}
-   {:name      "Insert raw value with default convert"
-    :operation insert-any-val
-    :samples   (gen/sample (gen-insertion-with clj->java) SAMPLE-SIZE)}
-   {:name      "Insert raw value with given convert"
-    :operation insert-scalar-val
-    :samples   (gen/sample gen-scalar-insertion SAMPLE-SIZE)}
+  (concat insertion-tasks)
+  #_[
    {:name      "Lookup json"
     :operation lookup-json
     :samples   (gen/sample gen-lookup SAMPLE-SIZE)}
@@ -163,5 +201,5 @@
   (doseq [task tasks]
     (-> task (u/benchmark-compound) (u/show-result) (println))))
 
-#_(deftest run-benchmark
+(deftest run-benchmark
   (apply benchmark! default-tasks))
