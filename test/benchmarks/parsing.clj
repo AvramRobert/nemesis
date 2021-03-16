@@ -1,40 +1,38 @@
 (ns benchmarks.parsing
-  (:require [criterium.core :as c]
-            [cheshire.core :as j]
+  (:require [cheshire.core :as j]
             [clojure.test :refer [deftest]]
-            [clojure.java.io :as jio])
+            [clojure.java.io :as jio]
+            [benchmarks.util :as u])
   (:import com.fasterxml.jackson.databind.ObjectMapper)
   (:import com.google.gson.JsonParser
            (java.nio.file Files Paths)))
 
-(defn parser-cheshire [json]
-  "~8 ms"
-  (c/with-progress-reporting (c/bench (j/parse-string-strict json))))
+(defn default-tasks [json]
+  (let [default-sampler (constantly [json])]
+    [{:name      "Nemesis Parser"
+      :operation #(json.parser.Parser/parse %)
+      :sampler   default-sampler}
+     {:name      "Cheshire Parser"
+      :operation #(j/parse-string-strict %)
+      :sampler   default-sampler}
+     {:name      "GSON Parser"
+      :operation #(JsonParser/parseString %)
+      :sampler   default-sampler}
+     {:name      "Jackson Parser"
+      :operation (let [mapper ^ObjectMapper (ObjectMapper.)]
+                   #(.readTree mapper ^String %))
+      :sampler   default-sampler}
+     {:name      "Play Parser"
+      :operation #(play.api.libs.json.Json/parse ^String %)
+      :sampler   default-sampler}]))
 
-(defn parser-play [json]
-  "~7 ms"
-  (c/with-progress-reporting (c/bench (play.api.libs.json.Json/parse ^String json))))
-
-(defn parser-gson [json]
-  "~7 ms"
-  (c/with-progress-reporting (c/bench (JsonParser/parseString json))))
-
-(defn parser-nemesis [json]
-  "~6 ms"
-  (c/with-progress-reporting (c/bench (json.parser.Parser/parse json))))
-
-(defn parser-jackson [json]
-  "~4 ms"
-  (let [mapper ^ObjectMapper (ObjectMapper.)]
-    (c/with-progress-reporting (c/bench (.readTree mapper ^String json)))))
-
-(defn benchmark [f]
-  (-> (jio/resource "resources/sample.json")
+(defn- read-json! [path]
+  (-> (jio/resource path)
       (.toURI)
       (Paths/get)
       (Files/readAllBytes)
-      (String.)
-      (f)))
+      (String.)))
 
 #_(deftest run-benchmark
-  (benchmark parser-nemesis))
+  (let [tasks (-> "resources/sample.json" (read-json!) (default-tasks))]
+    (apply u/benchmark-out! tasks)))

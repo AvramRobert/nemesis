@@ -226,9 +226,5 @@
           merging-tasks
           updating-tasks))
 
-(defn benchmark! [& tasks]
-  (doseq [task tasks]
-    (-> task (u/benchmark-compound) (u/show-result) (println))))
-
 #_(deftest run-benchmark
-  (apply benchmark! default-tasks))
+  (apply u/benchmark-out! default-tasks))

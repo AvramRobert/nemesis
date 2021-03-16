@@ -28,7 +28,17 @@
 (defn- bench-task! [operation sample]
   (c/quick-benchmark* #(operation sample) {}))
 
-(defn benchmark-compound [task]
+(defn show-result [stats]
+  (let [name  (:name stats "Operation")
+        mean  (-> stats (:mean) (derive-unit))
+        lower (-> stats (:lower-quantile) (derive-unit))
+        upper (-> stats (:upper-quantile) (derive-unit))]
+    (str (format "==== %s stats ====\n" name)
+         (format "Average time: %s\n" mean)
+         (format "Lower quantile: %s\n" lower)
+         (format "Upper quantile: %s\n" upper))))
+
+(defn benchmark-task [task]
   "Benchmarks an operation against a number samples and returns their mean."
   (let [name      (:name task)
         operation (:operation task)
@@ -39,12 +49,6 @@
          (stats)
          (label-with name))))
 
-(defn show-result [stats]
-  (let [name  (:name stats "Operation")
-        mean  (-> stats (:mean) (derive-unit))
-        lower (-> stats (:lower-quantile) (derive-unit))
-        upper (-> stats (:upper-quantile) (derive-unit))]
-    (str (format "==== %s stats ====\n" name)
-         (format "Average time: %s\n" mean)
-         (format "Lower quantile: %s\n" lower)
-         (format "Upper quantile: %s\n" upper))))
+(defn benchmark-out! [& tasks]
+  (doseq [task tasks]
+    (-> task (benchmark-task) (show-result) (println))))
