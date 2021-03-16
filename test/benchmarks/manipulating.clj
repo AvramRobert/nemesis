@@ -1,7 +1,7 @@
 (ns benchmarks.manipulating
   (:require [clojure.test :refer :all]
             [nemesis.util.generators :refer :all]
-            [nemesis.util.conversion :refer :all]
+            [nemesis.util.conversion :refer [clj->nem clj->java in function]]
             [clojure.test.check.generators :as gen]
             [benchmarks.util :as u])
   (:import (json Converters)))
@@ -72,46 +72,39 @@
      :value scalar
      :to    (-> scalar (convertor) (:to))}))
 
-(def gen-lookup
-  (do-gen [json (gen-map {:max-depth    7
-                          :max-elements 3})
+(defn gen-lookup [opts]
+  (do-gen [json (gen-map opts)
            path (gen-path-from json)]
     {:in   (in path)
      :json (clj->nem json)}))
 
-(def gen-scalar-lookup
-  (do-gen [json   (gen-map {:max-depth    7
-                            :max-elements 3})
+(defn gen-scalar-lookup [opts]
+  (do-gen [json   (gen-map opts)
            path   (gen-path-from json)
            scalar (gen/one-of default-scalars)]
     {:in   (in path)
      :from (-> scalar (convertor) (:from))
      :json (clj->nem (assoc-in-non-empty json path scalar))}))
 
-(def gen-obj-merge
-  (do-gen [map1 (gen-map {:max-depth    7
-                          :max-elements 3})
-           map2 (gen-map {:max-depth    7
-                          :max-elements 3})]
+(defn gen-obj-merge [opts]
+  (do-gen [map1 (gen-map opts)
+           map2 (gen-map opts)]
     {:json  (clj->nem map1)
      :value (clj->nem map2)}))
 
-(def gen-arr-merge
-  (do-gen [arr1 (gen-arr {:max-depth    7
-                          :max-elements 3})
-           arr2 (gen-arr {:max-depth    7
-                          :max-elements 3})]
+(defn gen-arr-merge [opts]
+  (do-gen [arr1 (gen-arr opts)
+           arr2 (gen-arr opts)]
     {:json  (clj->nem arr1)
      :value (clj->nem arr2)}))
 
-(defn gen-merge-for [type]
+(defn gen-merge-for [type opts]
   (case type
-    :array gen-arr-merge
-    :object gen-obj-merge))
+    :array (gen-arr-merge opts)
+    :object (gen-obj-merge opts)))
 
-(def gen-scalar-update
-  (do-gen [json   (gen-map {:max-depth    7
-                            :max-elements 3})
+(defn gen-scalar-update [opts]
+  (do-gen [json   (gen-map opts)
            path   (gen-path-from json)
            scalar (gen/one-of [gen-string])]
     (let [f       (update-fn scalar)
@@ -122,84 +115,120 @@
        :in   (in path)
        :fn   (function f)})))
 
-;; FIXME: These should have progressive sizes
-;; E.G: inserting small, medium, large json.
-;; where small depth = [0, 2], elements = [0, 10]
-;;       medium depth = [3, 5], elements = [10, 20]
-;;       large  depth = [5, 10], elements = [20, 25]
-
 (def insertion-tasks
-  (let [low    {:densities {0 {:min-elements 5
-                               :max-elements 10}
-                            1 {:min-elements 1
-                               :max-elements 3}}}
-        medium {:densities {0 {:min-elements 10
-                               :max-elements 15}
-                            1 {:min-elements 5
-                               :max-elements 10}}}
-        high   {:densities {0 {:min-elements 10
-                               :max-elements 15}
-                            1 {:min-elements 10
-                               :max-elements 15}
-                            2  {:min-elements 5
-                                :max-elements 10}}}]
-    [{:name      "Insert Json (low overhead)"
+  (let [small {:densities {0 {:min-elements 2
+                              :max-elements 20}
+                           1 {:min-elements 5
+                              :max-elements 10}}}
+        large {:densities {0 {:min-elements 30
+                              :max-elements 40}
+                           1 {:min-elements 5
+                              :max-elements 10}
+                           2 {:min-elements 3
+                              :max-elements 5}}}]
+    [{:name      "Insert Json (small)"
       :operation insert-json
-      :sampler   #(gen/sample (gen-insertion-as clj->nem low) SAMPLE-SIZE)}
-     {:name      "Insert Json (medium overhead)"
+      :sampler   #(gen/sample (gen-insertion-as clj->nem small) SAMPLE-SIZE)}
+     {:name      "Insert Json (large)"
       :operation insert-json
-      :sampler   #(gen/sample (gen-insertion-as clj->nem medium) SAMPLE-SIZE)}
-     {:name      "Insert Json (high overhead)"
-      :operation insert-json
-      :sampler   #(gen/sample (gen-insertion-as clj->nem high) SAMPLE-SIZE)}
+      :sampler   #(gen/sample (gen-insertion-as clj->nem large) SAMPLE-SIZE)}
 
-     ;{:name      "Insert raw value with default conversion (low overhead)"
-     ; :operation insert-any-val
-     ; :sampler   #(gen/sample (gen-insertion-as clj->java low) SAMPLE-SIZE)}
-     ;{:name      "Insert raw value with default conversion (medium overhead)"
-     ; :operation insert-any-val
-     ; :sampler   #(gen/sample (gen-insertion-as clj->java medium) SAMPLE-SIZE)}
-     ;{:name      "Insert raw value with default conversion (high overhead)"
-     ; :operation insert-any-val
-     ; :sampler   #(gen/sample (gen-insertion-as clj->java high) SAMPLE-SIZE)}
-     ;
-     ;{:name      "Insert raw value with provided conversion (low overhead)"
-     ; :operation insert-any-val
-     ; :sampler   #(gen/sample (gen-scalar-insertion low) SAMPLE-SIZE)}
-     ;{:name      "Insert raw value with provided conversion (medium overhead)"
-     ; :operation insert-any-val
-     ; :sampler   #(gen/sample (gen-scalar-insertion medium) SAMPLE-SIZE)}
-     ;{:name      "Insert raw value with provided conversion (high overhead)"
-     ; :operation insert-any-val
-     ; :sampler   #(gen/sample (gen-scalar-insertion high) SAMPLE-SIZE)}
-     ;
-     ]))
+     {:name      "Insert raw value with default conversion (small)"
+      :operation insert-any-val
+      :sampler   #(gen/sample (gen-insertion-as clj->java small) SAMPLE-SIZE)}
+     {:name      "Insert raw value with default conversion (large)"
+      :operation insert-any-val
+      :sampler   #(gen/sample (gen-insertion-as clj->java large) SAMPLE-SIZE)}
+
+     {:name      "Insert raw value with provided conversion (small)"
+      :operation insert-scalar-val
+      :sampler   #(gen/sample (gen-scalar-insertion small) SAMPLE-SIZE)}
+     {:name      "Insert raw value with provided conversion (large)"
+      :operation insert-scalar-val
+      :sampler   #(gen/sample (gen-scalar-insertion large) SAMPLE-SIZE)}]))
+
+(def lookup-tasks
+  (let [shallow  {:min-elements 1
+                  :max-elements 3
+                  :min-depth 0
+                  :max-depth 3}
+        deep     {:min-elements 1
+                  :max-elements 3
+                  :min-depth 5
+                  :max-depth 7}]
+    [{:name      "Lookup json (shallow)"
+      :operation lookup-json
+      :sampler   #(gen/sample (gen-lookup shallow) SAMPLE-SIZE)}
+     {:name      "Lookup Json (deep)"
+      :operation lookup-json
+      :sampler   #(gen/sample (gen-lookup deep) SAMPLE-SIZE)}
+
+     {:name      "Lookup raw value with given conversion (shallow)"
+      :operation lookup-scalar
+      :sampler   #(gen/sample (gen-scalar-lookup shallow) SAMPLE-SIZE)}
+     {:name      "Lookup raw value with given conversion (deep)"
+      :operation lookup-scalar
+      :sampler   #(gen/sample (gen-scalar-lookup deep) SAMPLE-SIZE)}]))
+
+(def merging-tasks
+  (let [small {:densities {0 {:min-elements 5
+                              :max-elements 20}
+                           1 {:min-elements 5
+                              :max-elements 10}}}
+        large {:densities {0 {:min-elements 30
+                              :max-elements 40}
+                           1 {:min-elements 5
+                              :max-elements 10}
+                           2 {:min-elements 3
+                              :max-elements 5}}}]
+    [{:name      "Merge json objects (small)"
+      :operation merge-json
+      :sampler   #(gen/sample (gen-merge-for :object small) SAMPLE-SIZE)}
+     {:name      "Merge json objects (large)"
+      :operation merge-json
+      :sampler   #(gen/sample (gen-merge-for :object large) SAMPLE-SIZE)}
+
+     {:name      "Merge json arrays (small)"
+      :operation merge-json
+      :sampler   #(gen/sample (gen-merge-for :array small) SAMPLE-SIZE)}
+     {:name      "Merge json arrays (large)"
+      :operation merge-json
+      :sampler   #(gen/sample (gen-merge-for :array large) SAMPLE-SIZE)}]))
+
+(def updating-tasks
+  (let [small {:densities {0 {:min-elements 5
+                              :max-elements 20}
+                           1 {:min-elements 5
+                              :max-elements 10}}}
+        large {:densities {0 {:min-elements 30
+                              :max-elements 40}
+                           1 {:min-elements 5
+                              :max-elements 10}
+                           2 {:min-elements 3
+                              :max-elements 5}}}]
+    [{:name      "Update with partial given conversion (small)"
+      :operation update-json-partial
+      :sampler   #(gen/sample (gen-scalar-update small) SAMPLE-SIZE)}
+     {:name      "Update with partial given conversion (large)"
+      :operation update-json-partial
+      :sampler   #(gen/sample (gen-scalar-update large) SAMPLE-SIZE)}
+
+     {:name      "Update with total given conversion (small)"
+      :operation update-json-total
+      :sampler   #(gen/sample (gen-scalar-update small) SAMPLE-SIZE)}
+     {:name      "Update with total given conversion (large)"
+      :operation update-json-total
+      :sampler   #(gen/sample (gen-scalar-update large) SAMPLE-SIZE)}]))
 
 (def default-tasks
-  (concat insertion-tasks)
-  #_[
-   {:name      "Lookup json"
-    :operation lookup-json
-    :samples   (gen/sample gen-lookup SAMPLE-SIZE)}
-   {:name      "Lookup raw value with given convert"
-    :operation lookup-scalar
-    :samples   (gen/sample gen-scalar-lookup SAMPLE-SIZE)}
-   {:name      "Merge json objects"
-    :operation merge-json
-    :samples   (gen/sample (gen-merge-for :object) SAMPLE-SIZE)}
-   {:name      "Merge json arrays"
-    :operation merge-json
-    :samples   (gen/sample (gen-merge-for :array) SAMPLE-SIZE)}
-   {:name      "Update with partial given convert"
-    :operation update-json-partial
-    :samples   (gen/sample gen-scalar-update SAMPLE-SIZE)}
-   {:name      "Update with total given convert"
-    :operation update-json-total
-    :samples   (gen/sample gen-scalar-update SAMPLE-SIZE)}])
+  (concat insertion-tasks
+          lookup-tasks
+          merging-tasks
+          updating-tasks))
 
 (defn benchmark! [& tasks]
   (doseq [task tasks]
     (-> task (u/benchmark-compound) (u/show-result) (println))))
 
-(deftest run-benchmark
+#_(deftest run-benchmark
   (apply benchmark! default-tasks))
