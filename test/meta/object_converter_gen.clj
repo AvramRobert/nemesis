@@ -11,14 +11,14 @@
   import util.error.Either;
   import java.util.Arrays;
 
-  public class ObjectConverter<A> {
+  public class %s<A> {
     private final A obj;
 
     private Entry<String, Json> entry(final String key, final Json value) {
       return new Entry<>(\"\\\"\" + key + \"\\\"\", value);
     }
 
-    public ObjectConverter(final A obj) {
+    public %1$s(final A obj) {
         this.obj = obj;
     }
 
@@ -27,7 +27,7 @@
       return new JObj(Map.from(Arrays.asList(entries)));
     }
 
-    %s'
+    %s
   }")
 
 (def function-def "public final Either<String, Json> with(%s) {\n return %s; }")
@@ -69,12 +69,12 @@
           (param-pairs arity)
           (flat-maps arity)))
 
-(defn clazz [fn#]
+(defn clazz [class-name fn#]
   (->> (inc fn#)
        (range 1)
        (map method)
        (join "\n\n")
-       (format class-def)))
+       (format class-def class-name)))
 
 (defn create-file [fn#]
-  (spit "./src/java/json/coerce/ObjectConverter.java" (clazz fn#)))
+  (spit "./src/java/json/coerce/ObjectConverter.java" (clazz "ObjectConverter" fn#)))

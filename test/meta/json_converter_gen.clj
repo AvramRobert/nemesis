@@ -8,10 +8,10 @@
   import util.error.Either;
   import json.model.JsonT;
 
-  public class JsonConverter {
+  public class %s {
     private final JsonT json;
 
-      public JsonConverter(final JsonT json) {
+      public %1$s(final JsonT json) {
         this.json = json;
       }
 
@@ -61,12 +61,12 @@
           (combiner-def arity)
           (flat-maps (dec arity))))
 
-(defn clazz [method#]
+(defn clazz [class-name method#]
   (->> (+ method# 2)
        (range 2)
        (map method)
        (join "\n\n")
-       (format class-def)))
+       (format class-def class-name)))
 
 (defn create-file [fn#]
-  (spit "./src/java/json/coerce/JsonConverter.java" (clazz fn#)))
+  (spit "./src/java/json/coerce/JsonConverter.java" (clazz "JsonConverter" fn#)))

@@ -1,5 +1,6 @@
 package util.error;
-import static util.function.Functions.*;
+import util.function.Consumers.Consumer1;
+import util.function.Functions.Function1;
 
 public interface Either<E, R> {
 

@@ -1,6 +1,6 @@
 package util.error;
 
-import util.function.Functions;
+import util.function.Consumers.Consumer1;
 import util.function.Functions.Function1;
 
 public class Right<E, R> implements Either<E, R> {
@@ -11,7 +11,7 @@ public class Right<E, R> implements Either<E, R> {
     }
 
     @Override
-    public void consume(Functions.Consumer1<R> f, Functions.Consumer1<E> g) {
+    public void consume(Consumer1<R> f, Consumer1<E> g) {
         f.apply(value);
     }
 
