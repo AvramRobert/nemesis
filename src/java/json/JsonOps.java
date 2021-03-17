@@ -1,16 +1,18 @@
 package json;
 
 import json.coerce.Convert;
+import json.coerce.JsonConverter;
 import json.coerce.ObjectConverter;
-import json.data.*;
+import json.model.In;
+import json.model.JObj;
+import json.model.Json;
+import json.model.JsonT;
 import json.parser.Parser;
-import util.Either;
-
-import static json.data.JsonT.*;
+import util.error.Either;
 
 public class JsonOps {
 
-    public  static In in (final Object... path) { return JsonT.in(path); }
+    public  static In in (final Object... path) { return new In(path); }
 
     public static final Json empty = JObj.empty;
 
@@ -25,15 +27,18 @@ public class JsonOps {
     public static <A> Either<String, A> parseAs(final Convert<Json, A> f, final String text) {
         return parse(text).as(f);
     }
-    public static <A> ObjectConverter<A> objectConverter() {
-        return new ObjectConverter<>();
+
+    public static <A> ObjectConverter<A> convert(final A a) {
+        return new ObjectConverter<>(a);
     }
+
+    public static JsonConverter convert(final Json json) { return new JsonConverter(json); }
 
     public static String asString(final Json json) {
         return json.toString();
     }
 
-    public static <A> Either<String, Json> asJson (final Convert<A, Json> f, final A value) {
+    public static <A> Either<String, Json> asJson (final A value, final Convert<A, Json> f) {
         return f.convert(value);
     }
 }

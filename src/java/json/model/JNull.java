@@ -1,8 +1,6 @@
-package json.data;
+package json.model;
 
 public class JNull extends Json {
-    final JType type;
-
     private JNull() {
         this.type = JType.JsonNull;
     }

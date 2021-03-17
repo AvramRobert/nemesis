@@ -2,24 +2,32 @@
   (:require [clojure.string :refer [join]]
             [meta.gen-util :refer :all]))
 
+(def class-def
+  "package json.coerce;
+  import static util.function.Functions.*;
+  import util.error.Either;
+  import json.model.Json;
+  import json.model.JsonT;
+
+  public class JsonConverter {
+    private final Json json;
+
+      public JsonConverter(final Json json) {
+        this.json = json;
+      }
+
+    %s
+  }")
+
 (def map-def "f%d.convert(blob)\n.map(%s -> comb.apply(%s))")
 
 (def flat-map-def "f%d.convert(blob)\n.flatMap(%s -> %s)")
 
 (def function-def
-  "public static <%s> Convert<Json, %s> combine(\n%s,\n%s) {
-    return json -> {
+  "public <%s> Either<String, %s> with(\n%s,\n%s) {
     JsonT blob = json.transform();
     return %s;
-    };}")
-
-(def class-def
-  "package json.coerce;
-  import static util.Functions.*;
-  import json.data.Json;
-  import json.data.JsonT;
-
-  public class JsonConverter {\n  %s }")
+  }")
 
 (defn combiner-def [arity]
   (format "Function%d<%s> comb" (dec arity) (type-list arity)))

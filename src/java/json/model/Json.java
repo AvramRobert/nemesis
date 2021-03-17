@@ -1,4 +1,4 @@
-package json.data;
+package json.model;
 
 public abstract class Json {
     public JType type;

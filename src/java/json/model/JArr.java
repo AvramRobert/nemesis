@@ -1,7 +1,6 @@
-package json.data;
+package json.model;
 
 import io.lacuna.bifurcan.List;
-import util.Debug;
 
 public final class JArr extends Json {
     public final List<Json> value;

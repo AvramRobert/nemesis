@@ -1,4 +1,4 @@
-package util;
+package util.function;
 
 public class Functions {
     @FunctionalInterface

@@ -1,5 +1,5 @@
-package util;
-import static util.Functions.*;
+package util.error;
+import static util.function.Functions.*;
 
 public interface Either<E, R> {
 
@@ -9,6 +9,10 @@ public interface Either<E, R> {
 
     static <ER, C> Either<ER, C> left(final ER e) {
         return new Left<>(e);
+    }
+
+    static <A> Either<String, A> left (final String msg, Object... params) {
+        return Either.left(String.format(msg, params));
     }
 
     void consume (final Consumer1<R> f, final Consumer1<E> g);

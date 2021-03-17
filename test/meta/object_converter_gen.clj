@@ -6,30 +6,37 @@
   "package json.coerce;
   import io.lacuna.bifurcan.Map;
   import io.lacuna.bifurcan.Maps.Entry;
-  import json.data.JObj;
-  import json.data.Json;
+  import json.model.JObj;
+  import json.model.Json;
+  import util.error.Either;
   import java.util.Arrays;
 
   public class ObjectConverter<A> {
-    private final Entry<String, Json> entry(final String key, final Json value) {
+    private final A obj;
+
+    private Entry<String, Json> entry(final String key, final Json value) {
       return new Entry<>(\"\\\"\" + key + \"\\\"\", value);
     }
 
+    public ObjectConverter(final A obj) {
+        this.obj = obj;
+    }
+
     @SafeVarargs
-    private final JObj mapFrom(final Entry<String, Json>... entries) {
+    private JObj mapFrom(final Entry<String, Json>... entries) {
       return new JObj(Map.from(Arrays.asList(entries)));
     }
 
-    %s
+    %s'
   }")
 
-(def function-def "public final Convert<A, Json> object(%s) {\n return value -> %s; }")
+(def function-def "public final Either<String, Json> with(%s) {\n return %s; }")
 
 (def param-def "final String key%d, final Convert<A, Json> f%d")
 
-(def map-def "f%d.convert(value).map(%s -> mapFrom(%s))")
+(def map-def "f%d.convert(obj).map(%s -> mapFrom(%s))")
 
-(def flat-map-def "f%d.convert(value).flatMap(%s -> %s)")
+(def flat-map-def "f%d.convert(obj).flatMap(%s -> %s)")
 
 (def entry-def "entry(key%d, %s)")
 

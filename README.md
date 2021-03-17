@@ -9,6 +9,8 @@ that should be coerced to some domain-object. (_think Jackson JsonNode, but bett
 
 It is, as such, somewhat of a nemesis to most other JSON libraries.  
 
+For a slightly more detailed introduction and rationale, please take a look [here](docs/intro.md). 
+
 ## Disclaimer
 **STILL IN ACTIVE DEVELOPMENT**  
 For a list of the things that currently may or may not work, take a look at the [current feature set](./docs/featureset.md).
@@ -18,18 +20,18 @@ For a list of the things that currently may or may not work, take a look at the 
 
 ```java
 import static nemesis.json.JsonOps.*;
-import static nemesis.coerce.DefaultConverters.JSON_TO_LONG;
+import static nemesis.json.Converters.JSON_TO_LONG;
 
 public static void main (String... args) {
     var json1 = "{ \"hello\" : \"world\" }";
     var json2 = "{ \"numbers\" : [{ \"first\" : 1 }, { \"second\" : 2 }] }";
 
     var modified = parse(json1)
-         .insert("Mark", in("Oh-Hai"))
-         .insert("value", in("Deep", "Nested", "Structure"))
+         .insertValue("Mark", in("Oh-Hai"))
+         .insertValue("value", in("Deep", "Nested", "Structure"))
          .remove("hello")
-         .merge(parse(json2))
-         .update(JSON_TO_LONG, a -> a + 1, in("numbers", 1, "second"))
+         .mergeJson(parse(json2))
+         .updateValue(JSON_TO_LONG, a -> a + 1, in("numbers", 1, "second"))
          .affix()
          .map(json -> json.stringify());
 
