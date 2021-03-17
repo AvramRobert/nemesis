@@ -16,12 +16,12 @@ public class JsonOps {
 
     public static final Json empty = JObj.empty;
 
-    public static Either<String, Json> eparse (final String text) {
+    public static Either<String, Json> forceParse(final String text) {
         return Parser.parse(text);
     }
 
     public static JsonT parse (final String text) {
-        return eparse(text).fold(JsonT::new, JsonT::new);
+        return forceParse(text).fold(JsonT::new, JsonT::new);
     }
 
     public static <A> Either<String, A> parseAs(final Convert<Json, A> f, final String text) {
@@ -32,7 +32,9 @@ public class JsonOps {
         return new ObjectConverter<>(a);
     }
 
-    public static JsonConverter convert(final Json json) { return new JsonConverter(json); }
+    public static JsonConverter convert(final JsonT json) { return new JsonConverter(json); }
+
+    public static JsonConverter convert(final Json json) { return new JsonConverter(json.transform()); }
 
     public static String asString(final Json json) {
         return json.toString();

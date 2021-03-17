@@ -6,26 +6,24 @@
   "package json.coerce;
   import static util.function.Functions.*;
   import util.error.Either;
-  import json.model.Json;
   import json.model.JsonT;
 
   public class JsonConverter {
-    private final Json json;
+    private final JsonT json;
 
-      public JsonConverter(final Json json) {
+      public JsonConverter(final JsonT json) {
         this.json = json;
       }
 
     %s
   }")
 
-(def map-def "f%d.convert(blob)\n.map(%s -> comb.apply(%s))")
+(def map-def "f%d.convert(json)\n.map(%s -> comb.apply(%s))")
 
-(def flat-map-def "f%d.convert(blob)\n.flatMap(%s -> %s)")
+(def flat-map-def "f%d.convert(json)\n.flatMap(%s -> %s)")
 
 (def function-def
   "public <%s> Either<String, %s> with(\n%s,\n%s) {
-    JsonT blob = json.transform();
     return %s;
   }")
 
