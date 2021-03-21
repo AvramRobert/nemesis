@@ -15,17 +15,19 @@ For a slightly more detailed introduction and rationale, please take a look [her
 **STILL IN ACTIVE DEVELOPMENT**  
 For a list of the things that currently may or may not work, take a look at the [current feature set](./docs/featureset.md).
 
+## Dependency
+**Supports Java 1.8 and upwards**
+
+**Loading..**
 
 ## Usage
 
 ```java
-
-
 public static void main (String... args) {
-    var json1 = "{ \"hello\" : \"world\" }";
-    var json2 = "{ \"numbers\" : [{ \"first\" : 1 }, { \"second\" : 2 }] }";
+    String json1 = "{ \"hello\" : \"world\" }";
+    String json2 = "{ \"numbers\" : [{ \"first\" : 1 }, { \"second\" : 2 }] }";
 
-    var modified = parse(json1)
+    Either<String, String> modified = parse(json1)
          .insertValue("Mark", in("Oh-Hai"))
          .insertValue("value", in("Deep", "Nested", "Structure"))
          .remove("hello")
@@ -36,6 +38,7 @@ public static void main (String... args) {
 
      System.out.println(modified);
  }
+// Right: 
 //    {
 //        "Deep":{
 //          "Nested":{
