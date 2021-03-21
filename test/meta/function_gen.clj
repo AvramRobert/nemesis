@@ -9,7 +9,7 @@
   "@FunctionalInterface\n public interface Consumer%s<%s> {\n  void apply(%s); }")
 
 (def class-def
-  "package %s;\n public class %s {\n  %s }")
+  "package %s;\n public final class %s {\n  %s }")
 
 (defn param-def [letter]
   (format "final %s %s" (s/upper-case letter) (s/lower-case letter)))

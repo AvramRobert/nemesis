@@ -8,7 +8,7 @@
   import %2$s.util.error.Either;
   import %2$s.json.model.JsonT;
 
-  public class %s {
+  public final class %s {
     private final JsonT json;
 
       public %3$s(final JsonT json) {
@@ -23,7 +23,7 @@
 (def flat-map-def "f%d.convert(json)\n.flatMap(%s -> %s)")
 
 (def function-def
-  "public <%s> Either<String, %s> with(\n%s,\n%s) {
+  "public final <%s> Either<String, %s> with(\n%s,\n%s) {
     return %s;
   }")
 

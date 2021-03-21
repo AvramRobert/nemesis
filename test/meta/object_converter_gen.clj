@@ -12,7 +12,7 @@
   import io.lacuna.bifurcan.Maps.Entry;
   import java.util.Arrays;
 
-  public class %s<A> {
+  public final class %s<A> {
     private final A obj;
 
     private Entry<String, Json> entry(final String key, final Json value) {
@@ -24,7 +24,7 @@
     }
 
     @SafeVarargs
-    private JObj mapFrom(final Entry<String, Json>... entries) {
+    private final JObj mapFrom(final Entry<String, Json>... entries) {
       return new JObj(Map.from(Arrays.asList(entries)));
     }
 

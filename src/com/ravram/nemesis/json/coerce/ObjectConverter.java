@@ -8,7 +8,7 @@ import io.lacuna.bifurcan.Maps.Entry;
 
 import java.util.Arrays;
 
-public class ObjectConverter<A> {
+public final class ObjectConverter<A> {
     private final A obj;
 
     private Entry<String, Json> entry(final String key, final Json value) {
@@ -20,7 +20,7 @@ public class ObjectConverter<A> {
     }
 
     @SafeVarargs
-    private JObj mapFrom(final Entry<String, Json>... entries) {
+    private final JObj mapFrom(final Entry<String, Json>... entries) {
         return new JObj(Map.from(Arrays.asList(entries)));
     }
 

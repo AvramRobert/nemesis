@@ -1,6 +1,6 @@
 package com.ravram.nemesis.util.function;
 
-public class Consumers {
+public final class Consumers {
     @FunctionalInterface
     public interface Consumer1<T0> {
         void apply(final T0 t0);

@@ -5,21 +5,21 @@ import static com.ravram.nemesis.util.function.Functions.*;
 import com.ravram.nemesis.util.error.Either;
 import com.ravram.nemesis.json.model.JsonT;
 
-public class JsonConverter {
+public final class JsonConverter {
     private final JsonT json;
 
     public JsonConverter(final JsonT json) {
         this.json = json;
     }
 
-    public <T0, T1> Either<String, T1> with(
+    public final <T0, T1> Either<String, T1> with(
             Convert<JsonT, T0> f0,
             Function1<T0, T1> comb) {
         return f0.convert(json)
                 .map(t0 -> comb.apply(t0));
     }
 
-    public <T0, T1, T2> Either<String, T2> with(
+    public final <T0, T1, T2> Either<String, T2> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Function2<T0, T1, T2> comb) {
@@ -28,7 +28,7 @@ public class JsonConverter {
                         .map(t1 -> comb.apply(t0, t1)));
     }
 
-    public <T0, T1, T2, T3> Either<String, T3> with(
+    public final <T0, T1, T2, T3> Either<String, T3> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -39,7 +39,7 @@ public class JsonConverter {
                                 .map(t2 -> comb.apply(t0, t1, t2))));
     }
 
-    public <T0, T1, T2, T3, T4> Either<String, T4> with(
+    public final <T0, T1, T2, T3, T4> Either<String, T4> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -52,7 +52,7 @@ public class JsonConverter {
                                         .map(t3 -> comb.apply(t0, t1, t2, t3)))));
     }
 
-    public <T0, T1, T2, T3, T4, T5> Either<String, T5> with(
+    public final <T0, T1, T2, T3, T4, T5> Either<String, T5> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -67,7 +67,7 @@ public class JsonConverter {
                                                 .map(t4 -> comb.apply(t0, t1, t2, t3, t4))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6> Either<String, T6> with(
+    public final <T0, T1, T2, T3, T4, T5, T6> Either<String, T6> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -84,7 +84,7 @@ public class JsonConverter {
                                                         .map(t5 -> comb.apply(t0, t1, t2, t3, t4, t5)))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7> Either<String, T7> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7> Either<String, T7> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -103,7 +103,7 @@ public class JsonConverter {
                                                                 .map(t6 -> comb.apply(t0, t1, t2, t3, t4, t5, t6))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8> Either<String, T8> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8> Either<String, T8> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -124,7 +124,7 @@ public class JsonConverter {
                                                                         .map(t7 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7)))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> Either<String, T9> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> Either<String, T9> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -147,7 +147,7 @@ public class JsonConverter {
                                                                                 .map(t8 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Either<String, T10> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Either<String, T10> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -172,7 +172,7 @@ public class JsonConverter {
                                                                                         .map(t9 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9)))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Either<String, T11> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Either<String, T11> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -199,7 +199,7 @@ public class JsonConverter {
                                                                                                 .map(t10 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Either<String, T12> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Either<String, T12> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -228,7 +228,7 @@ public class JsonConverter {
                                                                                                         .map(t11 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11)))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Either<String, T13> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Either<String, T13> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -259,7 +259,7 @@ public class JsonConverter {
                                                                                                                 .map(t12 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Either<String, T14> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Either<String, T14> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -292,7 +292,7 @@ public class JsonConverter {
                                                                                                                         .map(t13 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13)))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Either<String, T15> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Either<String, T15> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -327,7 +327,7 @@ public class JsonConverter {
                                                                                                                                 .map(t14 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Either<String, T16> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Either<String, T16> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -364,7 +364,7 @@ public class JsonConverter {
                                                                                                                                         .map(t15 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15)))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Either<String, T17> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Either<String, T17> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -403,7 +403,7 @@ public class JsonConverter {
                                                                                                                                                 .map(t16 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Either<String, T18> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Either<String, T18> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -444,7 +444,7 @@ public class JsonConverter {
                                                                                                                                                         .map(t17 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17)))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Either<String, T19> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Either<String, T19> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -487,7 +487,7 @@ public class JsonConverter {
                                                                                                                                                                 .map(t18 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Either<String, T20> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Either<String, T20> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -532,7 +532,7 @@ public class JsonConverter {
                                                                                                                                                                         .map(t19 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19)))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Either<String, T21> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Either<String, T21> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -579,7 +579,7 @@ public class JsonConverter {
                                                                                                                                                                                 .map(t20 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Either<String, T22> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Either<String, T22> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -628,7 +628,7 @@ public class JsonConverter {
                                                                                                                                                                                         .map(t21 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21)))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23> Either<String, T23> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23> Either<String, T23> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -679,7 +679,7 @@ public class JsonConverter {
                                                                                                                                                                                                 .map(t22 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24> Either<String, T24> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24> Either<String, T24> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -732,7 +732,7 @@ public class JsonConverter {
                                                                                                                                                                                                         .map(t23 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23)))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25> Either<String, T25> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25> Either<String, T25> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -787,7 +787,7 @@ public class JsonConverter {
                                                                                                                                                                                                                 .map(t24 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26> Either<String, T26> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26> Either<String, T26> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -844,7 +844,7 @@ public class JsonConverter {
                                                                                                                                                                                                                         .map(t25 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25)))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27> Either<String, T27> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27> Either<String, T27> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -903,7 +903,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                 .map(t26 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28> Either<String, T28> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28> Either<String, T28> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -964,7 +964,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                         .map(t27 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27)))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29> Either<String, T29> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29> Either<String, T29> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -1027,7 +1027,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                                 .map(t28 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28))))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30> Either<String, T30> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30> Either<String, T30> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -1092,7 +1092,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                                         .map(t29 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29)))))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31> Either<String, T31> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31> Either<String, T31> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -1159,7 +1159,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                                                 .map(t30 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30))))))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32> Either<String, T32> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32> Either<String, T32> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -1228,7 +1228,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                                                         .map(t31 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31)))))))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33> Either<String, T33> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33> Either<String, T33> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -1299,7 +1299,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                                                                 .map(t32 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32))))))))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34> Either<String, T34> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34> Either<String, T34> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
@@ -1372,7 +1372,7 @@ public class JsonConverter {
                                                                                                                                                                                                                                                                                         .map(t33 -> comb.apply(t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24, t25, t26, t27, t28, t29, t30, t31, t32, t33)))))))))))))))))))))))))))))))))));
     }
 
-    public <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35> Either<String, T35> with(
+    public final <T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35> Either<String, T35> with(
             Convert<JsonT, T0> f0,
             Convert<JsonT, T1> f1,
             Convert<JsonT, T2> f2,
