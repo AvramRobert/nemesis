@@ -4,7 +4,7 @@
             [nemesis.util.generators :refer :all]
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]])
-  (:import json.parser.Parser))
+  (:import com.ravram.nemesis.json.parser.Parser))
 
 (defspec isomorphic-conversion 100
   (for-all [json-clj (gen-json {:max-depth    3

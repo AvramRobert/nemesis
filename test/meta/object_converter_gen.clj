@@ -1,14 +1,15 @@
 (ns meta.object-converter-gen
-  (:require [meta.gen-util :refer :all]
-            [clojure.string :refer [join]]))
+  (:require [clojure.string :as s]
+            [meta.gen-util :refer :all]))
 
 (def class-def
-  "package json.coerce;
+  "package %s;
+
+  import %s.json.model.JObj;
+  import %2$s.json.model.Json;
+  import %2$s.util.error.Either;
   import io.lacuna.bifurcan.Map;
   import io.lacuna.bifurcan.Maps.Entry;
-  import json.model.JObj;
-  import json.model.Json;
-  import util.error.Either;
   import java.util.Arrays;
 
   public class %s<A> {
@@ -18,7 +19,7 @@
       return new Entry<>(\"\\\"\" + key + \"\\\"\", value);
     }
 
-    public %1$s(final A obj) {
+    public %3$s(final A obj) {
         this.obj = obj;
     }
 
@@ -43,12 +44,12 @@
 (defn entry-list [arity]
   (->> (range 0 arity)
        (map #(format entry-def % (nth type-vars %)))
-       (join ",")))
+       (s/join ",")))
 
 (defn param-pairs [arity]
   (->> (range 0 arity)
        (map #(format param-def % %))
-       (join ",\n")))
+       (s/join ",\n")))
 
 (defn binds [param arity]
   (if (= param (dec arity))
@@ -69,12 +70,17 @@
           (param-pairs arity)
           (flat-maps arity)))
 
-(defn clazz [class-name fn#]
+(defn clazz [domain package class-name fn#]
   (->> (inc fn#)
        (range 1)
        (map method)
-       (join "\n\n")
-       (format class-def class-name)))
+       (s/join "\n\n")
+       (format class-def package domain class-name)))
 
 (defn create-file [fn#]
-  (spit "./src/java/json/coerce/ObjectConverter.java" (clazz "ObjectConverter" fn#)))
+  (let [domain "com.ravram.nemesis"
+        package (str domain ".json.coerce")
+        path    (s/replace package "." "/")
+        class   "ObjectConverter"]
+    (spit (format "./src/%s/%s.java" path class)
+          (clazz domain package class fn#))))

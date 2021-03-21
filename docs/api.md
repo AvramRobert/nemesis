@@ -13,8 +13,8 @@
     * [Creating](api.md#creating)
     * [Casting](api.md#casting)
     * [Reducing](api.md#reducing)
-    * [Traversing](api.md#traversing) (not supported yet)
     * [Affixing](api.md#terminating--affixing-structure)
+    * [Traversing](api.md#traversing) (not supported yet)
 1. [Converting](api.md#converting)
     * [JSON to Object conversion](api.md#json-converters)
     * [Object to JSON conversion](api.md#object-converters)
@@ -52,7 +52,7 @@
 Generally, parsing reads directly into a `JsonT`.
 
 ```java
-import static nemesis.json.JsonOps.*;
+
 
 parse("{ \"hello\" : \"world\" }") // JsonT
 ```
@@ -75,7 +75,7 @@ parseAs(myTypeConverter, myJson);
 
 Assume we start with the following:
 ```java
-import static nemesis.json.JsonOps.*;
+
 
 JsonT jsonT = parse("{ \"hello\" : \"world\" }")
 ```
@@ -154,8 +154,8 @@ For arbitrary types, you'll have to provide a `Convert<A, Json>` instance.
 For more information on `Convert`, take a look [here](api.md#converting).
 
 ```java
-import static nemesis.json.coerce.ObjectConverter.object;
-import static nemesis.json.Converters.INT_TO_JSON;
+import static com.ravram.nemesis.json.coerce.ObjectConverter.object;
+import static com.ravram.nemesis.json.Converters.INT_TO_JSON;
 
 static class Point {
     final int a;
@@ -229,9 +229,9 @@ jsonT
 Updates are supported for any value at any degree of nestedness.  
 Can either be performed directly on a `JsonT` node or on a proper type `A`, provided a `Convert<Json, A>` instance.
 
-**Note: Converters for JSON types can be found in `nemesis.json.Converters`**
+**Note: Converters for JSON types can be found in `com.ravram.nemesis.json.Converters`**
 ```java
-import static nemesis.json.Converters.JSON_TO_INT;
+
 
 jsonT
     .insertValue(1, in("one", "level")
@@ -267,7 +267,7 @@ Values of any type `A` can be retrieved from any level and any structure, provid
 For more information on `Convert`, take a look [here](api.md#converting).
 
 ```java
-import static nemesis.json.Converters.*;
+
 
 jsonT
   .insertValue(true, in("one", "level"))
@@ -308,12 +308,12 @@ For more information on `Convert`, take a look [here](api.md#converting).
 
 #### Casting to JSON types
 
-Converters for basic JSON types can be found in `nemesis.json.Converters`
+Converters for basic JSON types can be found in `com.ravram.nemesis.json.Converters`
 
 A list of all default converters can be found [here](api.md#default-json-converters).
 
 ```java
-import static nemesis.json.Converters.JSON_TO_STRING;
+
 
 jsonT.getJson(in("hello")).as(JSON_TO_STRING); // Either<String, String>
 ```
@@ -362,7 +362,7 @@ Signature:
 Function3<A, String, JsonT, Either<String, A>>
 ```
 ```java
-import nemesis.json.Converters.JSON_TO_STRING;
+import com.ravram.nemesis.json.Converters.JSON_TO_STRING;
 
 jsonT.reduceObj("Greeting:", (inter, key, jsonValue) -> {
     return jsonValue.as(JSON_TO_STRING).map(value -> inter + " " + key + " " + value);
@@ -390,7 +390,7 @@ Function3<A, Integer, JsonT, Either<String, A>>
 ```
     
 ```java
-import nemesis.json.Converters.JSON_TO_INT;
+import com.ravram.nemesis.json.Converters.JSON_TO_INT;
 
 JsonT json = parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
 
@@ -398,10 +398,6 @@ json.reduceArr(0, (inter, index, jsonValue) -> {
     return jsonValue.getAs(JSON_TO_INT, in("value")).map(x -> x + inter);
 });
 ```
-
-### Traversing
-
-**NOT YET SUPPORTED**
 
 ### Creating
 
@@ -425,6 +421,9 @@ Yes, the error is a `String`. Don't worry, it contains more information that you
 ```java
 jsonT.affix()
 ```
+### Traversing
+
+**NOT YET SUPPORTED**
 
 ## Converting
 
@@ -436,7 +435,7 @@ Converting `Json` to an arbitrary type `A` is done by defining an instance of `C
 
 #### Default Json Converters
 
-For the most basic of JSON types, _nemesis_ already provides converters in `nemesis.json.Converters`.
+For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.json.Converters`.
 
 Here's a list:
 
@@ -477,8 +476,7 @@ Convert<Json, MyType> converter = json ->
 ```
 **Example:**
 ```java
-import static.nemesis.json.Converters.*;
-import static nemesis.json.JsonOps.*;
+import static com.ravram.nemesis.json.Converters.*;
 
 static class Coord {
     public final int s;
@@ -530,7 +528,7 @@ Convert<Json, Figure> figure = json ->
 
 #### Default Object Converters
 
-For the most basic of JSON types, _nemesis_ already provides converters in `nemesis.json.Converters`.
+For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.json.Converters`.
 
 Here's a list:
 
@@ -568,8 +566,7 @@ Convert<MyType, Json> converter = json ->
 ```
 **Example:**
 ```java
-import static.nemesis.json.Converters.*;
-import static nemesis.json.JsonOps.*;
+import static com.ravram.nemesis.json.Converters.*;
 
 static class Coord {
     public final int s;

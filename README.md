@@ -19,8 +19,7 @@ For a list of the things that currently may or may not work, take a look at the 
 ## Usage
 
 ```java
-import static nemesis.json.JsonOps.*;
-import static nemesis.json.Converters.JSON_TO_LONG;
+
 
 public static void main (String... args) {
     var json1 = "{ \"hello\" : \"world\" }";

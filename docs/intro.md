@@ -22,22 +22,21 @@ It thus provides data structure-esque functions, which allow one to **safely**, 
 
 ## Transformation
 As with any JSON library, _nemesis_ complies to the JSON specification and can parse any form it may occur in.  
-The parsed version is represented through the datatype `nemesis.model.Json`.
+The parsed version is represented through the datatype `com.ravram.nemesis.model.Json`.
 
 Every such `nemsis.model.Json` can either be marshalled back into a `String` or can be _transformed_. 
 
-A transformation wraps the `nemesis.model.Json` into a `nemesis.model.JsonT`, which acts as the context in which
+A transformation wraps the `com.ravram.nemesis.model.Json` into a `com.ravram.nemesis.model.JsonT`, which acts as the context in which
 changes are allowed to happen. These emphasise two properties:
 
 1. **Compositionality**
    
-   Every transformation, irrespective of sanity and/or success, returns a `nemesis.model.JsonT`.
+   Every transformation, irrespective of sanity and/or success, returns a `com.ravram.nemesis.model.JsonT`.
    This allows one to chain transformations together and actively "pretend" as if all were fine.
 
 2. **Safety**
     
     Changes are only "materialised" after a particular function has been called which "terminates" the transformation. 
     
-    That function then returns an `nemesis.util.error.Either<String, Json>`, which signals its outcome, either success or failure.\
+    That function then returns an `com.ravram.nemesis.util.error.Either<String, Json>`, which signals its outcome, either success or failure.\
     (Yes, the error is truly a `String`. Don't worry, it contains more info than you may expect.)
-    

@@ -13,15 +13,15 @@
 
 (defn convertor [scalar]
   (cond
-    (int? scalar)     {:to   Converters/LONG_TO_JSON
+    (int? scalar) {:to       Converters/LONG_TO_JSON
                        :from Converters/JSON_TO_LONG}
-    (double? scalar)  {:to   Converters/DOUBLE_TO_JSON
+    (double? scalar) {:to    Converters/DOUBLE_TO_JSON
                        :from Converters/JSON_TO_DOUBLE}
-    (string? scalar)  {:to   Converters/STRING_TO_JSON
+    (string? scalar) {:to   Converters/STRING_TO_JSON
                       :from Converters/JSON_TO_STRING}
     (boolean? scalar) {:to   Converters/BOOLEAN_TO_JSON
                        :from Converters/JSON_TO_BOOLEAN}
-    (nil? scalar)     {:to   Converters/NULL_TO_JSON
+    (nil? scalar) {:to       Converters/NULL_TO_JSON
                        :from Converters/JSON_TO_NULL}))
 
 (defn update-fn [scalar]

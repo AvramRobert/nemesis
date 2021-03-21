@@ -12,10 +12,10 @@
 
 * API improvements
 * Complete documentation 
-* Bug fixes
-
-### Planned
-
 * Definitive tests
 * Definitive benchmarks
 * Proper release
+
+### Planned
+
+* Performance improvements

@@ -1,6 +1,6 @@
 (ns meta.function-gen
   (:require [meta.gen-util :refer :all]
-            [clojure.string :refer [upper-case lower-case join]]))
+            [clojure.string :as s]))
 
 (def function-def
   "@FunctionalInterface\n public interface Function%s<%s> {\n  %s apply (%s); }")
@@ -9,13 +9,13 @@
   "@FunctionalInterface\n public interface Consumer%s<%s> {\n  void apply(%s); }")
 
 (def class-def
-  "package util.function;\n public class %s {\n  %s }")
+  "package %s;\n public class %s {\n  %s }")
 
 (defn param-def [letter]
-  (format "final %s %s" (upper-case letter) (lower-case letter)))
+  (format "final %s %s" (s/upper-case letter) (s/lower-case letter)))
 
 (defn param-list [arity]
-  (->> type-labels (take arity) (map param-def) (join ",\n")))
+  (->> type-labels (take arity) (map param-def) (s/join ",\n")))
 
 (defn fun-interface [arity]
   (format function-def
@@ -30,13 +30,20 @@
           (type-list arity)
           (param-list arity)))
 
-(defn clazz [class-name interface-def interface#]
+(defn clazz [package class-name interface-def interface#]
   (->> (inc interface#)
        (range 1)
        (map interface-def)
-       (join "\n\n")
-       (format class-def class-name)))
+       (s/join "\n\n")
+       (format class-def package class-name)))
 
 (defn create-file [interface#]
-  (spit "./src/java/util/function/Consumers.java" (clazz "Consumers" con-interface interface#))
-  (spit "./src/java/util/function/Functions.java" (clazz "Functions" fun-interface interface#)))
+  (let [domain    "com.ravram.nemesis"
+        package   (str domain ".util.function")
+        path      (s/replace package "." "/")
+        consumers "Consumers"
+        functions "Functions"]
+    (spit (format "./src/%s/%s.java" path consumers)
+          (clazz package consumers con-interface interface#))
+    (spit (format "./src/%s/%s.java" path functions)
+          (clazz package functions fun-interface interface#))))

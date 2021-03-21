@@ -2,12 +2,11 @@
   (:require [clojure.test :refer :all]
             [cheshire.core :as json]
             [clojure.pprint :refer [pprint]])
-  (:import (json.model Json JNum JString JObj JArr JBool JNull)
+  (:import (com.ravram.nemesis.json.model JsonT Json JNum JString JObj JArr JBool JNull)
            (io.lacuna.bifurcan List Map)
-           (json.parser Parser)
-           (json.model JsonT)
-           (json JsonOps)
-           (util.function Functions$Function1)
+           (com.ravram.nemesis.json.parser Parser)
+           (com.ravram.nemesis.json JsonOps)
+           (com.ravram.nemesis.util.function Functions$Function1)
            (java.util ArrayList HashMap HashSet)))
 
 (deftype WEntry [key value])
@@ -35,15 +34,15 @@
             (reduce (fn [m e]
                       (.put m (str (.key e)) (.value e))) (Map.) form))]
     (cond
-      (nil? form)       JNull/instance
+      (nil? form) JNull/instance
       (empty-map? form) JObj/empty
-      (number? form)    (JNum. form)
-      (string? form)    (JString. (pr-str form))
-      (keyword? form)   (JString. (name form))
-      (boolean? form)   (if form JBool/jtrue JBool/jfalse)
-      (wentry? form)    form
-      (wmap? form)      (JObj. (bifurcan-map (.entries form)))
-      (vector? form)    (JArr. (List/from form))
+      (number? form) (JNum. form)
+      (string? form) (JString. (pr-str form))
+      (keyword? form) (JString. (name form))
+      (boolean? form) (if form JBool/jtrue JBool/jfalse)
+      (wentry? form) form
+      (wmap? form) (JObj. (bifurcan-map (.entries form)))
+      (vector? form) (JArr. (List/from form))
       :else (throw (Exception. (format "Illegal JSON type of `%s`" form))))))
 
 (defn- keyseq [form]

@@ -1,17 +1,17 @@
 (ns meta.json-converter-gen
-  (:require [clojure.string :refer [join]]
+  (:require [clojure.string :as s]
             [meta.gen-util :refer :all]))
 
 (def class-def
-  "package json.coerce;
-  import static util.function.Functions.*;
-  import util.error.Either;
-  import json.model.JsonT;
+  "package %s;
+  import static %s.util.function.Functions.*;
+  import %2$s.util.error.Either;
+  import %2$s.json.model.JsonT;
 
   public class %s {
     private final JsonT json;
 
-      public %1$s(final JsonT json) {
+      public %3$s(final JsonT json) {
         this.json = json;
       }
 
@@ -37,7 +37,7 @@
   (->> type-labels
        (map-indexed converter)
        (take params)
-       (join ",\n")))
+       (s/join ",\n")))
 
 (defn binds [param arity]
   (if (>= param (dec arity))
@@ -61,12 +61,20 @@
           (combiner-def arity)
           (flat-maps (dec arity))))
 
-(defn clazz [class-name method#]
+(defn clazz [domain
+             package
+             class-name
+             method#]
   (->> (+ method# 2)
        (range 2)
        (map method)
-       (join "\n\n")
-       (format class-def class-name)))
+       (s/join "\n\n")
+       (format class-def package domain class-name)))
 
 (defn create-file [fn#]
-  (spit "./src/java/json/coerce/JsonConverter.java" (clazz "JsonConverter" fn#)))
+  (let [domain  "com.ravram.nemesis"
+        package (str domain ".json.coerce")
+        path    (s/replace package "." "/")
+        class   "JsonConverter"]
+    (spit (format "./src/%s/%s.java" path class)
+          (clazz domain package class fn#))))

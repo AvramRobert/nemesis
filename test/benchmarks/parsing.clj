@@ -1,19 +1,21 @@
 (ns benchmarks.parsing
-  (:require [cheshire.core :as j]
+  (:require [cheshire.core :as cheshire]
             [clojure.test :refer [deftest]]
             [clojure.java.io :as jio]
             [benchmarks.util :as u])
-  (:import com.fasterxml.jackson.databind.ObjectMapper)
-  (:import com.google.gson.JsonParser
-           (java.nio.file Files Paths)))
+  (:import com.fasterxml.jackson.databind.ObjectMapper
+           com.google.gson.JsonParser
+           play.api.libs.json.Json
+           com.ravram.nemesis.json.parser.Parser)
+  (:import (java.nio.file Files Paths)))
 
 (defn default-tasks [json]
   (let [default-sampler (constantly [json])]
     [{:name      "Nemesis Parser"
-      :operation #(json.parser.Parser/parse %)
+      :operation #(Parser/parse %)
       :sampler   default-sampler}
      {:name      "Cheshire Parser"
-      :operation #(j/parse-string-strict %)
+      :operation #(cheshire/parse-string-strict %)
       :sampler   default-sampler}
      {:name      "GSON Parser"
       :operation #(JsonParser/parseString %)
@@ -23,7 +25,7 @@
                    #(.readTree mapper ^String %))
       :sampler   default-sampler}
      {:name      "Play Parser"
-      :operation #(play.api.libs.json.Json/parse ^String %)
+      :operation #(Json/parse ^String %)
       :sampler   default-sampler}]))
 
 (defn- read-json! [path]
