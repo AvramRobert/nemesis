@@ -1,8 +1,8 @@
-(defproject nemesis "0.1.0-SNAPSHOT"
+(defproject com.ravram/nemesis "0.1.0-SNAPSHOT"
   :description "A library for working with JSON through direct manipulation."
   :url "https://github.com/AvramRobert/nemesis"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :license {:name "MIT"
+            :url "https://opensource.org/licenses/MIT"}
   :java-source-paths ["src"]
   :dependencies [[io.lacuna/bifurcan "0.1.0"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]
@@ -12,4 +12,15 @@
                                   [com.google.code.gson/gson "2.8.6"]
                                   [criterium "0.4.6"]
                                   [cheshire "5.9.0"]]
-                   :resource-paths ["test/resources"]}})
+                   :resource-paths ["test/resources"]}}
+  :javac-options ["-target" "1.8" "-source" "1.8"]
+  :scm {:url "git@github.com:AvramRobert/nemesis.git"}
+  :pom-addition [:developers [:developer
+                              [:name "Robert M. Avram"]
+                              [:url "https://github.com/AvramRobert"]
+                              [:email "am11.robert@yahoo.com"]]]
+  :classifiers {:javadoc {:java-source-paths ^:replace []
+                          :source-paths      ^:replace []
+                          :resource-paths    ^:replace ["javadoc"]}
+                :sources {:source-paths   ^:replace ["src"]
+                          :resource-paths ^:replace []}})
