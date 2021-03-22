@@ -1,4 +1,4 @@
-package com.ravram.nemesis.json.model;
+package com.ravram.nemesis.model;
 
 public class JNum extends Json {
     public final Number value;

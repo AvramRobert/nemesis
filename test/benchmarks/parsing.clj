@@ -6,7 +6,7 @@
   (:import com.fasterxml.jackson.databind.ObjectMapper
            com.google.gson.JsonParser
            play.api.libs.json.Json
-           com.ravram.nemesis.json.parser.Parser)
+           com.ravram.nemesis.parser.Parser)
   (:import (java.nio.file Files Paths)))
 
 (defn default-tasks [json]

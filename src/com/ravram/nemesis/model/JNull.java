@@ -1,4 +1,4 @@
-package com.ravram.nemesis.json.model;
+package com.ravram.nemesis.model;
 
 public class JNull extends Json {
     private JNull() {

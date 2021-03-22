@@ -6,7 +6,7 @@
   "package %s;
   import static %s.util.function.Functions.*;
   import %2$s.util.error.Either;
-  import %2$s.json.model.JsonT;
+  import %2$s.model.JsonT;
 
   public final class %s {
     private final JsonT json;
@@ -73,7 +73,7 @@
 
 (defn create-file [fn#]
   (let [domain  "com.ravram.nemesis"
-        package (str domain ".json.coerce")
+        package (str domain ".coerce")
         path    (s/replace package "." "/")
         class   "JsonConverter"]
     (spit (format "./src/%s/%s.java" path class)

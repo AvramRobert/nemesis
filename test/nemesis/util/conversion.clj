@@ -2,10 +2,10 @@
   (:require [clojure.test :refer :all]
             [cheshire.core :as json]
             [clojure.pprint :refer [pprint]])
-  (:import (com.ravram.nemesis.json.model JsonT Json JNum JString JObj JArr JBool JNull)
+  (:import (com.ravram.nemesis.model JsonT Json JNum JString JObj JArr JBool JNull)
            (io.lacuna.bifurcan List Map)
-           (com.ravram.nemesis.json.parser Parser)
-           (com.ravram.nemesis.json JsonOps)
+           (com.ravram.nemesis.parser Parser)
+           (com.ravram.nemesis JsonOps)
            (com.ravram.nemesis.util.function Functions$Function1)
            (java.util ArrayList HashMap HashSet)))
 

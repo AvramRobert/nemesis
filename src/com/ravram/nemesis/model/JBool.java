@@ -1,4 +1,4 @@
-package com.ravram.nemesis.json.model;
+package com.ravram.nemesis.model;
 
 public class JBool extends Json {
     public final boolean value;

@@ -1,4 +1,4 @@
-package com.ravram.nemesis.json.model;
+package com.ravram.nemesis.model;
 
 import io.lacuna.bifurcan.List;
 

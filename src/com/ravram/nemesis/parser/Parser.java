@@ -1,10 +1,10 @@
-package com.ravram.nemesis.json.parser;
+package com.ravram.nemesis.parser;
 
-import com.ravram.nemesis.json.model.Json;
+import com.ravram.nemesis.model.Json;
 import com.ravram.nemesis.util.error.Either;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
-import com.ravram.nemesis.json.model.*;
+import com.ravram.nemesis.model.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;

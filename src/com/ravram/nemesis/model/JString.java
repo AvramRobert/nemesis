@@ -1,4 +1,4 @@
-package com.ravram.nemesis.json.model;
+package com.ravram.nemesis.model;
 
 public final class JString extends Json {
     public final String value;

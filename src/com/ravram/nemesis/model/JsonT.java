@@ -1,7 +1,7 @@
-package com.ravram.nemesis.json.model;
+package com.ravram.nemesis.model;
 
-import com.ravram.nemesis.json.coerce.Convert;
-import com.ravram.nemesis.json.coerce.DynamicConversions;
+import com.ravram.nemesis.coerce.Convert;
+import com.ravram.nemesis.coerce.DynamicConversions;
 import com.ravram.nemesis.util.error.Either;
 import com.ravram.nemesis.util.function.Functions;
 import com.ravram.nemesis.util.misc.Strings;

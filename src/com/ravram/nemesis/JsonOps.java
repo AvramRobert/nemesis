@@ -1,14 +1,14 @@
-package com.ravram.nemesis.json;
+package com.ravram.nemesis;
 
-import com.ravram.nemesis.json.model.In;
+import com.ravram.nemesis.model.In;
 import com.ravram.nemesis.util.error.Either;
-import com.ravram.nemesis.json.coerce.Convert;
-import com.ravram.nemesis.json.coerce.JsonConverter;
-import com.ravram.nemesis.json.coerce.ObjectConverter;
-import com.ravram.nemesis.json.model.JObj;
-import com.ravram.nemesis.json.model.Json;
-import com.ravram.nemesis.json.model.JsonT;
-import com.ravram.nemesis.json.parser.Parser;
+import com.ravram.nemesis.coerce.Convert;
+import com.ravram.nemesis.coerce.JsonConverter;
+import com.ravram.nemesis.coerce.ObjectConverter;
+import com.ravram.nemesis.model.JObj;
+import com.ravram.nemesis.model.Json;
+import com.ravram.nemesis.model.JsonT;
+import com.ravram.nemesis.parser.Parser;
 
 public class JsonOps {
 

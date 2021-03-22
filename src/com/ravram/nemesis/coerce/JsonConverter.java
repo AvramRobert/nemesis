@@ -1,9 +1,9 @@
-package com.ravram.nemesis.json.coerce;
+package com.ravram.nemesis.coerce;
 
 import static com.ravram.nemesis.util.function.Functions.*;
 
 import com.ravram.nemesis.util.error.Either;
-import com.ravram.nemesis.json.model.JsonT;
+import com.ravram.nemesis.model.JsonT;
 
 public final class JsonConverter {
     private final JsonT json;

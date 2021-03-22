@@ -5,7 +5,7 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (com.ravram.nemesis.json Converters)))
+  (:import (com.ravram.nemesis Converters)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-json {:max-depth    2
@@ -45,7 +45,7 @@
   (for-all [json-clj      (gen-map {:max-depth    2
                                     :max-elements 3})
             clj-to-insert (gen-json {:max-depth        2
-                                         :max-elements 3})
+                                     :max-elements 3})
             keys          (-> gen/string-alphanumeric
                               (gen/not-empty)
                               (gen/vector)

@@ -5,8 +5,8 @@
 (def class-def
   "package %s;
 
-  import %s.json.model.JObj;
-  import %2$s.json.model.Json;
+  import %s.model.JObj;
+  import %2$s.model.Json;
   import %2$s.util.error.Either;
   import io.lacuna.bifurcan.Map;
   import io.lacuna.bifurcan.Maps.Entry;
@@ -79,7 +79,7 @@
 
 (defn create-file [fn#]
   (let [domain "com.ravram.nemesis"
-        package (str domain ".json.coerce")
+        package (str domain ".coerce")
         path    (s/replace package "." "/")
         class   "ObjectConverter"]
     (spit (format "./src/%s/%s.java" path class)

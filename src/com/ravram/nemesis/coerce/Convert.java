@@ -1,4 +1,4 @@
-package com.ravram.nemesis.json.coerce;
+package com.ravram.nemesis.coerce;
 
 import com.ravram.nemesis.util.error.Either;
 import com.ravram.nemesis.util.error.Left;

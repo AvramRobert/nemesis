@@ -4,7 +4,7 @@
             [nemesis.util.conversion :refer [clj->nem clj->java in function]]
             [clojure.test.check.generators :as gen]
             [benchmarks.util :as u])
-  (:import (com.ravram.nemesis.json Converters)))
+  (:import (com.ravram.nemesis Converters)))
 
 (def ^:const SAMPLE-SIZE 5)
 
