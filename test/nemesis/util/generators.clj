@@ -159,12 +159,8 @@
       (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
 
-(defn gen-json [{:keys [scalars
-                        max-depth
-                        max-elements]
-                 :or   {scalars default-scalars
-                        max-depth 1
-                        max-elements 5}
+(defn gen-json [{:keys [scalars]
+                 :or   {scalars default-scalars}
                  :as   opts}]
   (gen/one-of (conj scalars (gen-arr opts) (gen-map opts))))
 

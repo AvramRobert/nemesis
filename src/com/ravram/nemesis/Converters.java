@@ -1,10 +1,10 @@
 package com.ravram.nemesis;
 
 import com.ravram.nemesis.coerce.Convert;
+import com.ravram.nemesis.coerce.DynamicConversions;
+import com.ravram.nemesis.model.*;
 import com.ravram.nemesis.util.error.Either;
 import com.ravram.nemesis.util.misc.Collections;
-import com.ravram.nemesis.util.misc.Strings;
-import com.ravram.nemesis.model.*;
 import io.lacuna.bifurcan.IEntry;
 
 import java.util.*;
@@ -154,7 +154,7 @@ public class Converters {
     public static <A> Convert<Map<String, A>, Json> mapFrom(final Convert<A, Json> f) {
         return map -> Collections.traverseMap(
                 map,
-                key -> Either.right(Strings.escape(key)), f::convert)
+                DynamicConversions::coerceKey, f::convert)
                 .map(JObj::new);
     }
 

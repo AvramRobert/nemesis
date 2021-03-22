@@ -1,5 +1,7 @@
 package com.ravram.nemesis.model;
 
+import com.ravram.nemesis.util.misc.Strings;
+
 public final class JString extends Json {
     public final String value;
     public JString(final String i) {
@@ -9,6 +11,6 @@ public final class JString extends Json {
 
     @Override
     public String toString() {
-        return value;
+        return Strings.escape(value);
     }
 }

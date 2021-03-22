@@ -258,7 +258,6 @@ public class Parser {
         while (cursor < length) {
             current = text.charAt(cursor);
             if (current == QUOTE) {
-                cursor ++; // also consume the last ' " '
                 return SUCCESSFUL;
             }
             else cursor++;
@@ -269,10 +268,11 @@ public class Parser {
     private boolean consumeString() {
         final char current = text.charAt(cursor);
         if (current == QUOTE) {
+            cursor ++; // consume the first ' " '
             final int start = cursor;
-            cursor ++;
             if (consumeStringContent()) {
                 final String sub = text.substring(start, cursor);
+                cursor ++; // consume the last ' " '
                 return succeed(new JString(sub));
             }
             else return FAILED;
@@ -406,7 +406,7 @@ public class Parser {
         skip();
         if (cursor < length) {
             final char current = text.charAt(cursor);
-            if (number(current))           return consumeNumber(cursor);
+            if      (number(current))      return consumeNumber(cursor);
             else if (current == O_BRACKET) return consumeArr();
             else if (current == O_CURLY)   return consumeObj();
             else if (current == QUOTE)     return consumeString();

@@ -9,15 +9,15 @@ import static com.ravram.nemesis.util.misc.Collections.*;
 
 public class DynamicConversions {
 
-    public static <A> Either<String, Long> coerceLong(final A value) {
+    public static <A> Either<String, Long> coerceIndex(final A value) {
         if (value instanceof Long) return Either.right((Long) value);
         else if (value instanceof Integer) return Either.right(Integer.toUnsignedLong((Integer) value));
         else return Either.left("Value `%s` is not of type Long", value.toString());
     }
 
-    public static <A> Either<String, String> coerceString(final A value) {
-        if (value instanceof String) return Either.right((String) value);
-        else return Either.left("Value `%s` is not of type String", value.toString());
+    public static <A> Either<String, String> coerceKey(final A key) {
+        if (key instanceof String) return Either.right(Strings.escape((String) key));
+        return Either.left("Key `%s` is not of type String", key.toString());
     }
 
     @SuppressWarnings("unchecked")
@@ -57,7 +57,7 @@ public class DynamicConversions {
 
         } else if (value instanceof java.util.Map) {
             final java.util.Map<Object, Object> map = (java.util.Map<Object, Object>) value;
-            return traverseMap(map, s -> coerceString(s).map(Strings::escape), DynamicConversions::coerceJson).map(JObj::new);
+            return traverseMap(map, DynamicConversions::coerceKey, DynamicConversions::coerceJson).map(JObj::new);
 
         } else if (value instanceof java.util.List) {
             final java.util.List<Object> list = (java.util.List<Object>) value;

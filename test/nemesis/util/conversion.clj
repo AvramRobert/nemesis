@@ -24,7 +24,7 @@
     (cond
       (map? clj)   (->> clj (mapv recurse) (WMap.) (f))
       (coll? clj)  (->> clj (mapv (partial walker f)) (f))
-      :else (f clj))))
+      :else        (f clj))))
 
 (defn- coerce [form]
   (letfn [(empty-map? [form]
@@ -37,7 +37,7 @@
       (nil? form) JNull/instance
       (empty-map? form) JObj/empty
       (number? form) (JNum. form)
-      (string? form) (JString. (pr-str form))
+      (string? form) (JString. form)
       (keyword? form) (JString. (name form))
       (boolean? form) (if form JBool/jtrue JBool/jfalse)
       (wentry? form) form

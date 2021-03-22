@@ -55,6 +55,16 @@
           expected      (assoc-in json-clj keys clj-to-insert)]
       (is (= expected computed)))))
 
+(defspec raw-association 100
+  (for-all [json  (gen-map {:max-depth    2
+                            :min-elements 1
+                            :max-elements 3})
+            value (gen-json {})
+            key   gen-string]
+           (let [computed (transform (insert-jval (clj->java value) [key]) json)
+                 expected (assoc json key value)]
+             (is (= expected computed)))))
+
 (defspec deep-association-replace 100
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
                                               :max-elements 3}))
@@ -129,7 +139,7 @@
 (defspec deep-updating 100
   (for-all [json-clj (gen/not-empty (gen-map {:max-depth    2
                                               :max-elements 3
-                                              :scalars      [gen/int]}))
+                                              :scalars      [gen/small-integer]}))
             new-key   gen-string
             new-value gen/nat]
     (let [keys     (rand-keyseq json-clj)
@@ -176,5 +186,4 @@
                  expected (concat json-clj-1 json-clj-2)]
              (is (= expected computed)))))
 
-;; FIXME: Test for inserting random java types that are somewhat conceptually equivalent to json (ex: Map<String, ?> or List<?>)
 ;; FIXME: Test for failure cohesion, i.e. if it fails once, any subsequent operation should not be performed.

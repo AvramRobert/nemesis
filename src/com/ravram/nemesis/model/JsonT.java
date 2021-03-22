@@ -50,9 +50,9 @@ public class JsonT {
     }
 
     private Either<String, Json> associateInObject(final JObj json, final Json toAssoc, final int depth, final Object... keys) {
-        final Either<String, String> skey = DynamicConversions.coerceString(keys[depth]);
+        final Either<String, String> skey = DynamicConversions.coerceKey(keys[depth]);
         if (skey.isRight()) {
-            final String key   = Strings.escape(skey.value());
+            final String key   = skey.value();
             final Json value   = json.value.get(key, node);
             return associate(value, toAssoc, depth + 1, keys).map(x -> new JObj(json.value.put(key, x)));
         } else {
@@ -61,7 +61,7 @@ public class JsonT {
     }
 
     private Either<String, Json> associateInArray(final JArr json, final Json toAssoc, final int depth, final Object... keys) {
-        final Either<String, Long> sidx = DynamicConversions.coerceLong(keys[depth]);
+        final Either<String, Long> sidx = DynamicConversions.coerceIndex(keys[depth]);
         if (sidx.isRight()) {
             final List<Json> list = json.value;
             final long idx        = sidx.value();
@@ -92,11 +92,11 @@ public class JsonT {
                 final Object k = path[depth];
                 if (tree.type == JType.JsonObject) {
                     final JObj obj = (JObj) tree;
-                    final Either<String, String> ekey = DynamicConversions.coerceString(k);
+                    final Either<String, String> ekey = DynamicConversions.coerceKey(k);
                     if (ekey.isLeft()) return fail(ekey.error());
                     else {
                         final String key = ekey.value();
-                        final Json value = obj.value.get(Strings.escape(key), null);
+                        final Json value = obj.value.get(key, null);
                         if (value == null) return fail("Key `%s` not found", key);
                         else {
                             tree = value;
@@ -106,7 +106,7 @@ public class JsonT {
                 }
                 else if (tree.type == JType.JsonArray) {
                     final JArr arr = (JArr) tree;
-                    final Either<String, Long> eindex = DynamicConversions.coerceLong(k);
+                    final Either<String, Long> eindex = DynamicConversions.coerceIndex(k);
                     if (eindex.isLeft()) return fail(eindex.error());
                     else {
                         final long index = eindex.value();
