@@ -1,7 +1,7 @@
 (ns benchmarks.manipulating
   (:require [clojure.test :refer :all]
             [nemesis.util.generators :refer :all]
-            [nemesis.util.conversion :refer [clj->nem clj->java in function]]
+            [nemesis.util.conversion :refer [clj->nem clj->java in function-1]]
             [clojure.test.check.generators :as gen]
             [benchmarks.util :as u])
   (:import (com.ravram.nemesis Converters)))
@@ -113,7 +113,7 @@
        :from (-> scalar (convertor) (:from))
        :to   (-> scalar (f) (convertor) (:to))
        :in   (in path)
-       :fn   (function f)})))
+       :fn   (function-1 f)})))
 
 (def insertion-tasks
   (let [small {:densities {0 {:min-elements 2

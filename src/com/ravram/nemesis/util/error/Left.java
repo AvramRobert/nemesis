@@ -54,4 +54,13 @@ public class Left<E, R> implements Either<E, R> {
     public String toString() {
         return String.format("Left: %s", error);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Left) {
+            return error == ((Left<?, ?>) obj).error;
+        } else {
+            return false;
+        }
+    }
 }

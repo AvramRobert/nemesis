@@ -25,7 +25,7 @@
   (gen/return nil))
 
 (def gen-string
-  (->> gen/char-alpha (gen/vector) (gen/fmap #(apply str %)) (gen/not-empty)))
+  (gen/not-empty gen/string-alphanumeric))
 
 (def default-scalars
   [gen-int
@@ -38,7 +38,7 @@
                  :or   {min-depth 1
                         max-depth 4}}]
   (gen/vector
-    (gen/resize 10 (gen/not-empty gen/string-alphanumeric))
+    (gen/resize 10 (gen/not-empty gen-string))
     min-depth max-depth))
 
 (defn- make-path-gen [path json]
@@ -58,9 +58,11 @@
   (update opts :current-depth #(-> % (or 0) (inc))))
 
 (defn- extract-densities [opts]
-  (let [current-depth (:current-depth opts 0)
-        min-elements (get-in opts [:densities current-depth :min-elements] 0)
-        max-elements (get-in opts [:densities current-depth :max-elements] 5)
+  (let [current-depth        (:current-depth opts 0)
+        default-min-elements (:min-elements opts 0)
+        default-max-elements (:max-elements opts 5)
+        min-elements         (get-in opts [:densities current-depth :min-elements] default-min-elements)
+        max-elements         (get-in opts [:densities current-depth :max-elements] default-max-elements)
         [min max] (if (> min-elements max-elements)
                     [min-elements min-elements]
                     [min-elements max-elements])]
@@ -158,6 +160,16 @@
       (gen/map gen-string (gen/one-of scalars) map-opts)
       (rec-map (gen/recursive-gen rec-map (gen/one-of scalars))))))
 
+(defn gen-shallow-map [{:keys [scalars]
+                        :or   {scalars default-scalars}
+                        :as   opts}]
+  (->> opts (extract-densities) (gen/map gen-string (gen/one-of scalars))))
+
+(defn gen-shallow-arr [{:keys [scalars]
+                        :or   {scalars default-scalars}
+                        :as   opts}]
+  (let [{:keys [min-elements max-elements]} (extract-densities opts)]
+    (gen/vector (gen/one-of scalars) min-elements max-elements)))
 
 (defn gen-json [{:keys [scalars]
                  :or   {scalars default-scalars}

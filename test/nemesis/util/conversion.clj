@@ -5,8 +5,8 @@
   (:import (com.ravram.nemesis.model JsonT Json JNum JString JObj JArr JBool JNull)
            (io.lacuna.bifurcan List Map)
            (com.ravram.nemesis.parser Parser)
-           (com.ravram.nemesis JsonOps)
-           (com.ravram.nemesis.util.function Functions$Function1)
+           (com.ravram.nemesis JsonOps Converters)
+           (com.ravram.nemesis.util.function Functions$Function1 Functions$Function3)
            (java.util ArrayList HashMap HashSet)))
 
 (deftype WEntry [key value])
@@ -81,14 +81,18 @@
   (let [res (->> cljs (map clj->nem) (map #(.transform %)) (apply f) (.affix))]
     (if (.isRight res)
       (nem->clj (.value res))
-      (pprint res))))
+      res)))
 
 (defn rand-keyseq [form]
   (vec (keyseq form)))
 
-(defn function [fn]
+(defn function-1 [fn]
   (reify Functions$Function1
     (apply [_ a] (fn a))))
+
+(defn function-3 [fn]
+  (reify Functions$Function3
+    (apply [_ a b c] (fn a b c))))
 
 (defn in [args]
   (JsonOps/in (into-array Object args)))
@@ -111,11 +115,19 @@
 
 (defn update-j [fn-j keys]
   (fn [^JsonT json-t]
-    (.updateJson json-t (function fn-j) (in keys))))
+    (.updateJson json-t (function-1 fn-j) (in keys))))
 
 (defn update-jval [to fn-val from keys]
   (fn [^JsonT json-t]
-    (.updateValue json-t to (function fn-val) from (in keys))))
+    (.updateValue json-t to (function-1 fn-val) from (in keys))))
 
 (defn merge-j [^JsonT a ^JsonT b]
   (.mergeJson a b))
+
+(defn reduce-obj-j [init f]
+  (fn [^JsonT json]
+    (.reduceObj json init (function-3 f))))
+
+(defn reduce-arr-j [init f]
+  (fn [^JsonT json]
+    (.reduceArr json init (function-3 f))))

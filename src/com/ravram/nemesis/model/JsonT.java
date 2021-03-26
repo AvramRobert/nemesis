@@ -3,7 +3,6 @@ package com.ravram.nemesis.model;
 import com.ravram.nemesis.coerce.Convert;
 import com.ravram.nemesis.coerce.DynamicConversions;
 import com.ravram.nemesis.util.error.Either;
-import com.ravram.nemesis.util.function.Functions;
 import com.ravram.nemesis.util.misc.Strings;
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.List;
@@ -11,6 +10,7 @@ import io.lacuna.bifurcan.Map;
 
 import java.util.Arrays;
 
+import static com.ravram.nemesis.util.function.Functions.*;
 import static com.ravram.nemesis.util.error.Either.left;
 
 public class JsonT {
@@ -170,8 +170,8 @@ public class JsonT {
         }
     }
 
-    private <A> Either<String, A> reduceObjBlind(final A init,
-                                                 final Functions.Function3<A, String, JsonT, Either<String, A>> f) {
+    private <A> Either<String, A> blindReduceObj(final A init,
+                                                 final Function3<A, String, JsonT, Either<String, A>> f) {
         A start = init;
         if (json.type == JType.JsonObject) {
             for (IEntry<String, Json> e : jobj().value.entries()) {
@@ -183,8 +183,8 @@ public class JsonT {
         } else return left(String.format("Cannot reduce over json type `%s`.", json.type));
     }
 
-    private <A> Either<String, A> reduceArrBlind(final A init,
-                                                 final Functions.Function3<A, Integer, JsonT, Either<String, A>> f) {
+    private <A> Either<String, A> blindReduceArr(final A init,
+                                                 final Function3<A, Integer, JsonT, Either<String, A>> f) {
         A start = init;
         if (json.type == JType.JsonArray) {
             int i = 0;
@@ -237,7 +237,7 @@ public class JsonT {
         return insertValue(value, DynamicConversions::coerceJson, in);
     }
 
-    public final JsonT updateJson(final Functions.Function1<JsonT, JsonT> f, final In in) {
+    public final JsonT updateJson(final Function1<JsonT, JsonT> f, final In in) {
         if (failed || in.isEmpty) return this;
         else {
             final JsonT result = f.apply(blindGet(in));
@@ -247,7 +247,7 @@ public class JsonT {
     }
 
     public final <A, B> JsonT updateValue(final Convert<Json, A> from,
-                                          final Functions.Function1<A, B> f,
+                                          final Function1<A, B> f,
                                           final Convert<B, Json> to,
                                           final In in) {
         if (failed || in.isEmpty) return this;
@@ -259,7 +259,7 @@ public class JsonT {
         }
     }
 
-    public final <A, B> JsonT updateValue(final Convert<Json, A> to, final Functions.Function1<A, B> f, final In in) {
+    public final <A, B> JsonT updateValue(final Convert<Json, A> to, final Function1<A, B> f, final In in) {
         return updateValue(to, f, DynamicConversions::coerceJson, in);
     }
 
@@ -277,15 +277,15 @@ public class JsonT {
     }
 
     public final <A> Either<String, A> reduceObj(final A init,
-                                                 final Functions.Function3<A, String, JsonT, Either<String, A>> f) {
+                                                 final Function3<A, String, JsonT, Either<String, A>> f) {
         if (failed) return Either.left(error);
-        else return reduceObjBlind(init, f);
+        else return blindReduceObj(init, f);
     }
 
     public final <A> Either<String, A> reduceArr(final A init,
-                                                 final Functions.Function3<A, Integer, JsonT, Either<String, A>> f) {
+                                                 final Function3<A, Integer, JsonT, Either<String, A>> f) {
         if (failed) return Either.left(error);
-        else return reduceArrBlind(init, f);
+        else return blindReduceArr(init, f);
     }
 
     public final <A> Either<String, A> as(final Convert<Json, A> f) {
