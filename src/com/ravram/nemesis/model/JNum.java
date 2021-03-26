@@ -9,6 +9,11 @@ public class JNum extends Json {
 
     @Override
     public String toString() {
+        return encode();
+    }
+
+    @Override
+    public String encode() {
         return value.toString();
     }
 }

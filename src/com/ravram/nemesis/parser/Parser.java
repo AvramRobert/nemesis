@@ -298,7 +298,7 @@ public class Parser {
         else return abruptEnd(S_COMMA, until);
     }
 
-    private boolean consumePair() {
+    private boolean consumeColon() {
         skip();
         if (cursor < length) {
             final char current = text.charAt(cursor);
@@ -368,7 +368,7 @@ public class Parser {
             }
             else if (consumeString()) {
                 final String key = result.toString();
-                if (consumePair()) {
+                if (consumeColon()) {
                     if (consumeAny()) {
                         final Json value = result;
                         if (consumeComma(C_CURLY)) fields.put(key, value);

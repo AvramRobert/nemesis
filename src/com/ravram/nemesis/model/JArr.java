@@ -12,11 +12,16 @@ public final class JArr extends Json {
 
     @Override
     public String toString() {
+        return value.toString();
+    }
+
+    @Override
+    public String encode() {
         final StringBuilder buff = new StringBuilder();
         buff.append("[");
 
         for (Json json : value) {
-            buff.append(",").append(json.toString());
+            buff.append(",").append(json.encode());
         }
         if (value.size() == 0) {
             return buff.append("]").toString();

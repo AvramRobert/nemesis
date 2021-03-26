@@ -7,7 +7,5 @@ public abstract class Json {
         return new JsonT(this);
     }
 
-    public String stringify() {
-        return this.toString();
-    }
+    public abstract String encode();
 }

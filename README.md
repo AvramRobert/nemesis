@@ -34,7 +34,7 @@ public static void main (String... args) {
          .mergeJson(parse(json2))
          .updateValue(JSON_TO_LONG, a -> a + 1, in("numbers", 1, "second"))
          .affix()
-         .map(json -> json.stringify());
+         .map(json -> json.encode());
 
      System.out.println(modified);
  }

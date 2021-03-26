@@ -6,6 +6,4 @@ public class Strings {
         return String.format("\"%s\"", s);
     }
 
-    public static String unescape (final String s) { return s.replace("\"", ""); }
-
 }

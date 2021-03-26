@@ -10,6 +10,11 @@ public class JBool extends Json {
 
     @Override
     public String toString() {
+        return encode();
+    }
+
+    @Override
+    public String encode() {
         return Boolean.toString(value);
     }
 

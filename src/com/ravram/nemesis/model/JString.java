@@ -11,6 +11,11 @@ public final class JString extends Json {
 
     @Override
     public String toString() {
+        return value;
+    }
+
+    @Override
+    public String encode() {
         return Strings.escape(value);
     }
 }

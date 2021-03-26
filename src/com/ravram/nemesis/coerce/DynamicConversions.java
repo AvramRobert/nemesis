@@ -3,7 +3,6 @@ package com.ravram.nemesis.coerce;
 import io.lacuna.bifurcan.List;
 import com.ravram.nemesis.model.*;
 import com.ravram.nemesis.util.error.Either;
-import com.ravram.nemesis.util.misc.Strings;
 
 import static com.ravram.nemesis.util.misc.Collections.*;
 
@@ -16,7 +15,7 @@ public class DynamicConversions {
     }
 
     public static <A> Either<String, String> coerceKey(final A key) {
-        if (key instanceof String) return Either.right(Strings.escape((String) key));
+        if (key instanceof String) return Either.right((String) key);
         return Either.left("Key `%s` is not of type String", key.toString());
     }
 

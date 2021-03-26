@@ -3,7 +3,6 @@ package com.ravram.nemesis.model;
 import com.ravram.nemesis.coerce.Convert;
 import com.ravram.nemesis.coerce.DynamicConversions;
 import com.ravram.nemesis.util.error.Either;
-import com.ravram.nemesis.util.misc.Strings;
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
@@ -158,9 +157,8 @@ public class JsonT {
         if (json.type == JType.JsonObject) {
             Map<String, Json> map = jobj().value;
             for (String key: keys) {
-                final String k = Strings.escape(key);
-                if (map.contains(k)) {
-                    map = map.remove(k);
+                if (map.contains(key)) {
+                    map = map.remove(key);
                 }
             }
             return succeed(new JObj(map));
@@ -175,7 +173,7 @@ public class JsonT {
         A start = init;
         if (json.type == JType.JsonObject) {
             for (IEntry<String, Json> e : jobj().value.entries()) {
-                final Either<String, A> res = f.apply(start, Strings.unescape(e.key()), e.value().transform());
+                final Either<String, A> res = f.apply(start, e.key(), e.value().transform());
                 if (res.isRight()) start = res.value();
                 else return Either.left(res.error());
             }

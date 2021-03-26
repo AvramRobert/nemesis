@@ -9,6 +9,11 @@ public class JNull extends Json {
 
     @Override
     public String toString() {
+        return encode();
+    }
+
+    @Override
+    public String encode() {
         return "null";
     }
 }

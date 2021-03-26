@@ -5,7 +5,7 @@
   (:import (com.ravram.nemesis.model JsonT Json JNum JString JObj JArr JBool JNull)
            (io.lacuna.bifurcan List Map)
            (com.ravram.nemesis.parser Parser)
-           (com.ravram.nemesis JsonOps Converters)
+           (com.ravram.nemesis JsonOps)
            (com.ravram.nemesis.util.function Functions$Function1 Functions$Function3)
            (java.util ArrayList HashMap HashSet)))
 
@@ -20,7 +20,7 @@
 
 (defn- walker [f clj]
   (letfn [(recurse [[k v]]
-            (walker f (WEntry. (walker f k) (walker f v))))]
+            (walker f (WEntry. k (walker f v))))]
     (cond
       (map? clj)   (->> clj (mapv recurse) (WMap.) (f))
       (coll? clj)  (->> clj (mapv (partial walker f)) (f))
@@ -69,7 +69,7 @@
   (json/parse-string json-string))
 
 (defn nem->clj [^Json json]
-  (json->clj (str json)))
+  (json->clj (.encode json)))
 
 (defn clj->json [clj]
   (json/generate-string clj))

@@ -1,5 +1,6 @@
 package com.ravram.nemesis.model;
 
+import com.ravram.nemesis.util.misc.Strings;
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.Map;
 
@@ -14,15 +15,20 @@ public final class JObj extends Json {
 
     @Override
     public String toString() {
+        return value.toString();
+    }
+
+    @Override
+    public String encode() {
         final StringBuilder buff = new StringBuilder();
 
         buff.append("{");
 
         for (IEntry<String, Json> entry : value) {
             buff.append(",")
-                .append(entry.key())
+                .append(Strings.escape(entry.key()))
                 .append(":")
-                .append(entry.value().toString());
+                .append(entry.value().encode());
         }
         if (value.size() == 0) {
             return buff.append("}").toString();
