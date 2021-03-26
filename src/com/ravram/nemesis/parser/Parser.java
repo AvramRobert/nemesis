@@ -29,6 +29,7 @@ public class Parser {
     private final String BOOLS = "true, false";
     private final String NUMS  = "0-9";
     private final String JSON  = "{, [, \", 0-9, true, false or null";
+    private final String KEY   = "\"";
     private final char S_COLON = ':';
     private final char S_COMMA = ',';
     private final char S_QUOTE = '\"';
@@ -78,7 +79,7 @@ public class Parser {
     }
 
     private boolean unexpectedEnd (final String expected, final char received) {
-        final String msg = String.format("Unexpected end of input. Expected any of `%s` but received `%c`.", expected, received);
+        final String msg = String.format("Unexpected end of input. Expected `%s` but received `%c`.", expected, received);
         this.failure = failureMessage(msg);
         return FAILED;
     }
@@ -90,7 +91,7 @@ public class Parser {
     }
 
     private boolean abruptEnd (final String expected) {
-        final String msg = String.format("Unexpected end of input. Expected any of %s but received nothing.", expected);
+        final String msg = String.format("Unexpected end of input. Expected `%s` but received nothing.", expected);
         this.failure = failureMessage(msg);
         return FAILED;
     }
@@ -100,9 +101,8 @@ public class Parser {
         if (expected.length > 1) {
             msg = String.format("Unexpected end of input. Expected `%c`, but received nothing", expected[0]);
         } else {
-            msg = String.format("Unexpected end of input. Expected any of `%s`, but received nothing.", Arrays.toString(expected));
+            msg = String.format("Unexpected end of input. Expected `%s`, but received nothing.", Arrays.toString(expected));
         }
-
         this.failure = failureMessage(msg);
         return FAILED;
     }
@@ -268,11 +268,11 @@ public class Parser {
     private boolean consumeString() {
         final char current = text.charAt(cursor);
         if (current == QUOTE) {
-            cursor ++; // consume the first ' " '
+            cursor ++; // consume the first `"`
             final int start = cursor;
             if (consumeStringContent()) {
                 final String sub = text.substring(start, cursor);
-                cursor ++; // consume the last ' " '
+                cursor ++; // consume the last `"`
                 return succeed(new JString(sub));
             }
             else return FAILED;
@@ -280,12 +280,12 @@ public class Parser {
         else return unexpectedEnd(S_QUOTE, current);
     }
 
-    private boolean consumeComma(final char until) {
+    private boolean consumeCommaUntil(final char until) {
         skip();
         if (cursor < length) {
             final char current = text.charAt(cursor);
             if (current == COMMA) {
-                cursor ++;
+                cursor ++; // consume the `,`
                 skip();
                 if (hasNext(0) && text.charAt(cursor) == until) {
                     return unexpectedEnd(JSON, until);
@@ -303,8 +303,7 @@ public class Parser {
         if (cursor < length) {
             final char current = text.charAt(cursor);
             if (current == COLON) {
-                cursor ++;
-                skip();
+                cursor ++; // consume the `:`
                 return SUCCESSFUL;
             }
             else return unexpectedEnd(S_COLON, current);
@@ -356,48 +355,54 @@ public class Parser {
     }
 
     private boolean consumeObj() {
-        cursor ++;
+        cursor ++; // consume the `{`
         final HashMap<String, Json> fields = new HashMap<>();
         char current;
         while (true) {
-            current = text.charAt(cursor);
             skip();
-            if (current == C_CURLY) {
-                cursor ++;
-                return succeed(new JObj(Map.from(fields)));
-            }
-            else if (consumeString()) {
-                final String key = result.toString();
-                if (consumeColon()) {
-                    if (consumeAny()) {
-                        final Json value = result;
-                        if (consumeComma(C_CURLY)) fields.put(key, value);
-                        else return FAILED;
+            if (cursor >= length) return abruptEnd(KEY);
+            else {
+                current = text.charAt(cursor);
+                if (current == C_CURLY) {
+                    cursor ++; // consume the `}`
+                    return succeed(new JObj(Map.from(fields)));
+                }
+                else if (consumeString()) {
+                    final String key = result.toString();
+                    if (consumeColon()) {
+                        if (consumeAny()) {
+                            final Json value = result;
+                            if (consumeCommaUntil(C_CURLY)) fields.put(key, value);
+                            else return FAILED;
+                        } else return FAILED;
                     } else return FAILED;
-                } else return FAILED;
+                }
+                else return unexpectedEnd(JSON, current);
             }
-            else return unexpectedEnd(JSON, current);
         }
     }
 
     private boolean consumeArr() {
-        cursor ++;
+        cursor ++; // consume the `[`
         final ArrayList<Json> list = new ArrayList<>();
         char current;
         while(true) {
-            current = text.charAt(cursor);
             skip();
-            if (current == C_BRACKET) {
-                cursor ++;
-                return succeed(new JArr(List.from(list)));
-            }
+            if (cursor >= length) return abruptEnd(JSON);
             else {
-                if (consumeAny()) {
-                    final Json value = result;
-                    if (consumeComma(C_BRACKET)) list.add(value);
+                current = text.charAt(cursor);
+                if (current == C_BRACKET) {
+                    cursor ++; // consume the `]`
+                    return succeed(new JArr(List.from(list)));
+                }
+                else {
+                    if (consumeAny()) {
+                        final Json value = result;
+                        if (consumeCommaUntil(C_BRACKET)) list.add(value);
+                        else return FAILED;
+                    }
                     else return FAILED;
                 }
-                else return FAILED;
             }
         }
     }
