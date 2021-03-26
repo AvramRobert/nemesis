@@ -15,7 +15,7 @@ public class Converters {
     public final static Convert<Json, Integer> JSON_TO_INT = json -> {
         if (json.type == JType.JsonNumber) {
             final Number num = ((JNum) json).value;
-            if (num instanceof Integer) return Either.right((Integer) num);
+            if (num instanceof Integer) return Either.right(num.intValue());
             else return Either.left(String.format("`%s` is not an Integer", num));
         }
         else return Either.left(String.format("`%s` is not a valid JSON number", json));
@@ -24,8 +24,8 @@ public class Converters {
     public final static Convert<Json, Long> JSON_TO_LONG = json -> {
         if (json.type == JType.JsonNumber) {
             final Number num = ((JNum) json).value;
-            if (num instanceof Long) return Either.right((Long) num);
-            else if (num instanceof Integer) return Either.right(Integer.toUnsignedLong((Integer) num));
+            if (num instanceof Long) return Either.right(num.longValue());
+            else if (num instanceof Integer) return Either.right(num.longValue());
             else return Either.left(String.format("`%s` is not a Long", num));
         } else return Either.left(String.format("`%s` is not a valid JSON number", json));
     };
@@ -33,7 +33,7 @@ public class Converters {
     public final static Convert<Json, Double> JSON_TO_DOUBLE = json -> {
         if (json.type == JType.JsonNumber) {
             final Number num = ((JNum) json).value;
-            if (num instanceof Double) return Either.right((Double) num);
+            if (num instanceof Double) return Either.right(num.doubleValue());
             else return Either.left(String.format("`%s` is not a Double", num));
         }
         else return Either.left(String.format("`%s` is not a valid JSON number", json));
@@ -42,7 +42,7 @@ public class Converters {
     public final static Convert<Json, Float> JSON_TO_FLOAT = json -> {
         if (json.type == JType.JsonNumber) {
             final Number num = ((JNum) json).value;
-            if (num instanceof Float) return Either.right((Float) num);
+            if (num instanceof Float) return Either.right(num.floatValue());
             else return Either.left(String.format("`%s` is not a Float", num));
         }
         else return Either.left(String.format("`%s` is not a valid JSON number", json));

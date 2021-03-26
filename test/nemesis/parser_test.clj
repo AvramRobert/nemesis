@@ -15,4 +15,4 @@
 
 (defspec fault-detection 100
   (for-all [json-string gen-faulty-json-string]
-    (->> json-string (Parser/parse) (.isRight) (= false) (is))))
+    (is (not (-> json-string (Parser/parse) (.isRight))))))

@@ -2,48 +2,11 @@
   (:require [clojure.test :refer :all]
             [cheshire.core :as json]
             [clojure.pprint :refer [pprint]])
-  (:import (com.ravram.nemesis.model JsonT Json JNum JString JObj JArr JBool JNull)
-           (io.lacuna.bifurcan List Map)
+  (:import (com.ravram.nemesis.model JsonT Json)
            (com.ravram.nemesis.parser Parser)
            (com.ravram.nemesis JsonOps)
            (com.ravram.nemesis.util.function Functions$Function1 Functions$Function3)
            (java.util ArrayList HashMap HashSet)))
-
-(deftype WEntry [key value])
-(deftype WMap [entries])
-
-(defn- wentry? [e]
-  (instance? WEntry e))
-
-(defn- wmap? [m]
-  (instance? WMap m))
-
-(defn- walker [f clj]
-  (letfn [(recurse [[k v]]
-            (walker f (WEntry. k (walker f v))))]
-    (cond
-      (map? clj)   (->> clj (mapv recurse) (WMap.) (f))
-      (coll? clj)  (->> clj (mapv (partial walker f)) (f))
-      :else        (f clj))))
-
-(defn- coerce [form]
-  (letfn [(empty-map? [form]
-            (and (map? form) (empty? form)))
-
-          (bifurcan-map [form]
-            (reduce (fn [m e]
-                      (.put m (str (.key e)) (.value e))) (Map.) form))]
-    (cond
-      (nil? form) JNull/instance
-      (empty-map? form) JObj/empty
-      (number? form) (JNum. form)
-      (string? form) (JString. form)
-      (keyword? form) (JString. (name form))
-      (boolean? form) (if form JBool/jtrue JBool/jfalse)
-      (wentry? form) form
-      (wmap? form) (JObj. (bifurcan-map (.entries form)))
-      (vector? form) (JArr. (List/from form))
-      :else (throw (Exception. (format "Illegal JSON type of `%s`" form))))))
 
 (defn- keyseq [form]
   (cond
@@ -62,9 +25,6 @@
     (set? clj)    (->> clj (mapv clj->java) (HashSet.))
     :else         clj))
 
-(defn clj->nem [clj]
-  (walker coerce clj))
-
 (defn json->clj [json-string]
   (json/parse-string json-string))
 
@@ -75,13 +35,10 @@
   (json/generate-string clj))
 
 (defn json->nem [json]
-  (Parser/parse json))
+  (-> json (Parser/parse) (.value)))
 
-(defn transform [f & cljs]
-  (let [res (->> cljs (map clj->nem) (map #(.transform %)) (apply f) (.affix))]
-    (if (.isRight res)
-      (nem->clj (.value res))
-      res)))
+(defn clj->nem [clj]
+  (-> clj (clj->json) (json->nem)))
 
 (defn rand-keyseq [form]
   (vec (keyseq form)))
@@ -97,37 +54,41 @@
 (defn in [args]
   (JsonOps/in (into-array Object args)))
 
-(defn insert-j [json keys]
-  (fn [^JsonT json-t]
-    (.insertJson json-t json (in keys))))
+(defn converted [f & cljs]
+  (->> cljs
+       (mapv clj->nem)
+       (mapv #(.transform %))
+       (apply f)))
 
-(defn insert-jval [value keys]
-  (fn [^JsonT json-t]
-    (.insertValue json-t value (in keys))))
+(defn result [^JsonT json-t]
+  (-> json-t (.affix) (.map (function-1 nem->clj))))
 
-(defn remove-j [keys]
-  (fn [^JsonT json-t]
-    (.remove json-t (into-array String keys))))
+(defn result-value [^JsonT json-t]
+  (-> json-t (result) (.value)))
 
-(defn get-j [keys]
-  (fn [^JsonT json-t]
-    (.getJson json-t (in keys))))
+(defn insert-j [clj json keys]
+  (converted #(.insertJson % json (in keys)) clj))
 
-(defn update-j [fn-j keys]
-  (fn [^JsonT json-t]
-    (.updateJson json-t (function-1 fn-j) (in keys))))
+(defn insert-jval [clj value keys]
+  (converted #(.insertValue % value (in keys)) clj))
 
-(defn update-jval [to fn-val from keys]
-  (fn [^JsonT json-t]
-    (.updateValue json-t to (function-1 fn-val) from (in keys))))
+(defn remove-j [clj keys]
+  (converted #(.remove % (into-array String keys)) clj))
 
-(defn merge-j [^JsonT a ^JsonT b]
-  (.mergeJson a b))
+(defn get-j [clj keys]
+  (converted #(.getJson % (in keys)) clj))
 
-(defn reduce-obj-j [init f]
-  (fn [^JsonT json]
-    (.reduceObj json init (function-3 f))))
+(defn update-j [clj fn keys]
+  (converted #(.updateJson % (function-1 (comp fn result-value)) (in keys)) clj))
 
-(defn reduce-arr-j [init f]
-  (fn [^JsonT json]
-    (.reduceArr json init (function-3 f))))
+(defn update-jval [clj to fn from keys]
+  (converted #(.updateValue % to (function-1 fn) from (in keys)) clj))
+
+(defn merge-j [clj-1 clj-2]
+  (converted #(.mergeJson %1 %2) clj-1 clj-2))
+
+(defn reduce-obj-j [clj init f]
+  (.reduceObj (.transform (clj->nem clj)) init (function-3 f)))
+
+(defn reduce-arr-j [clj init f]
+  (.reduceArr (.transform (clj->nem clj)) init (function-3 f)))

@@ -4,6 +4,7 @@
 
 1. [Types and classes](api.md#types-and-classes-to-expect)
 1. [Parsing](api.md#parsing)
+1. [Encoding](api.md#encoding)   
 1. [Transforming](api.md#transforming)
     * [Inserting](api.md#inserting)
     * [Removing](api.md#removing)
@@ -69,6 +70,18 @@ final String myJson = ...;
 final Convert<Json, MyType> myTypeConverter = ...;
 
 parseAs(myTypeConverter, myJson);
+```
+
+## Encoding
+
+Any `Json` can be encoded to a proper Json string by calling `encode`.
+
+**Note:** Calling `toString` on these objects will **NOT** write to a valid json. 
+
+```java
+Json myJson = ...;
+
+myJson.encode();
 ```
 
 ## Transforming
