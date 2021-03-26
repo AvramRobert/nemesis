@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-public class Parser {
+public final class Parser {
 
     // == PARSING STATE INFO == //
     private final boolean SUCCESSFUL = true;
@@ -96,15 +96,12 @@ public class Parser {
         return FAILED;
     }
 
-    private boolean abruptEnd (final Character... expected) {
-        String msg = "";
+    private boolean abruptEnd (final char... expected) {
         if (expected.length > 1) {
-            msg = String.format("Unexpected end of input. Expected `%c`, but received nothing", expected[0]);
+            return abruptEnd(Arrays.toString(expected));
         } else {
-            msg = String.format("Unexpected end of input. Expected `%s`, but received nothing.", Arrays.toString(expected));
+            return abruptEnd(String.valueOf(expected[0]));
         }
-        this.failure = failureMessage(msg);
-        return FAILED;
     }
 
     private boolean number(final char c) {
@@ -120,15 +117,15 @@ public class Parser {
                 c == '9';
     }
 
-    private boolean nullity(final char n, final char u, final char l1, final char l2) {
+    private boolean isNull(final char n, final char u, final char l1, final char l2) {
         return n == 'n' && u == 'u' && l1 == 'l' && l2 == 'l';
     }
 
-    private boolean truth(final char t, final char r, final char u, final char e) {
+    private boolean isTrue(final char t, final char r, final char u, final char e) {
         return t == 't' && r == 'r' && u == 'u' && e == 'e';
     }
 
-    private boolean falsity(final char f, final char a, final char l, final char s, final char e) {
+    private boolean isFalse(final char f, final char a, final char l, final char s, final char e) {
         return f == 'f' && a == 'a' && l == 'l' && s == 's' && e == 'e';
     }
 
@@ -317,7 +314,7 @@ public class Parser {
             final char r = text.charAt(cursor + 1);
             final char u = text.charAt(cursor + 2);
             final char e = text.charAt(cursor + 3);
-            if (truth(t, r, u, e)) {
+            if (isTrue(t, r, u, e)) {
                 cursor += 4;
                 return succeed(JBool.jtrue);
             }
@@ -332,7 +329,7 @@ public class Parser {
             final char l = text.charAt(cursor + 2);
             final char s = text.charAt(cursor + 3);
             final char e = text.charAt(cursor+ 4);
-            if (falsity(f, a, l, s, e)) {
+            if (isFalse(f, a, l, s, e)) {
                 cursor += 5;
                 return succeed(JBool.jfalse);
             }
@@ -346,7 +343,7 @@ public class Parser {
             final char u  = text.charAt(cursor + 1);
             final char l1 = text.charAt(cursor + 2);
             final char l2 = text.charAt(cursor + 3);
-            if (nullity(n, u, l1, l2)) {
+            if (isNull(n, u, l1, l2)) {
                 cursor += 4;
                 return succeed(JNull.instance);
             }
