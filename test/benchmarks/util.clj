@@ -6,7 +6,7 @@
 
 (defn- derive-unit [mean]
   (let [nano  (* mean 1000000000)
-        micro (* mean 100000)
+        micro (* mean 1000000)
         milli (* mean 1000)]
     (cond
       (< nano 1000)  (str nano " ns")
