@@ -5,6 +5,10 @@ import com.ravram.nemesis.util.error.Either;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -124,7 +128,7 @@ public class Parser {
     }
 
     private boolean consumeNumeral(final int start) {
-        cursor++; // consume first `0-9`
+        cursor++; // consume first number
         while (cursor < length) {
             char current = text.charAt(cursor);
             switch (current) {
@@ -528,8 +532,9 @@ public class Parser {
                 if (p.consumeAny()) return Either.right(p.result);
                 else return Either.left(p.failure);
             } catch (Exception e) {
-                e.printStackTrace();
-                return Either.left(e.getMessage()); // do better
+                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                e.printStackTrace(new PrintStream(baos));
+                return Either.left(baos.toString());
             }
         }
     }
