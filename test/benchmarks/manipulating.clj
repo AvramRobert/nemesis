@@ -226,5 +226,5 @@
           merging-tasks
           updating-tasks))
 
-#_(deftest run-benchmark
+(defn -main [& args]
   (apply u/benchmark-out! default-tasks))

@@ -17,9 +17,22 @@
 (def gen-int
   gen/small-integer)
 
+(def gen-exp-num
+  (do-gen [num-sign (gen/elements ["-" "+"])
+           before   gen/nat
+           dot      (gen/elements ["." ""])
+           middle   gen/nat
+           exp      (gen/elements ["E" "e"])
+           exp-sign (gen/elements ["-" "+" ""])
+           after    gen/nat]
+    (Double/parseDouble (str num-sign before dot middle exp exp-sign after))))
+
 (def gen-double
   (gen/double* {:infinite? false
                 :NaN?      false}))
+
+(def gen-num
+  (gen/one-of [gen-int gen-exp-num gen-double]))
 
 (def gen-nil
   (gen/return nil))
@@ -28,8 +41,7 @@
   (gen/not-empty gen/string-alphanumeric))
 
 (def default-scalars
-  [gen-int
-   gen-double
+  [gen-num
    gen-bool
    gen-nil
    gen-string])

@@ -92,27 +92,27 @@ public class Parser {
         return String.format("%s\nFailed at line: %d\n%s", prelude, lines, pointedSample(30));
     }
 
-    private boolean unexpectedEnd (final String expected, final char received) {
-        final String msg = String.format("Unexpected end of input. Expected `%s` but received `%c`.", expected, received);
+    private boolean unexpected(final String expected, final char received) {
+        final String msg = String.format("Unexpected input. Expected %s but received %c.", expected, received);
         this.failure = failureMessage(msg);
         return FAILED;
     }
 
-    private boolean unexpectedEnd (final char expected, final char received) {
-        final String msg = String.format("Unexpected end of input. Expected `%c` but received `%c`.", expected, received);
+    private boolean unexpected(final char expected, final char received) {
+        final String msg = String.format("Unexpected input. Expected %c but received %c.", expected, received);
         this.failure = failureMessage(msg);
         return FAILED;
     }
 
     private boolean abruptEnd (final String expected) {
-        final String msg = String.format("Unexpected end of input. Expected `%s` but received nothing.", expected);
+        final String msg = String.format("Unexpected end of input. Expected %s but received nothing.", expected);
         this.failure = failureMessage(msg);
         return FAILED;
     }
 
     private boolean abruptEnd (final char... expected) {
         if (expected.length > 1) {
-            return abruptEnd(Arrays.toString(expected));
+            return abruptEnd(String.join(" | ", Arrays.toString(expected)));
         } else {
             return abruptEnd(String.valueOf(expected[0]));
         }
@@ -167,14 +167,14 @@ public class Parser {
                 case NINE:
                     return consumeNumeral(start);
                 default:
-                    return unexpectedEnd(NUMS, current);
+                    return unexpected(NUMS, current);
             }
         }
         return abruptEnd(NUMS);
     }
 
     private boolean consumeExponent(final int start) {
-        cursor ++; // consume the `E`, `e`
+        cursor ++; // consume `E`, `e`
         if (cursor < length) {
             char current = text.charAt(cursor);
             switch (current) {
@@ -193,7 +193,7 @@ public class Parser {
                 case PLUS:
                     return consumeSignedExponent(start);
                 default:
-                    return unexpectedEnd(NUMS, current);
+                    return unexpected(NUMS, current);
             }
         }
         else return abruptEnd(NUMS);
@@ -215,12 +215,12 @@ public class Parser {
                 case SEVEN:
                 case EIGHT:
                 case NINE:
-                    cursor++;
+                    cursor++; // consume number
                     continue;
                 case EXP_S:
                 case EXP_L:
                     if (decimalStart < cursor) return consumeExponent(start);
-                    else return unexpectedEnd(NUMS, current);
+                    else return unexpected(NUMS, current);
                 default:
                     // a character is consumed that isn't related to numbers
                     // decimalStart dictates when I start counting after the decimal point
@@ -228,7 +228,7 @@ public class Parser {
                         final double number = Double.parseDouble(text.substring(start, cursor));
                         return succeed(new JNum(number));
                     }
-                    else unexpectedEnd(NUMS, current);
+                    else unexpected(NUMS, current);
             }
         }
         // the input is exhausted, but there's enough digits to yield a number
@@ -240,7 +240,7 @@ public class Parser {
     }
 
     private boolean consumeNumber(final int start) {
-        cursor++; // consume first `0-9`
+        cursor++; // consume first number
         while (cursor < length) {
             char current = text.charAt(cursor);
             switch (current) {
@@ -289,7 +289,7 @@ public class Parser {
                 case NINE:
                     return consumeNumber(start);
                 default:
-                    return unexpectedEnd(NUMS, current);
+                    return unexpected(NUMS, current);
             }
         } else return abruptEnd(NUMS);
     }
@@ -304,9 +304,9 @@ public class Parser {
                     if (text.charAt(cursor) == E) {
                         cursor++; // consume `e`
                         return succeed(JBool.jtrue);
-                    } else return unexpectedEnd(E, text.charAt(cursor));
-                } else return unexpectedEnd(U, text.charAt(cursor));
-            } else return unexpectedEnd(R, text.charAt(cursor));
+                    } else return unexpected(E, text.charAt(cursor));
+                } else return unexpected(U, text.charAt(cursor));
+            } else return unexpected(R, text.charAt(cursor));
         } else return abruptEnd(BOOLS);
     }
 
@@ -322,10 +322,10 @@ public class Parser {
                         if (text.charAt(cursor) == E) {
                             cursor++; // consume `e`
                             return succeed(JBool.jfalse);
-                        } else return unexpectedEnd(E, text.charAt(cursor));
-                    } else return unexpectedEnd(S, text.charAt(cursor));
-                } else return unexpectedEnd(L, text.charAt(cursor));
-            } else return unexpectedEnd(A, text.charAt(cursor));
+                        } else return unexpected(E, text.charAt(cursor));
+                    } else return unexpected(S, text.charAt(cursor));
+                } else return unexpected(L, text.charAt(cursor));
+            } else return unexpected(A, text.charAt(cursor));
         } else return abruptEnd(BOOLS);
     }
 
@@ -339,20 +339,20 @@ public class Parser {
                     if (text.charAt(cursor) == L) {
                         cursor++; // consume 'l'
                         return succeed(JNull.instance);
-                    } else return unexpectedEnd(L, text.charAt(cursor));
-                } else return unexpectedEnd(L, text.charAt(cursor));
-            } else return unexpectedEnd(U, text.charAt(cursor));
+                    } else return unexpected(L, text.charAt(cursor));
+                } else return unexpected(L, text.charAt(cursor));
+            } else return unexpected(U, text.charAt(cursor));
         } else return abruptEnd(NULL);
     }
 
     private boolean consumeString() {
-        cursor++; // consume the `"`
+        cursor++; // consume `"`
         int start = cursor;
         while (cursor < length) {
             switch (text.charAt(cursor)) {
                 case QUOTE:
                     final Json value = new JString(text.substring(start, cursor));
-                    cursor++; // consume the `"`
+                    cursor++; // consume `"`
                     return succeed(value);
                 default:
                     cursor++;
@@ -366,7 +366,7 @@ public class Parser {
             final char current = text.charAt(cursor);
             switch (current) {
                 case COLON:
-                    cursor++; // consume the `:`
+                    cursor++; // consume `:`
                     return SUCCESSFUL;
                 case NEWLINE:
                     lines++;
@@ -374,7 +374,7 @@ public class Parser {
                     cursor++;
                     continue;
                 default:
-                    return unexpectedEnd(COLON, current);
+                    return unexpected(COLON, current);
             }
         }
         return abruptEnd(COLON);
@@ -392,14 +392,14 @@ public class Parser {
                     cursor++;
                     continue;
                 default:
-                    return unexpectedEnd(OBJN, current);
+                    return unexpected(OBJN, current);
             }
         }
         return abruptEnd(OBJN);
     }
 
     private boolean consumeObj() {
-        cursor++; // consume the `{`
+        cursor++; // consume `{`
         final HashMap<String, Json> map = new HashMap<>();
         while (cursor < length) {
             char current = text.charAt(cursor);
@@ -410,7 +410,7 @@ public class Parser {
                     cursor++;
                     continue;
                 case C_CURLY:
-                    cursor++; // consume the `}`;
+                    cursor++; // consume `}`;
                     return succeed(JObj.empty);
                 case QUOTE:
                     if (consumeString()) {
@@ -422,10 +422,10 @@ public class Parser {
                                     map.put(key, value);
                                     switch (text.charAt(cursor)) {
                                         case C_CURLY:
-                                            cursor++; // consume the `}`
+                                            cursor++; // consume `}`
                                             return succeed(new JObj(Map.from(map)));
                                         default:
-                                            cursor++; // consume the `,`
+                                            cursor++; // consume `,`
                                             continue;
                                     }
                                 } else return FAILED;
@@ -433,7 +433,7 @@ public class Parser {
                         } else return FAILED;
                     } else return FAILED;
                 default:
-                    return unexpectedEnd(OBJC, current);
+                    return unexpected(OBJC, current);
             }
         }
         return abruptEnd(QUOTE, C_CURLY);
@@ -451,22 +451,22 @@ public class Parser {
                     cursor++;
                     continue;
                 default:
-                    return unexpectedEnd(ARRC, current);
+                    return unexpected(ARRC, current);
             }
         }
         return abruptEnd(ARRN);
     }
 
     private boolean consumeArr() {
-        cursor++; // consume the `[`
+        cursor++; // consume `[`
         final ArrayList<Json> list = new ArrayList<>();
         while (cursor < length) {
             switch (text.charAt(cursor)) {
                 case C_BRACKET:
-                    cursor++; // consume the `]`
+                    cursor++; // consume `]`
                     return succeed(JArr.empty);
                 case COMMA:
-                    return unexpectedEnd(JSON, COMMA);
+                    return unexpected(JSON, COMMA);
                 default:
                     if (consumeAny()) {
                         final Json value = result;
@@ -474,10 +474,10 @@ public class Parser {
                             list.add(value);
                             switch (text.charAt(cursor)) {
                                 case C_BRACKET:
-                                    cursor++; // consume the `]`
+                                    cursor++; // consume `]`
                                     return succeed(new JArr(List.from(list)));
                                 case COMMA:
-                                    cursor++; // consume the `,`;
+                                    cursor++; // consume `,`
                             }
                         } else return FAILED;
                     } else return FAILED;
@@ -514,7 +514,7 @@ public class Parser {
                 case SPACE:
                     cursor++;
                     continue;
-                default: return unexpectedEnd(JSON, current);
+                default: return unexpected(JSON, current);
             }
         }
         return abruptEnd(JSON);

@@ -35,6 +35,6 @@
       (Files/readAllBytes)
       (String.)))
 
-;(deftest run-benchmark
-;  (let [tasks (-> "resources/sample.json" (read-json!) (default-tasks))]
-;    (apply u/benchmark-out! tasks)))
+(defn -main [& args]
+  (let [tasks (-> "resources/sample.json" (read-json!) (default-tasks))]
+    (apply u/benchmark-out! tasks)))
