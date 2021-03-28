@@ -52,7 +52,8 @@ public static void main (String... args) {
 //        "Oh-Hai":"Mark"
 //    }
 ```
-See [API](./docs/api.md) for more details and examples.
+See [API](./docs/api.md) for more details and examples.\
+See [Benchmarks](./docs/benchmarks.md) for some performance related information.
 ## License
 
 Copyright © 2021 Robert M. Avram
