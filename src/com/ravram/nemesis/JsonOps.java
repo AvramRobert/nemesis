@@ -5,10 +5,10 @@ import com.ravram.nemesis.util.error.Either;
 import com.ravram.nemesis.coerce.Convert;
 import com.ravram.nemesis.coerce.JsonConverter;
 import com.ravram.nemesis.coerce.ObjectConverter;
+import com.ravram.nemesis.parser.Parser;
 import com.ravram.nemesis.model.JObj;
 import com.ravram.nemesis.model.Json;
 import com.ravram.nemesis.model.JsonT;
-import com.ravram.nemesis.parser.Parser;
 
 public class JsonOps {
 

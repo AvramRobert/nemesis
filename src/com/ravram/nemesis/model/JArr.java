@@ -10,6 +10,8 @@ public final class JArr extends Json {
         this.type = JType.JsonArray;
     }
 
+    public final static Json empty = new JArr(List.of());
+
     @Override
     public String toString() {
         return value.toString();

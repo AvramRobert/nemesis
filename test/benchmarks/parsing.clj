@@ -3,11 +3,11 @@
             [clojure.test :refer [deftest]]
             [clojure.java.io :as jio]
             [benchmarks.util :as u])
-  (:import com.fasterxml.jackson.databind.ObjectMapper
-           com.google.gson.JsonParser
-           play.api.libs.json.Json
-           com.ravram.nemesis.parser.Parser)
-  (:import (java.nio.file Files Paths)))
+  (:import (java.nio.file Files Paths)
+           (com.google.gson JsonParser)
+           (play.api.libs.json Json)
+           (com.fasterxml.jackson.databind ObjectMapper)
+           (com.ravram.nemesis.parser Parser)))
 
 (defn default-tasks [json]
   (let [default-sampler (constantly [json])]
@@ -35,6 +35,6 @@
       (Files/readAllBytes)
       (String.)))
 
-#_(deftest run-benchmark
-  (let [tasks (-> "resources/sample.json" (read-json!) (default-tasks))]
-    (apply u/benchmark-out! tasks)))
+;(deftest run-benchmark
+;  (let [tasks (-> "resources/sample.json" (read-json!) (default-tasks))]
+;    (apply u/benchmark-out! tasks)))
