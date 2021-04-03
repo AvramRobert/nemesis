@@ -16,6 +16,7 @@ public class Left<E, R> implements Either<E, R> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <B> Either<E, B> map(Function1<R, B> f) {
         return (Left<E, B>) this;
     }
@@ -26,6 +27,7 @@ public class Left<E, R> implements Either<E, R> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <B> Either<E, B> flatMap(Function1<R, Either<E, B>> f) {
         return (Left<E, B>) this;
     }

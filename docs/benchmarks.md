@@ -16,6 +16,6 @@ popular JVM libraries:
 
 Given _nemesis_ esoteric approach to working with JSON, some may assume that its operations may be somewhat inefficient.
 
-As such, each one of them is also consistently benchmarked:
+As such, each one of them is consistently benchmarked:
 
 **Loading**
