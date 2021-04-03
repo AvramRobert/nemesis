@@ -15,6 +15,10 @@
                    :resource-paths ["test/resources"]}}
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :scm {:url "git@github.com:AvramRobert/nemesis.git"}
+  :deploy-repositories {"releases"  {:url   "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                                     :creds :gpg}
+                        "snapshots" {:url   "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                                     :creds :gpg}}
   :pom-addition [:developers [:developer
                               [:name "Robert M. Avram"]
                               [:url "https://github.com/AvramRobert"]
