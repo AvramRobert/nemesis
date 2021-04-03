@@ -1,5 +1,5 @@
 (defproject com.ravram/nemesis "0.1.0-SNAPSHOT"
-  :description "A library for working with JSON through direct manipulation."
+  :description "A library for working with JSON as one would with a normal data-structure"
   :url "https://github.com/AvramRobert/nemesis"
   :license {:name "MIT"
             :url "https://opensource.org/licenses/MIT"}
