@@ -15,6 +15,7 @@
                    :resource-paths ["test/resources"]}}
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :scm {:url "git@github.com:AvramRobert/nemesis.git"}
+  ;; use the token from Nexus UI, not your direct jira credentials
   :deploy-repositories {"releases"  {:url   "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
                                      :creds :gpg}
                         "snapshots" {:url   "https://s01.oss.sonatype.org/content/repositories/snapshots/"
