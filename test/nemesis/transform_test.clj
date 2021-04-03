@@ -179,6 +179,7 @@
   (for-all [faulty gen-faulty-json-string
             path     (gen-path {:max-depth 2})]
     (let [json           (JsonOps/parse faulty)
+          mapped-json    (.as json Converters/JSON_TO_INT)
           inserted-json  (.insertJson json JsonOps/empty (in path))
           inserted-value (.insertValue json 1 (in path))
           retrieved-json (.getJson json (in path))
@@ -199,5 +200,6 @@
       (is (= json merged-json))
       (is (= json updated-json))
       (is (= json updated-value))
+      (is (= (.affix json) mapped-json))
       (is (= (.affix json) reduced-obj))
       (is (= (.affix json) reduced-arr)))))

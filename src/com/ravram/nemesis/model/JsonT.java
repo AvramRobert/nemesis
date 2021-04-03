@@ -287,7 +287,8 @@ public class JsonT {
     }
 
     public final <A> Either<String, A> as(final Convert<Json, A> f) {
-        return f.convert(json);
+        if (failed) return Either.left(error);
+        else return f.convert(json);
     }
 
     public final Either<String, Json> affix() {
