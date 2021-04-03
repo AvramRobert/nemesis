@@ -195,7 +195,12 @@
         (gen/return "[")
         (gen/return "[{}")
         (gen/return "{[]")
-        (gen/return "{\"A:")]
+        (gen/elements (reductions str "" "tru"))
+        (gen/elements (reductions str "" "fals"))
+        (gen/elements (reductions str "" "nul"))
+        (gen/return "{\"A:")
+        (gen/return "{\"A:1,}")
+        (gen/return "[1,]")]
        (gen/one-of)
        (gen/vector)
        (gen/not-empty)

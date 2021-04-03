@@ -12,13 +12,18 @@ It is, as such, somewhat of a nemesis to most other JSON libraries.
 For a slightly more detailed introduction and rationale, please take a look [here](docs/intro.md). 
 
 ## Disclaimer
-**STILL IN ACTIVE DEVELOPMENT**  
-For a list of the things that currently may or may not work, take a look at the [current feature set](./docs/featureset.md).
+Not necessarily battle tested.
 
 ## Dependency
 **Supports Java 1.8 and upwards**
 
-**Loading..**
+```xml
+<dependency>
+  <groupId>com.ravram</groupId>
+  <artifactId>nemesis</artifactId>
+  <version>0.1.1</version>
+</dependency>
+```
 
 ## Usage
 

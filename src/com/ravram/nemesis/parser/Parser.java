@@ -7,61 +7,74 @@ import io.lacuna.bifurcan.Map;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class Parser {
 
     // == GENERAL CONSTANTS == //
-    private final String NULL = "null";
-    private final String BOOLS = "true | false";
-    private final String NUMS  = "0-9";
-    private final String JSON  = "{ | [ | \" | 0-9 | true | false | null";
-    private final String OBJC = "\" | }";
-    private final String OBJN = ", | }";
-    private final String ARRN = ", | ]";
-    private final String ARRC = ", | ]";
+    private static final int SUBTEXT_SIZE = 30;
+    private static final char COMMA = ',';
+    private static final char COLON = ':';
+    private static final char QUOTE = '\"';
+    private static final char O_CURLY = '{';
+    private static final char C_CURLY = '}';
+    private static final char O_BRACKET = '[';
+    private static final char C_BRACKET = ']';
+    private static final char N = 'n';
+    private static final char U = 'u';
+    private static final char L = 'l';
+    private static final char F = 'f';
+    private static final char A = 'a';
+    private static final char S = 's';
+    private static final char E = 'e';
+    private static final char T = 't';
+    private static final char R = 'r';
+    private static final char MINUS = '-';
+    private static final char PLUS = '+';
+    private static final char DECIMAL = '.';
+    private static final char EXP_S = 'e';
+    private static final char EXP_L = 'E';
+    private static final char SPACE = ' ';
+    private static final char NEWLINE = '\n';
+    private static final char ZERO = '0';
+    private static final char ONE = '1';
+    private static final char TWO = '2';
+    private static final char THREE = '3';
+    private static final char FOUR = '4';
+    private static final char FIVE = '5';
+    private static final char SIX = '6';
+    private static final char SEVEN = '7';
+    private static final char EIGHT = '8';
+    private static final char NINE = '9';
 
-    private final char COMMA = ',';
-    private final char COLON = ':';
-    private final char QUOTE = '\"';
-    private final char O_CURLY = '{';
-    private final char C_CURLY = '}';
-    private final char O_BRACKET = '[';
-    private final char C_BRACKET = ']';
-    private final char N = 'n';
-    private final char U = 'u';
-    private final char L = 'l';
-    private final char F = 'f';
-    private final char A = 'a';
-    private final char S = 's';
-    private final char E = 'e';
-    private final char T = 't';
-    private final char R = 'r';
-    private final char MINUS = '-';
-    private final char PLUS  = '+';
-    private final char DECIMAL = '.';
-    private final char EXP_S = 'e';
-    private final char EXP_L = 'E';
-    private final char SPACE = ' ';
-    private final char NEWLINE = '\n';
-    private final char ZERO = '0';
-    private final char ONE = '1';
-    private final char TWO = '2';
-    private final char THREE = '3';
-    private final char FOUR = '4';
-    private final char FIVE = '5';
-    private final char SIX = '6';
-    private final char SEVEN = '7';
-    private final char EIGHT = '8';
-    private final char NINE = '9';
+    private static final String TEXT_PATTERN = "text";
+    private static final String A_PATTERN = quote(A);
+    private static final String L_PATTERN = quote(L);
+    private static final String S_PATTERN = quote(S);
+    private static final String E_PATTERN = quote(E);
+    private static final String U_PATTERN = quote(U);
+    private static final String R_PATTERN = quote(R);
+    private static final String COLON_PATTERN = quote(COLON);
+    private static final String NUM_PATTERN =
+            join(quote(ONE), quote(TWO), quote(THREE), quote(FOUR), quote(FIVE), quote(SIX), quote(SEVEN), quote(EIGHT), quote(NINE));
+    private static final String BOOL_PATTERN =
+            join(quote("true"), quote("false"));
+    private static final String NULL_PATTERN =
+            quote("null");
+    private static final String JSON_PATTERN =
+            join(join(quote(O_CURLY), quote(O_BRACKET), quote(QUOTE)), BOOL_PATTERN, NULL_PATTERN, NUM_PATTERN);
+    private static final String OBJ_KEY_PATTERN =
+            join(quote(QUOTE), quote(C_CURLY));
+    private static final String OBJ_VAL_PATTERN =
+            join(quote(COMMA), quote(C_CURLY));
+    private static final String ARR_VAL_PATTERN =
+            join(quote(COMMA), quote(C_BRACKET));
+
+    private static final boolean SUCCESSFUL = true;
+    private static final boolean FAILED = false;
 
     // == PARSING STATE INFO == //
-    private final boolean SUCCESSFUL = true;
-    private final boolean FAILED = false;
     private String failure = "";
     private Json result = JObj.empty;
 
@@ -71,55 +84,55 @@ public class Parser {
     private int cursor = 0;
     private int lines = 0;
 
-    Parser(final int cursor, final String input) {
+    Parser(final String input) {
         this.text = input;
-        this.cursor = cursor;
         this.length = text.length();
     }
 
-    private int left (final int subtextSize) {
+    private static String quote(final char c) {
+        return String.format("`%c`", c);
+    }
+
+    private static String quote(final String s) {
+        return String.format("`%s`", s);
+    }
+
+    private static String join(final String... strings) {
+        return String.join(" | ", strings);
+    }
+
+    private int left(final int subtextSize) {
         final int bound = cursor - subtextSize;
         return Math.max(bound, 0);
     }
 
-    private int right (final int subtextSize) {
+    private int right(final int subtextSize) {
         final int bound = cursor + subtextSize;
         return Math.min(bound, length);
     }
 
     private String pointedSample(final int subtextSize) {
-        int middle  = subtextSize / 2;
-        return text.substring(left(middle), cursor) + " <-| " + text.substring(cursor, right(middle));
+        final int middle = subtextSize / 2;
+        final String left = text.substring(left(middle), cursor);
+        final String right = text.substring(cursor, right(middle));
+        if (right.length() > 0) return left + " <- here -> " + right;
+        else return left + " <- here";
     }
 
     private String failureMessage(final String prelude) {
-        return String.format("%s\nFailed at line: %d\n%s", prelude, lines, pointedSample(30));
+        return String.format("%s\nFailed at line: %d\n%s", prelude, lines, pointedSample(SUBTEXT_SIZE));
     }
 
-    private boolean unexpected(final String expected, final char received) {
-        final String msg = String.format("Unexpected input. Expected %s but received %c.", expected, received);
+    private boolean unexpected(final char received, final String expected) {
+        final String msg = String.format("Unexpected input. Expected %s but received `%c`.", expected, received);
         this.failure = failureMessage(msg);
         return FAILED;
     }
 
-    private boolean unexpected(final char expected, final char received) {
-        final String msg = String.format("Unexpected input. Expected %c but received %c.", expected, received);
-        this.failure = failureMessage(msg);
-        return FAILED;
-    }
-
-    private boolean abruptEnd (final String expected) {
+    private boolean abruptEnd(final String expected) {
         final String msg = String.format("Unexpected end of input. Expected %s but received nothing.", expected);
         this.failure = failureMessage(msg);
         return FAILED;
-    }
-
-    private boolean abruptEnd (final char... expected) {
-        if (expected.length > 1) {
-            return abruptEnd(String.join(" | ", Arrays.toString(expected)));
-        } else {
-            return abruptEnd(String.valueOf(expected[0]));
-        }
     }
 
     private boolean succeed(final Json json) {
@@ -171,14 +184,14 @@ public class Parser {
                 case NINE:
                     return consumeNumeral(start);
                 default:
-                    return unexpected(NUMS, current);
+                    return unexpected(current, NUM_PATTERN);
             }
         }
-        return abruptEnd(NUMS);
+        return abruptEnd(NUM_PATTERN);
     }
 
     private boolean consumeExponent(final int start) {
-        cursor ++; // consume `E`, `e`
+        cursor++; // consume `E`, `e`
         if (cursor < length) {
             char current = text.charAt(cursor);
             switch (current) {
@@ -197,14 +210,13 @@ public class Parser {
                 case PLUS:
                     return consumeSignedExponent(start);
                 default:
-                    return unexpected(NUMS, current);
+                    return unexpected(current, NUM_PATTERN);
             }
-        }
-        else return abruptEnd(NUMS);
+        } else return abruptEnd(NUM_PATTERN);
     }
 
     private boolean consumeDecimal(final int start) {
-        cursor ++; // consume `.`
+        cursor++; // consume `.`
         int decimalStart = cursor;
         while (cursor < length) {
             char current = text.charAt(cursor);
@@ -224,23 +236,21 @@ public class Parser {
                 case EXP_S:
                 case EXP_L:
                     if (decimalStart < cursor) return consumeExponent(start);
-                    else return unexpected(NUMS, current);
+                    else return unexpected(current, NUM_PATTERN);
                 default:
                     // a character is consumed that isn't related to numbers
                     // decimalStart dictates when I start counting after the decimal point
                     if (decimalStart < cursor) {
                         final double number = Double.parseDouble(text.substring(start, cursor));
                         return succeed(new JNum(number));
-                    }
-                    else unexpected(NUMS, current);
+                    } else unexpected(current, NUM_PATTERN);
             }
         }
         // the input is exhausted, but there's enough digits to yield a number
         if (decimalStart < cursor) {
             final double number = Double.parseDouble(text.substring(start, cursor));
             return succeed(new JNum(number));
-        }
-        else return abruptEnd(NUMS);
+        } else return abruptEnd(NUM_PATTERN);
     }
 
     private boolean consumeNumber(final int start) {
@@ -293,76 +303,102 @@ public class Parser {
                 case NINE:
                     return consumeNumber(start);
                 default:
-                    return unexpected(NUMS, current);
+                    return unexpected(current, NUM_PATTERN);
             }
-        } else return abruptEnd(NUMS);
+        } else return abruptEnd(NUM_PATTERN);
     }
 
     private boolean consumeTrue() {
         cursor++; // consume `t`
-        if (cursor + 2 < length) {
-            if (text.charAt(cursor) == R) {
+        char current;
+        if (cursor < length) {
+            current = text.charAt(cursor);
+            if (current == R) {
                 cursor++; // consume `r`
-                if (text.charAt(cursor) == U) {
-                    cursor++; // consume `u`
-                    if (text.charAt(cursor) == E) {
-                        cursor++; // consume `e`
-                        return succeed(JBool.jtrue);
-                    } else return unexpected(E, text.charAt(cursor));
-                } else return unexpected(U, text.charAt(cursor));
-            } else return unexpected(R, text.charAt(cursor));
-        } else return abruptEnd(BOOLS);
+                if (cursor < length) {
+                    current = text.charAt(cursor);
+                    if (current == U) {
+                        cursor++; // consume `u`
+                        if (cursor < length) {
+                            current = text.charAt(cursor);
+                            if (current == E) {
+                                cursor++; // consume `e`
+                                return succeed(JBool.jtrue);
+                            } else return unexpected(current, E_PATTERN);
+                        } else return abruptEnd(E_PATTERN);
+                    } else return unexpected(current, U_PATTERN);
+                } else return abruptEnd(U_PATTERN);
+            } else return unexpected(current, R_PATTERN);
+        } else return abruptEnd(R_PATTERN);
     }
 
     private boolean consumeFalse() {
         cursor++; // consume `f`
-        if (cursor + 3 < length) {
-            if (text.charAt(cursor) == A) {
+        char current;
+        if (cursor < length) {
+            current = text.charAt(cursor);
+            if (current == A) {
                 cursor++; // consume `a`
-                if (text.charAt(cursor) == L) {
-                    cursor++; // consume `l`
-                    if (text.charAt(cursor) == S) {
-                        cursor++; // consume `s`
-                        if (text.charAt(cursor) == E) {
-                            cursor++; // consume `e`
-                            return succeed(JBool.jfalse);
-                        } else return unexpected(E, text.charAt(cursor));
-                    } else return unexpected(S, text.charAt(cursor));
-                } else return unexpected(L, text.charAt(cursor));
-            } else return unexpected(A, text.charAt(cursor));
-        } else return abruptEnd(BOOLS);
+                if (cursor < length) {
+                    current = text.charAt(cursor);
+                    if (current == L) {
+                        cursor++; // consume `l`
+                        if (cursor < length) {
+                            current = text.charAt(cursor);
+                            if (current == S) {
+                                cursor++; // consume `s`
+                                if (cursor < length) {
+                                    current = text.charAt(cursor);
+                                    if (current == E) {
+                                        cursor++; // consume `e`
+                                        return succeed(JBool.jfalse);
+                                    } else return unexpected(current, E_PATTERN);
+                                } else return abruptEnd(E_PATTERN);
+                            } else return unexpected(current, S_PATTERN);
+                        } else return abruptEnd(S_PATTERN);
+                    } else return unexpected(current, L_PATTERN);
+                } else return abruptEnd(L_PATTERN);
+            } else return unexpected(current, A_PATTERN);
+        } else return abruptEnd(A_PATTERN);
     }
 
     private boolean consumeNull() {
         cursor++; // consume 'n';
-        if (cursor + 2 < length) {
-            if (text.charAt(cursor) == U) {
-                cursor++; // consume 'u'
-                if (text.charAt(cursor) == L) {
-                    cursor++; // consume 'l'
-                    if (text.charAt(cursor) == L) {
-                        cursor++; // consume 'l'
-                        return succeed(JNull.instance);
-                    } else return unexpected(L, text.charAt(cursor));
-                } else return unexpected(L, text.charAt(cursor));
-            } else return unexpected(U, text.charAt(cursor));
-        } else return abruptEnd(NULL);
+        char current;
+        if (cursor < length) {
+            current = text.charAt(cursor);
+            if (current == U) {
+                cursor++; // consume `u`
+                if (cursor < length) {
+                    current = text.charAt(cursor);
+                    if (current == L) {
+                        cursor++; // consume `l`
+                        if (cursor < length) {
+                            current = text.charAt(cursor);
+                            if (current == L) {
+                                cursor++; // consume 'l`
+                                return succeed(JNull.instance);
+                            } else return unexpected(current, L_PATTERN);
+                        } else return abruptEnd(L_PATTERN);
+                    } else return unexpected(current, L_PATTERN);
+                } else return abruptEnd(L_PATTERN);
+            } else return unexpected(current, U_PATTERN);
+        } else return abruptEnd(U_PATTERN);
     }
 
     private boolean consumeString() {
         cursor++; // consume `"`
         int start = cursor;
         while (cursor < length) {
-            switch (text.charAt(cursor)) {
-                case QUOTE:
-                    final Json value = new JString(text.substring(start, cursor));
-                    cursor++; // consume `"`
-                    return succeed(value);
-                default:
-                    cursor++;
+            if (text.charAt(cursor) == QUOTE) {
+                final Json value = new JString(text.substring(start, cursor));
+                cursor++; // consume `"`
+                return succeed(value);
+            } else {
+                cursor++;
             }
         }
-        return abruptEnd(QUOTE);
+        return abruptEnd(TEXT_PATTERN);
     }
 
     private boolean consumeColon() {
@@ -378,10 +414,10 @@ public class Parser {
                     cursor++;
                     continue;
                 default:
-                    return unexpected(COLON, current);
+                    return unexpected(current, COLON_PATTERN);
             }
         }
-        return abruptEnd(COLON);
+        return abruptEnd(COLON_PATTERN);
     }
 
     private boolean consumeObjEnd() {
@@ -389,22 +425,24 @@ public class Parser {
             final char current = text.charAt(cursor);
             switch (current) {
                 case C_CURLY:
-                case COMMA: return SUCCESSFUL;
+                case COMMA:
+                    return SUCCESSFUL;
                 case NEWLINE:
                     lines++;
                 case SPACE:
                     cursor++;
                     continue;
                 default:
-                    return unexpected(OBJN, current);
+                    return unexpected(current, OBJ_VAL_PATTERN);
             }
         }
-        return abruptEnd(OBJN);
+        return abruptEnd(OBJ_VAL_PATTERN);
     }
 
     private boolean consumeObj() {
         cursor++; // consume `{`
         final HashMap<String, Json> map = new HashMap<>();
+        boolean beginning = true;
         while (cursor < length) {
             char current = text.charAt(cursor);
             switch (current) {
@@ -414,9 +452,12 @@ public class Parser {
                     cursor++;
                     continue;
                 case C_CURLY:
-                    cursor++; // consume `}`;
-                    return succeed(JObj.empty);
+                    if (beginning) {
+                        cursor++; // consume `}`;
+                        return succeed(JObj.empty);
+                    } else return unexpected(C_CURLY, JSON_PATTERN);
                 case QUOTE:
+                    beginning = false;
                     if (consumeString()) {
                         final String key = result.toString();
                         if (consumeColon()) {
@@ -424,23 +465,21 @@ public class Parser {
                                 final Json value = result;
                                 if (consumeObjEnd()) {
                                     map.put(key, value);
-                                    switch (text.charAt(cursor)) {
-                                        case C_CURLY:
-                                            cursor++; // consume `}`
-                                            return succeed(new JObj(Map.from(map)));
-                                        default:
-                                            cursor++; // consume `,`
-                                            continue;
+                                    if (text.charAt(cursor) == C_CURLY) {
+                                        cursor++; // consume `}`
+                                        return succeed(new JObj(Map.from(map)));
                                     }
+                                    cursor++; // consume `,`
+                                    continue;
                                 } else return FAILED;
                             } else return FAILED;
                         } else return FAILED;
                     } else return FAILED;
                 default:
-                    return unexpected(OBJC, current);
+                    return unexpected(current, OBJ_KEY_PATTERN);
             }
         }
-        return abruptEnd(QUOTE, C_CURLY);
+        return abruptEnd(OBJ_KEY_PATTERN);
     }
 
     private boolean consumeArrEnd() {
@@ -448,30 +487,35 @@ public class Parser {
             final char current = text.charAt(cursor);
             switch (current) {
                 case C_BRACKET:
-                case COMMA: return SUCCESSFUL;
+                case COMMA:
+                    return SUCCESSFUL;
                 case NEWLINE:
                     lines++;
                 case SPACE:
                     cursor++;
                     continue;
                 default:
-                    return unexpected(ARRC, current);
+                    return unexpected(current, ARR_VAL_PATTERN);
             }
         }
-        return abruptEnd(ARRN);
+        return abruptEnd(ARR_VAL_PATTERN);
     }
 
     private boolean consumeArr() {
         cursor++; // consume `[`
         final ArrayList<Json> list = new ArrayList<>();
+        boolean beginning = true;
         while (cursor < length) {
             switch (text.charAt(cursor)) {
                 case C_BRACKET:
-                    cursor++; // consume `]`
-                    return succeed(JArr.empty);
+                    if (beginning) {
+                        cursor++; // consume `]`
+                        return succeed(JArr.empty);
+                    } else return unexpected(C_BRACKET, JSON_PATTERN);
                 case COMMA:
-                    return unexpected(JSON, COMMA);
+                    return unexpected(COMMA, JSON_PATTERN);
                 default:
+                    beginning = false;
                     if (consumeAny()) {
                         final Json value = result;
                         if (consumeArrEnd()) {
@@ -487,21 +531,28 @@ public class Parser {
                     } else return FAILED;
             }
         }
-        return abruptEnd(JSON);
+        return abruptEnd(JSON_PATTERN);
     }
 
     private boolean consumeAny() {
         while (cursor < length) {
             final char current = text.charAt(cursor);
             switch (current) {
-                case O_CURLY: return consumeObj();
-                case O_BRACKET: return consumeArr();
-                case N: return consumeNull();
-                case T: return consumeTrue();
-                case F: return consumeFalse();
-                case QUOTE: return consumeString();
+                case O_CURLY:
+                    return consumeObj();
+                case O_BRACKET:
+                    return consumeArr();
+                case N:
+                    return consumeNull();
+                case T:
+                    return consumeTrue();
+                case F:
+                    return consumeFalse();
+                case QUOTE:
+                    return consumeString();
                 case MINUS:
-                case PLUS: return consumeSignedNumber();
+                case PLUS:
+                    return consumeSignedNumber();
                 case ZERO:
                 case ONE:
                 case TWO:
@@ -518,14 +569,15 @@ public class Parser {
                 case SPACE:
                     cursor++;
                     continue;
-                default: return unexpected(JSON, current);
+                default:
+                    return unexpected(current, JSON_PATTERN);
             }
         }
-        return abruptEnd(JSON);
+        return abruptEnd(JSON_PATTERN);
     }
 
-    public static Either<String, Json> parse (final String input) {
-        final Parser p = new Parser(0, input);
+    public static Either<String, Json> parse(final String input) {
+        final Parser p = new Parser(input);
         if (input.isEmpty()) return Either.left("No input to parse.");
         else {
             try {
