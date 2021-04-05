@@ -37,7 +37,7 @@ public class JsonOps {
     public static JsonConverter convert(final Json json) { return new JsonConverter(json.transform()); }
 
     public static String asString(final Json json) {
-        return json.toString();
+        return json.encode();
     }
 
     public static <A> Either<String, Json> asJson (final A value, final Convert<A, Json> f) {

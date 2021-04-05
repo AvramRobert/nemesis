@@ -5,17 +5,17 @@
             :url "https://opensource.org/licenses/MIT"}
   :java-source-paths ["src"]
   :dependencies [[io.lacuna/bifurcan "0.1.0"]]
-  :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]
+  :profiles {:dev {:dependencies [[org.clojure/clojure "1.10.3"]
                                   [org.clojure/test.check "1.1.0"]
-                                  [com.fasterxml.jackson.core/jackson-databind "2.9.8"]
-                                  [com.typesafe.play/play-json_2.13 "2.7.4"]
+                                  [com.fasterxml.jackson.core/jackson-databind "2.10.2"]
+                                  [com.typesafe.play/play-json_2.13 "2.9.2"]
                                   [com.google.code.gson/gson "2.8.6"]
                                   [criterium "0.4.6"]
-                                  [cheshire "5.9.0"]]
+                                  [cheshire "5.10.0"]]
                    :resource-paths ["test/resources"]}}
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :scm {:url "git@github.com:AvramRobert/nemesis.git"}
-  ;; use the token from Nexus UI, not your direct jira credentials
+  ;; use the token from Nexus UI, not your jira credentials directly
   :deploy-repositories {"releases"  {:url   "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
                                      :creds :gpg}
                         "snapshots" {:url   "https://s01.oss.sonatype.org/content/repositories/snapshots/"
