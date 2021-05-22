@@ -1,13 +1,24 @@
 package com.ravram.nemesis.model;
 
+import com.ravram.nemesis.Json;
+import com.ravram.nemesis.JsonT;
 import io.lacuna.bifurcan.List;
 
-public final class JArr extends Json {
+public final class JArr implements Json {
     public final List<Json> value;
 
     public JArr(final List<Json> i) {
         this.value = i;
-        this.type = JType.JsonArray;
+    }
+
+    @Override
+    public JType type() {
+        return JType.JsonArray;
+    }
+
+    @Override
+    public JsonT transform() {
+        return new JsonT(this);
     }
 
     public final static Json empty = new JArr(List.of());

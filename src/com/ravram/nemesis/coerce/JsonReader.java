@@ -4,7 +4,7 @@ import static com.ravram.nemesis.util.function.Functions.*;
 
 import com.ravram.nemesis.Read;
 import com.ravram.nemesis.util.error.Either;
-import com.ravram.nemesis.model.Json;
+import com.ravram.nemesis.Json;
 
 public final class JsonReader {
     private final Json json;

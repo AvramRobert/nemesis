@@ -5,7 +5,7 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (com.ravram.nemesis Writers JsonOps Readers)))
+  (:import (com.ravram.nemesis Writers Json Readers)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-json {:max-depth    2
@@ -178,14 +178,14 @@
 (defspec failure-propagation 100
   (for-all [faulty gen-faulty-json-string
             path     (gen-path {:max-depth 2})]
-    (let [json           (JsonOps/parse faulty)
+    (let [json           (Json/parse faulty)
           mapped-json    (.as json Readers/READ_INT)
-          inserted-json  (.insertJson json JsonOps/empty (in path))
+          inserted-json  (.insertJson json Json/empty (in path))
           inserted-value (.insertValue json 1 (in path))
           retrieved-json (.getJson json (in path))
           merged-json    (.mergeJson json json)
           updated-json   (.updateJson json
-                                      (function-1 #(.insertJson % JsonOps/empty (in path)))
+                                      (function-1 #(.insertJson % Json/empty (in path)))
                                       (in path))
           updated-value  (.updateValue json
                                        Readers/READ_INT

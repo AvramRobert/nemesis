@@ -1,10 +1,22 @@
 package com.ravram.nemesis.model;
 
-public class JNum extends Json {
+import com.ravram.nemesis.Json;
+import com.ravram.nemesis.JsonT;
+
+public class JNum implements Json {
     public final Number value;
     public JNum(final Number value) {
         this.value = value;
-        this.type = JType.JsonNumber;
+    }
+
+    @Override
+    public JType type() {
+        return JType.JsonNumber;
+    }
+
+    @Override
+    public JsonT transform() {
+        return new JsonT(this);
     }
 
     @Override

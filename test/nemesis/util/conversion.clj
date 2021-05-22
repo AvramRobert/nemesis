@@ -2,9 +2,8 @@
   (:require [clojure.test :refer :all]
             [cheshire.core :as json]
             [clojure.pprint :refer [pprint]])
-  (:import (com.ravram.nemesis.model JsonT Json)
-           (com.ravram.nemesis.parser Parser)
-           (com.ravram.nemesis JsonOps)
+  (:import (com.ravram.nemesis.parser Parser)
+           (com.ravram.nemesis Json JsonT)
            (com.ravram.nemesis.util.function Functions$Function1 Functions$Function3)
            (java.util ArrayList HashMap HashSet)))
 
@@ -52,7 +51,7 @@
     (apply [_ a b c] (fn a b c))))
 
 (defn in [args]
-  (JsonOps/in (into-array Object args)))
+  (Json/in (into-array Object args)))
 
 (defn converted [f & cljs]
   (->> cljs

@@ -1,5 +1,6 @@
 package com.ravram.nemesis.parser;
 
+import com.ravram.nemesis.Json;
 import com.ravram.nemesis.model.*;
 import com.ravram.nemesis.util.error.Either;
 import io.lacuna.bifurcan.List;

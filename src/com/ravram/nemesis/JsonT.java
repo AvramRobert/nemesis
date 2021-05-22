@@ -1,9 +1,11 @@
-package com.ravram.nemesis.model;
+package com.ravram.nemesis;
 
-import com.ravram.nemesis.Read;
-import com.ravram.nemesis.Write;
 import com.ravram.nemesis.coerce.Convert;
 import com.ravram.nemesis.coerce.DynamicConversions;
+import com.ravram.nemesis.model.In;
+import com.ravram.nemesis.model.JArr;
+import com.ravram.nemesis.model.JObj;
+import com.ravram.nemesis.model.JType;
 import com.ravram.nemesis.util.error.Either;
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.List;
@@ -78,8 +80,8 @@ public class JsonT {
 
     private Either<String, Json> associate(final Json value, final Json toAssoc, final int depth, final Object... keys) {
         if      (depth >= keys.length)     return Either.right(toAssoc);
-        else if (value.type == JType.JsonObject) return associateInObject((JObj) value, toAssoc, depth, keys);
-        else if (value.type == JType.JsonArray)  return associateInArray((JArr) value, toAssoc, depth, keys);
+        else if (value.type() == JType.JsonObject) return associateInObject((JObj) value, toAssoc, depth, keys);
+        else if (value.type() == JType.JsonArray)  return associateInArray((JArr) value, toAssoc, depth, keys);
         else return left("Cannot insert into `%s`. It is not a structure.", toAssoc);
     }
 
@@ -91,7 +93,7 @@ public class JsonT {
         else {
             while(depth < path.length) {
                 final Object k = path[depth];
-                if (tree.type == JType.JsonObject) {
+                if (tree.type() == JType.JsonObject) {
                     final JObj obj = (JObj) tree;
                     final Either<String, String> ekey = DynamicConversions.coerceKey(k);
                     if (ekey.isLeft()) return fail(ekey.error());
@@ -105,7 +107,7 @@ public class JsonT {
                         }
                     }
                 }
-                else if (tree.type == JType.JsonArray) {
+                else if (tree.type() == JType.JsonArray) {
                     final JArr arr = (JArr) tree;
                     final Either<String, Long> eindex = DynamicConversions.coerceIndex(k);
                     if (eindex.isLeft()) return fail(eindex.error());
@@ -138,15 +140,15 @@ public class JsonT {
     }
 
     private JsonT blindMerge(final Json that) {
-        if (json.type == JType.JsonObject) {
-            if (that.type == JType.JsonObject) {
+        if (json.type() == JType.JsonObject) {
+            if (that.type() == JType.JsonObject) {
                 final JObj obj = (JObj) that;
                 return succeed(new JObj(jobj().value.merge(obj.value, (a, b) -> b)));
             }
             else return fail("%s is not a JSON object", that);
         }
-        else if (json.type == JType.JsonArray) {
-            if (that.type == JType.JsonArray) {
+        else if (json.type() == JType.JsonArray) {
+            if (that.type() == JType.JsonArray) {
                 final JArr arr = (JArr) that;
                 return succeed(new JArr((List<Json>) jarr().value.concat(arr.value)));
             }
@@ -156,7 +158,7 @@ public class JsonT {
     }
 
     private JsonT blindRemove(final String... keys) {
-        if (json.type == JType.JsonObject) {
+        if (json.type() == JType.JsonObject) {
             Map<String, Json> map = jobj().value;
             for (String key: keys) {
                 if (map.contains(key)) {
@@ -173,20 +175,20 @@ public class JsonT {
     private <A> Either<String, A> blindReduceObj(final A init,
                                                  final Function3<A, String, JsonT, Either<String, A>> f) {
         A start = init;
-        if (json.type == JType.JsonObject) {
+        if (json.type() == JType.JsonObject) {
             for (IEntry<String, Json> e : jobj().value.entries()) {
                 final Either<String, A> res = f.apply(start, e.key(), e.value().transform());
                 if (res.isRight()) start = res.value();
                 else return Either.left(res.error());
             }
             return Either.right(start);
-        } else return left(String.format("Cannot reduce over json type `%s`.", json.type));
+        } else return left(String.format("Cannot reduce over json type `%s`.", json.type()));
     }
 
     private <A> Either<String, A> blindReduceArr(final A init,
                                                  final Function3<A, Integer, JsonT, Either<String, A>> f) {
         A start = init;
-        if (json.type == JType.JsonArray) {
+        if (json.type() == JType.JsonArray) {
             int i = 0;
             final List<Json> js = jarr().value;
             for (Json j : js) {
@@ -195,7 +197,7 @@ public class JsonT {
                 else return Either.left(res.error());
             }
             return Either.right(start);
-        } else return left(String.format("Cannot reduce over json type `%s`.", json.type));
+        } else return left(String.format("Cannot reduce over json type `%s`.", json.type()));
     }
 
     public final JsonT getJson(final In in) {

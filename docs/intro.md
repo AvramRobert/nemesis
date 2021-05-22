@@ -22,16 +22,16 @@ It thus provides data structure-esque functions, which allow one to **safely**, 
 
 ## Transformation
 As with any JSON library, _nemesis_ complies to the JSON specification and can parse any form it may occur in.  
-The parsed version is represented through the datatype `com.ravram.nemesis.model.Json`.
+The parsed version is represented through the datatype `com.ravram.nemesis.Json`.
 
 Every such `nemsis.model.Json` can either be marshalled back into a `String` or can be _transformed_. 
 
-A transformation wraps the `com.ravram.nemesis.model.Json` into a `com.ravram.nemesis.model.JsonT`, which acts as the context in which
+A transformation wraps the `com.ravram.nemesis.Json` into a `com.ravram.nemesis.JsonT`, which acts as the context in which
 changes are allowed to happen. These emphasise two properties:
 
 1. **Compositionality**
    
-   Every transformation, irrespective of sanity and/or success, returns a `com.ravram.nemesis.model.JsonT`.
+   Every transformation, irrespective of sanity and/or success, returns a `com.ravram.nemesis.JsonT`.
    This allows one to chain transformations together and actively "pretend" as if all were fine.
 
 2. **Safety**

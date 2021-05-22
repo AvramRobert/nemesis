@@ -1,21 +1,32 @@
 package com.ravram.nemesis.model;
 
+import com.ravram.nemesis.Json;
+import com.ravram.nemesis.JsonT;
 import com.ravram.nemesis.util.misc.Strings;
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.Map;
 
 import java.util.HashMap;
 
-public final class JObj extends Json {
+public final class JObj implements Json {
     public final Map<String, Json> value;
     public JObj(final Map<String, Json> i) {
         this.value = i;
-        this.type = JType.JsonObject;
     }
 
     @Override
     public String toString() {
         return value.toString();
+    }
+
+    @Override
+    public JType type() {
+        return JType.JsonObject;
+    }
+
+    @Override
+    public JsonT transform() {
+        return new JsonT(this);
     }
 
     @Override

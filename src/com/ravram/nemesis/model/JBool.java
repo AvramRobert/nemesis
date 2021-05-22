@@ -1,11 +1,23 @@
 package com.ravram.nemesis.model;
 
-public class JBool extends Json {
+import com.ravram.nemesis.Json;
+import com.ravram.nemesis.JsonT;
+
+public class JBool implements Json {
     public final boolean value;
 
     public JBool(final boolean value) {
         this.value = value;
-        this.type = JType.JsonBool;
+    }
+
+    @Override
+    public JType type() {
+        return JType.JsonBool;
+    }
+
+    @Override
+    public JsonT transform() {
+        return new JsonT(this);
     }
 
     @Override

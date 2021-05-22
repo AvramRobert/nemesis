@@ -1,8 +1,19 @@
 package com.ravram.nemesis.model;
 
-public class JNull extends Json {
-    private JNull() {
-        this.type = JType.JsonNull;
+import com.ravram.nemesis.Json;
+import com.ravram.nemesis.JsonT;
+
+public class JNull implements Json {
+    private JNull() { }
+
+    @Override
+    public JType type() {
+        return JType.JsonNull;
+    }
+
+    @Override
+    public JsonT transform() {
+        return new JsonT(this);
     }
 
     public final static Json instance = new JNull();
