@@ -168,24 +168,24 @@ For more information on `Convert`, take a look [here](api.md#converting).
 
 ```java
 import static com.ravram.nemesis.coerce.ObjectConverter.object;
-import static com.ravram.nemesis.Converters.INT_TO_JSON;
+import static com.ravram.nemesis.Writers.WRITE_INT;
 
 static class Point {
-    final int a;
-    final int b;
+   final int a;
+   final int b;
 
-    public Point(final int a, final int b) {
-       this.a = a;
-       this.b = b;
-    }
+   public Point(final int a, final int b) {
+      this.a = a;
+      this.b = b;
+   }
 }
 
-Convert<Point, Json> pointConverter = point -> 
-            convert(point)
-                .with("a", p -> INT_TO_JSON.convert(p.a),
-                      "b", p -> INT_TO_JSON.convert(p.b));
+   Convert<Point, Json> pointConverter = point ->
+           convert(point)
+                   .with("a", p -> WRITE_INT.convert(p.a),
+                           "b", p -> WRITE_INT.convert(p.b));
 
-jsonT.insertValue(new Point(1, 1), pointConverter, in("point"))
+jsonT.insertValue(new Point(1,1),pointConverter,in("point"))
 ```
 
 ```json
@@ -242,7 +242,7 @@ jsonT
 Updates are supported for any value at any degree of nestedness.  
 Can either be performed directly on a `JsonT` node or on a proper type `A`, provided a `Convert<Json, A>` instance.
 
-**Note: Converters for JSON types can be found in `com.ravram.nemesis.Converters`**
+**Note: Converters for JSON types can be found in `com.ravram.nemesis.Writers`**
 ```java
 
 
@@ -321,7 +321,7 @@ For more information on `Convert`, take a look [here](api.md#converting).
 
 #### Casting to JSON types
 
-Converters for basic JSON types can be found in `com.ravram.nemesis.Converters`
+Converters for basic JSON types can be found in `com.ravram.nemesis.Writers`
 
 A list of all default converters can be found [here](api.md#default-json-converters).
 
@@ -374,12 +374,13 @@ Signature:
 ```java
 Function3<A, String, JsonT, Either<String, A>>
 ```
-```java
-import com.ravram.nemesis.Converters.JSON_TO_STRING;
 
-jsonT.reduceObj("Greeting:", (inter, key, jsonValue) -> {
-    return jsonValue.as(JSON_TO_STRING).map(value -> inter + " " + key + " " + value);
-});
+```java
+import com.ravram.nemesis.Writers.JSON_TO_STRING;
+
+jsonT.reduceObj("Greeting:",(inter,key,jsonValue)->{
+        return jsonValue.as(JSON_TO_STRING).map(value->inter+" "+key+" "+value);
+        });
 ```
 
 ```java
@@ -401,15 +402,15 @@ Signature:
 ```java
 Function3<A, Integer, JsonT, Either<String, A>>
 ```
-    
+
 ```java
-import com.ravram.nemesis.Converters.JSON_TO_INT;
+import com.ravram.nemesis.Writers.JSON_TO_INT;
 
-JsonT json = parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
+JsonT json=parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
 
-json.reduceArr(0, (inter, index, jsonValue) -> {
-    return jsonValue.getAs(JSON_TO_INT, in("value")).map(x -> x + inter);
-});
+        json.reduceArr(0,(inter,index,jsonValue)->{
+        return jsonValue.getAs(JSON_TO_INT,in("value")).map(x->x+inter);
+        });
 ```
 
 ### Creating
@@ -448,7 +449,7 @@ Converting `Json` to an arbitrary type `A` is done by defining an instance of `C
 
 #### Default Json Converters
 
-For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.Converters`.
+For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.Writers`.
 
 Here's a list:
 
@@ -488,60 +489,61 @@ Convert<Json, MyType> converter = json ->
               (a, b, c) -> new MyType(a, b, c))
 ```
 **Example:**
+
 ```java
-import static com.ravram.nemesis.Converters.*;
+import static com.ravram.nemesis.Writers.*;
 
 static class Coord {
-    public final int s;
-    public final int e;
+   public final int s;
+   public final int e;
 
-    public Coord(final int s, final int e) {
-        this.s = s;
-        this.e = e;
-    }
+   public Coord(final int s, final int e) {
+      this.s = s;
+      this.e = e;
+   }
 }
 
 static class Line {
-    public final Coord x;
-    public final Coord y;
-    
-    public Line(final Coord x, final Coord y) {
-        this.x = x;
-        this.y = y;
-    }
+   public final Coord x;
+   public final Coord y;
+
+   public Line(final Coord x, final Coord y) {
+      this.x = x;
+      this.y = y;
+   }
 }
 
 static class Figure {
-    public final List<Line> lines;
-    
-    public Figure(final List<Line> lines) {
-        this.lines = lines;
-    }
+   public final List<Line> lines;
+
+   public Figure(final List<Line> lines) {
+      this.lines = lines;
+   }
 }
 
-Convert<Json, Coord> coord = json ->
-    convert(json)
-        .with(js -> js.getValue(JSON_TO_INT, in("s")),
-              js -> js.getValue(JSON_TO_INT, in("e")),
-              (s, e) -> new Coord(s, e));
+   Convert<Json, Coord> coord = json ->
+           convert(json)
+                   .with(js -> js.getValue(JSON_TO_INT, in("s")),
+                           js -> js.getValue(JSON_TO_INT, in("e")),
+                           (s, e) -> new Coord(s, e));
 
-Convert<Json, Line> line = json ->
-    convert(json)
-        .with(js -> js.getValue(coord, in("x")),
-              js -> js.getValue(coord, in("y")),
-              (x, y) -> new Line(x, y));
+   Convert<Json, Line> line = json ->
+           convert(json)
+                   .with(js -> js.getValue(coord, in("x")),
+                           js -> js.getValue(coord, in("y")),
+                           (x, y) -> new Line(x, y));
 
-Convert<Json, Figure> figure = json ->
-    convert(json))
-        .with(js    -> js.getValue(listOf(line), in("lines")),
-              lines -> new Figure(lines));
+   Convert<Json, Figure> figure = json ->
+           convert(json))
+        .with(js->js.getValue(listOf(line),in("lines")),
+        lines->new Figure(lines));
 ```
 
 ### Object Converters
 
 #### Default Object Converters
 
-For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.Converters`.
+For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.Writers`.
 
 Here's a list:
 
@@ -578,50 +580,51 @@ Convert<MyType, Json> converter = json ->
               .., .. // String, Convert<MyType, Json>)
 ```
 **Example:**
+
 ```java
-import static com.ravram.nemesis.Converters.*;
+import static com.ravram.nemesis.Writers.*;
 
 static class Coord {
-    public final int s;
-    public final int e;
+   public final int s;
+   public final int e;
 
-    public Coord(final int s, final int e) {
-        this.s = s;
-        this.e = e;
-    }
+   public Coord(final int s, final int e) {
+      this.s = s;
+      this.e = e;
+   }
 }
 
 static class Line {
-    public final Coord x;
-    public final Coord y;
-    
-    public Line(final Coord x, final Coord y) {
-        this.x = x;
-        this.y = y;
-    }
+   public final Coord x;
+   public final Coord y;
+
+   public Line(final Coord x, final Coord y) {
+      this.x = x;
+      this.y = y;
+   }
 }
 
 static class Figure {
-    public final List<Line> lines;
-    
-    public Figure(final List<Line> lines) {
-        this.lines = lines;
-    }
+   public final List<Line> lines;
+
+   public Figure(final List<Line> lines) {
+      this.lines = lines;
+   }
 }
 
-Convert<Coord, Json> jcoord = coord ->
-    convert(coord)
-        .with("s", c -> INT_TO_JSON.convert(c.s),
-              "e", c -> INT_TO_JSON.convert(c.e));
+   Convert<Coord, Json> jcoord = coord ->
+           convert(coord)
+                   .with("s", c -> WRITE_INT.convert(c.s),
+                           "e", c -> WRITE_INT.convert(c.e));
 
-Convert<Line, Json> jline = line ->
-    convert(line)
-        .with("x", l -> jcoord.convert(l.x),
-              "y", l -> jcoord.convert(l.y));
+   Convert<Line, Json> jline = line ->
+           convert(line)
+                   .with("x", l -> jcoord.convert(l.x),
+                           "y", l -> jcoord.convert(l.y));
 
-Convert<Figure, Json> jfigure = figure ->
-    convert(figure)
-        .with("lines", f -> listFrom(jline).convert(f.lines));
+   Convert<Figure, Json> jfigure = figure ->
+           convert(figure)
+                   .with("lines", f -> listFrom(jline).convert(f.lines));
 ```
 
 ### Automatic converter derivation

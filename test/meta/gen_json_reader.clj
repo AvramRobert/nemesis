@@ -1,29 +1,30 @@
-(ns meta.json-converter-gen
+(ns meta.gen-json-reader
   (:require [clojure.string :as s]
             [meta.gen-util :refer :all]))
 
 (def class-def
   "package %s;
   import static %s.util.function.Functions.*;
+  import %2$s.Read;
   import %2$s.util.error.Either;
-  import %2$s.model.JsonT;
+  import %2$s.model.Json;
 
   public final class %s {
-    private final JsonT json;
+    private final Json json;
 
-      public %3$s(final JsonT json) {
+      public %3$s(final Json json) {
         this.json = json;
       }
 
     %s
   }")
 
-(def map-def "f%d.convert(json)\n.map(%s -> comb.apply(%s))")
+(def map-def "f%d.apply(json)\n.map(%s -> comb.apply(%s))")
 
-(def flat-map-def "f%d.convert(json)\n.flatMap(%s -> %s)")
+(def flat-map-def "f%d.apply(json)\n.flatMap(%s -> %s)")
 
 (def function-def
-  "public final <%s> Either<String, %s> with(\n%s,\n%s) {
+  "public final <%s> Either<String, %s> using(\n%s,\n%s) {
     return %s;
   }")
 
@@ -31,7 +32,7 @@
   (format "Function%d<%s> comb" (dec arity) (type-list arity)))
 
 (defn converter [index letter]
-  (format "Convert<JsonT, %s> f%d" letter index))
+  (format "Read<%s> f%d" letter index))
 
 (defn converters [params]
   (->> type-labels
@@ -75,6 +76,6 @@
   (let [domain  "com.ravram.nemesis"
         package (str domain ".coerce")
         path    (s/replace package "." "/")
-        class   "JsonConverter"]
+        class   "JsonReader"]
     (spit (format "./src/%s/%s.java" path class)
           (clazz domain package class fn#))))

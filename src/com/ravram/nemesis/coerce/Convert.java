@@ -3,21 +3,17 @@ package com.ravram.nemesis.coerce;
 import com.ravram.nemesis.util.error.Either;
 import com.ravram.nemesis.util.error.Left;
 import com.ravram.nemesis.util.error.Right;
-import com.ravram.nemesis.util.function.Functions;
+import com.ravram.nemesis.util.function.Functions.Function1;
 
 @FunctionalInterface
-public interface Convert <A, B> {
-    default Functions.Function1<A, Either<String, B>> function() {
-     return this::convert;
+public interface Convert <E, A, B> {
+    default <C> Convert<E, A, C> compose (final Convert<E, B, C> f) {
+        return a -> apply(a).fold(f::apply, Left::new);
     }
 
-    default <C> Convert<A, C> compose (final Convert<B, C> f) {
-        return a -> convert(a).fold(f::convert, Left::new);
+    default <C> Convert<E, A, C> compose (final Function1<B, C> f) {
+        return a -> apply(a).fold(b -> new Right<>(f.apply(b)), Left::new);
     }
 
-    default <C> Convert<A, C> compose (final Functions.Function1<B, C> f) {
-        return a -> convert(a).fold(b -> new Right<>(f.apply(b)), Left::new);
-    }
-
-    Either<String, B> convert(final A value);
+    Either<E, B> apply(final A value);
 }

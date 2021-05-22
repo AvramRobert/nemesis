@@ -1,5 +1,7 @@
 package com.ravram.nemesis.model;
 
+import com.ravram.nemesis.Read;
+import com.ravram.nemesis.Write;
 import com.ravram.nemesis.coerce.Convert;
 import com.ravram.nemesis.coerce.DynamicConversions;
 import com.ravram.nemesis.util.error.Either;
@@ -129,8 +131,8 @@ public class JsonT {
         else return succeed(result.value());
     }
 
-    private <A> JsonT blindInsertConverted(final A value, final Convert<A, Json> to, final In in) {
-        final Either<String, Json> converted = to.convert(value);
+    private <A> JsonT blindInsertConverted(final A value, final Write<A> to, final In in) {
+        final Either<String, Json> converted = to.apply(value);
         if (converted.isRight()) return blindInsert(converted.value(), in);
         else return fail(converted.error());
     }
@@ -201,7 +203,7 @@ public class JsonT {
         else return blindGet(in);
     }
 
-    public final <A> Either<String, A> getValue(final Convert<Json, A> f, final In in) {
+    public final <A> Either<String, A> getValue(final Read<A> f, final In in) {
         return getJson(in).as(f);
     }
 
@@ -226,7 +228,7 @@ public class JsonT {
         else return blindInsert(value.json, in);
     }
 
-    public final <A> JsonT insertValue(final A value, final Convert<A, Json> to, final In in) {
+    public final <A> JsonT insertValue(final A value, final Write<A> to, final In in) {
         if (failed || in.isEmpty) return this;
         else return blindInsertConverted(value, to, in);
         }
@@ -244,20 +246,20 @@ public class JsonT {
         }
     }
 
-    public final <A, B> JsonT updateValue(final Convert<Json, A> from,
+    public final <A, B> JsonT updateValue(final Read<A> from,
                                           final Function1<A, B> f,
-                                          final Convert<B, Json> to,
+                                          final Write<B> to,
                                           final In in) {
         if (failed || in.isEmpty) return this;
         else {
-            final Convert<Json, Json> g = from.compose(f).compose(to);
-            final Either<String, Json> result = blindGet(in).as(g);
+            final Convert<String, Json, Json> g = from.compose(f).compose(to);
+            final Either<String, Json> result = blindGet(in).as(g::apply);
             if (result.isLeft()) return fail("Could not apply update. Error: %s", result.error());
             else return blindInsert(result.value(), in);
         }
     }
 
-    public final <A, B> JsonT updateValue(final Convert<Json, A> to, final Function1<A, B> f, final In in) {
+    public final <A, B> JsonT updateValue(final Read<A> to, final Function1<A, B> f, final In in) {
         return updateValue(to, f, DynamicConversions::coerceJson, in);
     }
 
@@ -286,9 +288,9 @@ public class JsonT {
         else return blindReduceArr(init, f);
     }
 
-    public final <A> Either<String, A> as(final Convert<Json, A> f) {
+    public final <A> Either<String, A> as(final Read<A> f) {
         if (failed) return Either.left(error);
-        else return f.convert(json);
+        else return f.apply(json);
     }
 
     public final Either<String, Json> affix() {

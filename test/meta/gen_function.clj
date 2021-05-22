@@ -1,4 +1,4 @@
-(ns meta.function-gen
+(ns meta.gen-function
   (:require [meta.gen-util :refer :all]
             [clojure.string :as s]))
 

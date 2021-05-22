@@ -1,4 +1,4 @@
-(ns meta.object-converter-gen
+(ns meta.gen-json-writer
   (:require [clojure.string :as s]
             [meta.gen-util :refer :all]))
 
@@ -6,6 +6,7 @@
   "package %s;
 
   import %s.model.JObj;
+  import %2$s.Write;
   import %2$s.model.Json;
   import %2$s.util.error.Either;
   import io.lacuna.bifurcan.Map;
@@ -31,13 +32,13 @@
     %s
   }")
 
-(def function-def "public final Either<String, Json> with(%s) {\n return %s; }")
+(def function-def "public final Either<String, Json> using(%s) {\n return %s; }")
 
-(def param-def "final String key%d, final Convert<A, Json> f%d")
+(def param-def "final String key%d, final Write<A> f%d")
 
-(def map-def "f%d.convert(obj).map(%s -> mapFrom(%s))")
+(def map-def "f%d.apply(obj).map(%s -> mapFrom(%s))")
 
-(def flat-map-def "f%d.convert(obj).flatMap(%s -> %s)")
+(def flat-map-def "f%d.apply(obj).flatMap(%s -> %s)")
 
 (def entry-def "entry(key%d, %s)")
 
@@ -81,6 +82,6 @@
   (let [domain "com.ravram.nemesis"
         package (str domain ".coerce")
         path    (s/replace package "." "/")
-        class   "ObjectConverter"]
+        class   "JsonWriter"]
     (spit (format "./src/%s/%s.java" path class)
           (clazz domain package class fn#))))

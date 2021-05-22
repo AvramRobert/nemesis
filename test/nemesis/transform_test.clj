@@ -5,7 +5,7 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (com.ravram.nemesis Converters JsonOps)))
+  (:import (com.ravram.nemesis Writers JsonOps Readers)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-json {:max-depth    2
@@ -108,9 +108,9 @@
                              :nem (fn [m] (update-j m #(insert-jval % new-value [0]) keys))}
                     :scalar {:clj (fn [m] (update-in m keys inc))
                              :nem (fn [m] (update-jval m
-                                                       Converters/JSON_TO_LONG
+                                                       Readers/READ_LONG
                                                        inc
-                                                       Converters/LONG_TO_JSON
+                                                       Writers/WRITE_LONG
                                                        keys))}}
           fn-for   (fn [api]
                      (cond
@@ -150,7 +150,7 @@
               :max-elements 10
               :scalars      [gen-int]}
         add  (fn [i _ v]
-               (-> v (.as Converters/JSON_TO_LONG) (.map (function-1 #(+ i %)))))]
+               (-> v (.as Readers/READ_LONG) (.map (function-1 #(+ i %)))))]
     (for-all [json-obj (gen-shallow-map opts)
               json-arr (gen-shallow-arr opts)]
        (let [computed-obj (reduce-obj-j json-obj 0 add)
@@ -165,7 +165,7 @@
               :max-elements 10
               :scalars      [gen-int]}
         fail (fn [_ _ v]
-               (.as v Converters/JSON_TO_BOOLEAN))]
+               (.as v Readers/READ_BOOLEAN))]
     (for-all [json-obj (gen-shallow-map opts)
               json-arr (gen-shallow-arr opts)]
       (let [computed-obj (reduce-obj-j json-obj 0 fail)
@@ -179,7 +179,7 @@
   (for-all [faulty gen-faulty-json-string
             path     (gen-path {:max-depth 2})]
     (let [json           (JsonOps/parse faulty)
-          mapped-json    (.as json Converters/JSON_TO_INT)
+          mapped-json    (.as json Readers/READ_INT)
           inserted-json  (.insertJson json JsonOps/empty (in path))
           inserted-value (.insertValue json 1 (in path))
           retrieved-json (.getJson json (in path))
@@ -188,9 +188,9 @@
                                       (function-1 #(.insertJson % JsonOps/empty (in path)))
                                       (in path))
           updated-value  (.updateValue json
-                                       Converters/JSON_TO_INT
+                                       Readers/READ_INT
                                        (function-1 inc)
-                                       Converters/INT_TO_JSON
+                                       Writers/WRITE_INT
                                        (in path))
           reduced-obj    (.reduceObj json 0 (function-3 (fn [b _ _] (inc b))))
           reduced-arr    (.reduceArr json 0 (function-3 (fn [b _ _] (inc b))))]
