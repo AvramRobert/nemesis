@@ -4,7 +4,7 @@
             [nemesis.util.conversion :refer [clj->nem clj->java in function-1]]
             [clojure.test.check.generators :as gen]
             [benchmarks.util :as u])
-  (:import (com.ravram.nemesis Writers Readers)))
+  (:import (com.ravram.nemesis Write Read)))
 
 (def ^:const SAMPLE-SIZE 5)
 
@@ -13,16 +13,16 @@
 
 (defn convertor [scalar]
   (cond
-    (int? scalar) {:to   Writers/WRITE_LONG
-                   :from Readers/READ_LONG}
-    (double? scalar) {:to   Writers/WRITE_DOUBLE
-                      :from Readers/READ_DOUBLE}
-    (string? scalar) {:to   Writers/WRITE_STRING
-                      :from Readers/READ_STRING}
-    (boolean? scalar) {:to   Writers/WRITE_BOOLEAN
-                       :from Readers/READ_BOOLEAN}
-    (nil? scalar) {:to   Writers/WRITE_NULL
-                   :from Readers/READ_NULL}))
+    (int? scalar) {:to   Write/LONG
+                   :from Read/LONG}
+    (double? scalar) {:to   Write/DOUBLE
+                      :from Read/DOUBLE}
+    (string? scalar) {:to   Write/STRING
+                      :from Read/STRING}
+    (boolean? scalar) {:to   Write/BOOLEAN
+                       :from Read/BOOLEAN}
+    (nil? scalar) {:to   Write/NULL
+                   :from Read/NULL}))
 
 (defn update-fn [scalar]
   (cond

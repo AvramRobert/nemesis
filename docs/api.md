@@ -379,10 +379,10 @@ Function3<A, String, JsonT, Either<String, A>>
 ```
 
 ```java
-import com.ravram.nemesis.Writers.JSON_TO_STRING;
+
 
 jsonT.reduceObj("Greeting:",(inter,key,jsonValue)->{
-        return jsonValue.as(WRITE_STRING).map(value-> inter + " " + key + " " + value);
+        return jsonValue.as(WRITE_STRING).map(value->inter+" "+key+" "+value);
         });
 ```
 
@@ -407,13 +407,13 @@ Function3<A, Integer, JsonT, Either<String, A>>
 ```
 
 ```java
-import com.ravram.nemesis.Writers.JSON_TO_INT;
+
 
 JsonT json=parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
-        
-json.reduceArr(0, (inter, index, jsonValue)->{
-    return jsonValue.getAs(READ_INT, in("value")). map(x -> x + inter);
-});
+
+        json.reduceArr(0,(inter,index,jsonValue)->{
+        return jsonValue.getAs(READ_INT,in("value")).map(x->x+inter);
+        });
 ```
 
 ### Creating
@@ -548,7 +548,7 @@ static class Figure {
 
    Read<Figure> figure = json ->
            read(json).using(
-                   js -> js.transform().getValue(readListOf(line), in("lines")),
+                   js -> js.transform().getValue(readList(line), in("lines")),
                    lines -> new Figure(lines));
 ```
 
@@ -574,46 +574,46 @@ Write<MyType> writer = json ->
 import static com.ravram.nemesis.Writers.*;
 
 static class Coord {
-    public final int s;
-    public final int e;
+   public final int s;
+   public final int e;
 
-    public Coord(final int s, final int e) {
-        this.s = s;
-        this.e = e;
-    }
+   public Coord(final int s, final int e) {
+      this.s = s;
+      this.e = e;
+   }
 }
 
 static class Line {
-    public final Coord x;
-    public final Coord y;
+   public final Coord x;
+   public final Coord y;
 
-    public Line(final Coord x, final Coord y) {
-        this.x = x;
-        this.y = y;
-    }
+   public Line(final Coord x, final Coord y) {
+      this.x = x;
+      this.y = y;
+   }
 }
 
 static class Figure {
-    public final List<Line> lines;
+   public final List<Line> lines;
 
-    public Figure(final List<Line> lines) {
-        this.lines = lines;
-    }
+   public Figure(final List<Line> lines) {
+      this.lines = lines;
+   }
 }
 
-    Write<Coord> jcoord = coord ->
-            write(coord).using(
-                    "s", c -> WRITE_INT.convert(c.s),
-                    "e", c -> WRITE_INT.convert(c.e));
+   Write<Coord> jcoord = coord ->
+           write(coord).using(
+                   "s", c -> WRITE_INT.convert(c.s),
+                   "e", c -> WRITE_INT.convert(c.e));
 
-    Write<Line> jline = line ->
-            write(line).using(
-                    "x", l -> jcoord.convert(l.x),
-                    "y", l -> jcoord.convert(l.y));
+   Write<Line> jline = line ->
+           write(line).using(
+                   "x", l -> jcoord.convert(l.x),
+                   "y", l -> jcoord.convert(l.y));
 
-    Write<Figure> jfigure = figure ->
-            write(figure).using(
-                    "lines", f -> writeListOf(jline).convert(f.lines));
+   Write<Figure> jfigure = figure ->
+           write(figure).using(
+                   "lines", f -> writeList(jline).convert(f.lines));
 ```
 
 ### Automatic converter derivation

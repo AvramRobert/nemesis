@@ -1,9 +1,9 @@
 package com.ravram.nemesis.coerce;
 
+import com.ravram.nemesis.model.JObj;
+import com.ravram.nemesis.Write;
 import com.ravram.nemesis.Attempt;
 import com.ravram.nemesis.Json;
-import com.ravram.nemesis.Write;
-import com.ravram.nemesis.model.JObj;
 import io.lacuna.bifurcan.Map;
 import io.lacuna.bifurcan.Maps.Entry;
 
@@ -13,7 +13,7 @@ public final class JsonWriter<A> {
     private final A obj;
 
     private Entry<String, Json> entry(final String key, final Json value) {
-        return new Entry<>("\"" + key + "\"", value);
+        return new Entry<>(key, value);
     }
 
     public JsonWriter(final A obj) {

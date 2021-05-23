@@ -17,7 +17,7 @@
     private final A obj;
 
     private Entry<String, Json> entry(final String key, final Json value) {
-      return new Entry<>(\"\\\"\" + key + \"\\\"\", value);
+      return new Entry<>(key, value);
     }
 
     public %3$s(final A obj) {

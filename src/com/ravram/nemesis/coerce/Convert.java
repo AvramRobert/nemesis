@@ -15,5 +15,13 @@ public interface Convert <I, O> {
         return p -> apply(g.apply(p));
     }
 
+    default <B> Convert<I, B> map(final Function1<O, B> f) {
+        return i -> apply(i).map(f);
+    }
+
+    default <B> Convert<I, B> flatMap(final Function1<O, Convert<I, B>> f) {
+        return i -> apply(i).flatMap(o -> f.apply(o).apply(i));
+    }
+
     Attempt<O> apply(final I value);
 }

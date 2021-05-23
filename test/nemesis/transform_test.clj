@@ -5,7 +5,7 @@
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen])
-  (:import (com.ravram.nemesis Writers Json Readers)))
+  (:import (com.ravram.nemesis Json Read Write)))
 
 (defspec isomorphism 100
   (for-all [json-clj (gen-json {:max-depth    2
@@ -108,9 +108,9 @@
                              :nem (fn [m] (update-j m #(insert-jval % new-value [0]) keys))}
                     :scalar {:clj (fn [m] (update-in m keys inc))
                              :nem (fn [m] (update-jval m
-                                                       Readers/READ_LONG
+                                                       Read/LONG
                                                        inc
-                                                       Writers/WRITE_LONG
+                                                       Write/LONG
                                                        keys))}}
           fn-for   (fn [api]
                      (cond
@@ -150,7 +150,7 @@
               :max-elements 10
               :scalars      [gen-int]}
         add  (fn [i _ v]
-               (-> v (.as Readers/READ_LONG) (.map (function-1 #(+ i %)))))]
+               (-> v (.as Read/LONG) (.map (function-1 #(+ i %)))))]
     (for-all [json-obj (gen-shallow-map opts)
               json-arr (gen-shallow-arr opts)]
        (let [computed-obj (reduce-obj-j json-obj 0 add)
@@ -165,7 +165,7 @@
               :max-elements 10
               :scalars      [gen-int]}
         fail (fn [_ _ v]
-               (.as v Readers/READ_BOOLEAN))]
+               (.as v Read/BOOLEAN))]
     (for-all [json-obj (gen-shallow-map opts)
               json-arr (gen-shallow-arr opts)]
       (let [computed-obj (reduce-obj-j json-obj 0 fail)
@@ -179,7 +179,7 @@
   (for-all [faulty gen-faulty-json-string
             path     (gen-path {:max-depth 2})]
     (let [json           (Json/parse faulty)
-          mapped-json    (.as json Readers/READ_INT)
+          mapped-json    (.as json Read/INT)
           inserted-json  (.insertJson json Json/empty (in path))
           inserted-value (.insertValue json 1 (in path))
           retrieved-json (.getJson json (in path))
@@ -188,9 +188,9 @@
                                       (function-1 #(.insertJson % Json/empty (in path)))
                                       (in path))
           updated-value  (.updateValue json
-                                       Readers/READ_INT
+                                       Read/INT
                                        (function-1 inc)
-                                       Writers/WRITE_INT
+                                       Write/INT
                                        (in path))
           reduced-obj    (.reduceObj json 0 (function-3 (fn [b _ _] (inc b))))
           reduced-arr    (.reduceArr json 0 (function-3 (fn [b _ _] (inc b))))]

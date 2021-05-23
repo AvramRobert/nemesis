@@ -1,10 +1,10 @@
 package com.ravram.nemesis.coerce;
 
+import static com.ravram.nemesis.util.function.Functions.*;
+
+import com.ravram.nemesis.Read;
 import com.ravram.nemesis.Attempt;
 import com.ravram.nemesis.Json;
-import com.ravram.nemesis.Read;
-
-import static com.ravram.nemesis.util.function.Functions.*;
 
 public final class JsonReader {
     private final Json json;
