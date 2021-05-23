@@ -28,23 +28,31 @@
    * Type representing a correct json value.
 
 ### `JsonT`
-   * Type representing a json currently undergoing transformation.
-   * Supports the primary manipulative functions.
-   * Not a fixed JSON, transformation has to be terminated to get a `Json` out of it. (see [here](api.md#terminating--affixing-structure)).
+   * Type representing a json currently undergoing transformation
+   * Supports the primary manipulative functions
+   * Not a fixed JSON, transformation has to be terminated to get a `Json` out of it (see [here](api.md#terminating--affixing-structure))
 
 ### `Either<A, B>`
-   * Left-biased disjunctive type used for representing successful and erroneous computations.
-   * The left-hand side is seen as the error type, whilst the right-hand side as the success type.
+   * Left-biased disjunctive type used for representing successful and erroneous computations
+   * The left-hand side is seen as the error type, whilst the right-hand side as the success type
 
-### `Convert<A, B>`
-   * An interface describing the safe conversion from a type `A` to a type `B`.
-   * Equivalent to `Function<A, Either<String, B>>`
+### `Convert<E, I, O>`
+   * An interface describing the safe conversion from an input type `I` to an output type `O` that may fail with an error of type `E`
+   * Equivalent to `Function<I, Either<E, O>>`
+
+### `Read<A>`
+   * Concrete extension of `Convert` for reading `Json`
+   * Equivalent to `Convert<String, Json, A>`
+
+### `Write<A>`
+   * Concrete extension of `Convert` from writing `Json`
+   * Equivalent to `Convert<String, A, Json>`
+
+### `JsonReader`
+   * A helper class to aid in writing `Read<A>` instances
    
-### `JsonConverter<A>`
-   * A helper class to aid in writing `Convert<Json, A>` instances for json objects.
-   
-### `ObjectConverter<A>`
-   * A helper class to aid in writing `Convert<A, Json>` instances for arbitrary objects.
+### `JsonWriter<A>`
+   * A helper class to aid in writing `Write<A>` instances
 
 ## Parsing
 
@@ -53,23 +61,23 @@
 Generally, parsing reads directly into a `JsonT`.
 
 ```java
-
+import static com.ravram.nemesis.Json.*;
 
 parse("{ \"hello\" : \"world\" }") // JsonT
 ```
 
 ### To an arbitrary type
 
-You can however also parse directly to an arbitrary type `A`, given an instance of `Convert<Json, A>` for that type.
+You can however also parse directly to an arbitrary type `A`, given an instance of `Read<A>` for that type.
 
-For more information on `Convert`, take a look [here](api.md#converting).
+For more information on `Read`, take a look [here](api.md#converting).
 
 ```java
 
 final String myJson = ...;
-final Convert<Json, MyType> myTypeConverter = ...;
+final Read<MyType> myTypeReader = ...;
 
-parseAs(myTypeConverter, myJson);
+parseAs(myTypeReader, myJson);
 ```
 
 ## Encoding
@@ -88,7 +96,8 @@ myJson.encode();
 
 Assume we start with the following:
 ```java
-
+import static com.ravram.nemesis.Json.*;
+import static com.ravram.nemesis.JsonT;
 
 JsonT jsonT = parse("{ \"hello\" : \"world\" }")
 ```
@@ -100,7 +109,6 @@ JsonT jsonT = parse("{ \"hello\" : \"world\" }")
 The simplest insertion is of either `Json` or `JsonT` values.
 
 ```java
-
 JsonT jsonT2 = parse("{ \"a\" : 1 }");
 
 jsonT.insertJson(jsonT2, in("node"));
@@ -162,12 +170,13 @@ jsonT
 ```
 #### Arbitrary values
 
-For arbitrary types, you'll have to provide a `Convert<A, Json>` instance. 
+For arbitrary types, you'll have to provide a `Write<A>` instance.
 
-For more information on `Convert`, take a look [here](api.md#converting).
+For more information on `Write`, take a look [here](api.md#converting).
 
 ```java
-import static com.ravram.nemesis.coerce.ObjectConverter.object;
+import static com.ravram.nemesis.Json.*;
+import static com.ravram.nemesis.Write;
 import static com.ravram.nemesis.Writers.WRITE_INT;
 
 static class Point {
@@ -180,12 +189,12 @@ static class Point {
    }
 }
 
-   Convert<Point, Json> pointConverter = point ->
-           convert(point)
-                   .with("a", p -> WRITE_INT.convert(p.a),
-                           "b", p -> WRITE_INT.convert(p.b));
+   Write<Point> writePoint = point -> 
+        write(point).using(
+                "a", p -> WRITE_INT.apply(p.a),
+                "b", p -> WRITE_INT.apply(p.b));
 
-jsonT.insertValue(new Point(1,1),pointConverter,in("point"))
+jsonT.insertValue(new Point(1,1), writePoint, in("point"))
 ```
 
 ```json
@@ -240,15 +249,13 @@ jsonT
 ### Updating
 
 Updates are supported for any value at any degree of nestedness.  
-Can either be performed directly on a `JsonT` node or on a proper type `A`, provided a `Convert<Json, A>` instance.
+Can either be performed directly on a `JsonT` node or on a proper type `A`, provided a `Read<A>` instance.
 
-**Note: Converters for JSON types can be found in `com.ravram.nemesis.Writers`**
+For more information on `Read`, take a look [here](api.md#converting).
 ```java
-
-
 jsonT
     .insertValue(1, in("one", "level")
-    .updateValue(JSON_TO_INT, n -> n + 1, in("one", "level"));
+    .updateValue(READ_INT, n -> n + 1, in("one", "level"));
 ```
 
 ```json
@@ -267,7 +274,6 @@ jsonT
 JSON can be retrieved from any level and any structure.
 
 **Note: This returns a `JsonT` to leverage safety and further composition.**
-
 ```java
 jsonT
   .insertValue(Arrays.asList(1, 2, 3), in("one", "level"))
@@ -275,16 +281,15 @@ jsonT
 ```
 
 #### Values
-Values of any type `A` can be retrieved from any level and any structure, provided a `Convert<Json, A>` for that type.
+Values of any type `A` can be retrieved from any level and any structure, provided a `Read<A>` for that type.
 
-For more information on `Convert`, take a look [here](api.md#converting).
-
+For more information on `Read`, take a look [here](api.md#converting).
 ```java
 
 
 jsonT
   .insertValue(true, in("one", "level"))
-  .getValue(JSON_TO_BOOL, in("one", "level", 2));
+  .getValue(READ_BOOLEAN, in("one", "level", 2));
   
 ```
 
@@ -292,7 +297,6 @@ jsonT
 
 Two `JsonT`s can be merged together if they're both either JSON objects or arrays respectively.
 
-**Note:**
 ```java
 JsonT jsonObj1 = parse("{ \"oh\" : \"my\" }");
 JsonT jsonObj2 = parse ("{ \"well\" : \"hi\" }")
@@ -315,32 +319,31 @@ jsonArr1.mergeJson(jsonArr2);
 
 ### Casting
 
-A `JsonT` can be materialised to a concrete type `A` provided a `Convert<Json, A>` instance for that type.
+A `JsonT` can be materialised to a concrete type `A` provided a `Read<A>` instance for that type.
 
-For more information on `Convert`, take a look [here](api.md#converting).
+For more information on `Read`, take a look [here](api.md#converting).
 
 #### Casting to JSON types
 
-Converters for basic JSON types can be found in `com.ravram.nemesis.Writers`
+Writers and Readers for a bunch of types can be found in `com.ravram.nemesis.Writers` and
+`com.ravram.nemsis.Readers` respectively.
 
-A list of all default converters can be found [here](api.md#default-json-converters).
+A list of all the defaults can be found [here](api.md#default-readwrite-instances).
 
 ```java
-
-
-jsonT.getJson(in("hello")).as(JSON_TO_STRING); // Either<String, String>
+jsonT.getJson(in("hello")).as(READ_STRING); // Either<String, String>
 ```
 or
 ```java
-jsonT.getValue(JSON_TO_STRING, in("hello")); // Either<String, String>
+jsonT.getValue(WRITE_STRING, in("hello")); // Either<String, String>
 ```
 
 #### Casting to arbitrary types
 
 Like [previously](api.md#casting) mentioned, any `JsonT` can be coerced to an arbitrary type `A` given
-that one constructs a `Convert<Json, A>` instance for that type.
+that one constructs a `Read<A>` instance for that type.
 
-For more information on `Convert`, take a look [here](api.md#converting).
+For more information on `Read`, take a look [here](api.md#converting).
 
 ```java
 static class Greeting {
@@ -352,9 +355,9 @@ static class Greeting {
 }
 
 Convert<Json, Greeting> converter = json ->
-    convert(json)
-        .with(json  -> json.getValue(JSON_TO_STRING, in("hello")), 
-              value -> new Greeting(value));
+    convert(json).using(
+            json  -> json.transform().getValue(READ_STRING, in("hello")), 
+            value -> new Greeting(value));
 ```
 
 ### Reducing
@@ -379,7 +382,7 @@ Function3<A, String, JsonT, Either<String, A>>
 import com.ravram.nemesis.Writers.JSON_TO_STRING;
 
 jsonT.reduceObj("Greeting:",(inter,key,jsonValue)->{
-        return jsonValue.as(JSON_TO_STRING).map(value->inter+" "+key+" "+value);
+        return jsonValue.as(WRITE_STRING).map(value-> inter + " " + key + " " + value);
         });
 ```
 
@@ -407,10 +410,10 @@ Function3<A, Integer, JsonT, Either<String, A>>
 import com.ravram.nemesis.Writers.JSON_TO_INT;
 
 JsonT json=parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
-
-        json.reduceArr(0,(inter,index,jsonValue)->{
-        return jsonValue.getAs(JSON_TO_INT,in("value")).map(x->x+inter);
-        });
+        
+json.reduceArr(0, (inter, index, jsonValue)->{
+    return jsonValue.getAs(READ_INT, in("value")). map(x -> x + inter);
+});
 ```
 
 ### Creating
@@ -441,48 +444,58 @@ jsonT.affix()
 
 ## Converting
 
-Conversion from JSON to Java types and vice-versa is abstractly modeled by the interface `Convert<A, B>`
+Conversion from JSON to Java types and vice-versa is modeled abstractly via the functional interface `Convert<E, I, O>`.
+It represents the conversion of some type `A` into a type `B` which may fail with an error `E`.
 
-### Json Converters
+Two interfaces are derived from it that specifically model reading and writing respectively:
 
-Converting `Json` to an arbitrary type `A` is done by defining an instance of `Convert<Json, A>` for it.
+* `Read<A>` (`Convert<String, Json, A>`)
+  - Reads types `A` from `Json`
 
-#### Default Json Converters
+* `Write<A>` (`Convert<String, A, Json>`)
+  - Writes types `A` to `Json`
+   
 
-For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.Writers`.
+Converting `Json` to an arbitrary type `A` and vice versa is thusdone by defining `Read` and `Write`
+instances for that type and using them wherever needed.
+
+#### Default Read/Write Instances
+
+_nemesis_ provides `Read` and `Write` instances for a number of basic types.
+These can be found in `com.ravram.nemesis.Readers` and `com.ravram.nemesis.Writers` respectively.
 
 Here's a list:
 
-* `JSON_TO_INT` -> `Convert<Json, Int>`
-* `JSON_TO_LONG` -> `Convert<Json, Long>`
-* `JSON_TO_DOUBLE` -> `Convert<Json, Double>`
-* `JSON_TO_FLOAT` -> `Convert<Json, Float>`
-* `JSON_TO_STRING` -> `Convert<Json, String>`
-* `JSON_TO_BOOLEAN` -> `Convert<Json, Boolean>`
-* `JSON_TO_NULL`    -> `Convert<Json, Void>`
-* `JSON_TO_LIST`    -> `Convert<Json, List<Json>>`
-* `JSON_TO_SET`    -> `Convert<Json, Set<Json>>`
-* `listOf(Convert<Json, A>)` -> `Convert<Json, List<A>>`
-* `setOf(Convert<Json, A>)` -> `Convert<Json, Set<A>>`
-* `mapOf(Convert<Json, A>)`  -> `Convert<Json, Map<String, A>>`
-* `optionalOf(Convert<Json, A>)` -> `Convert<Json, Optional<A>>`
+* `Integer`
+* `Long`
+* `Float`
+* `Double`
+* `String`
+* `Boolean`
+* `Null`
+* `UUID`
+* `ZonedDateTime`
+* `List` (both `Json` and arbitrary types)
+* `Set` (both `Json` and arbitrary types)
+* `Map` (both `Json` and arbitrary types)
 
-#### Custom Json Converters
+#### Custom Read/Write instances
 
-When it comes to creating your own, _nemesis_ provides some help.
+When it comes to creating your `Read` and `Write` instances, _nemesis_ offers some help.
 
-There's a `convert` function which works like this:
+#### **Read** instances
+
+There's a `read` function which works like this:
 
 ```java
-
-Convert<Json, MyType> converter = json ->
-    convert(json)
-        .with (
-            // the first n - 1 arguments are individual `Convert` instances
+Read<MyType> reader = json ->
+    read(json)
+        .using (
+            // the first n - 1 arguments are individual `Read` instances
             // with which you extract and convert individual attributes of your type
-              .., // Convert<JsonT, A> 
-              .., // Convert<JsonT, B>
-              .., // Convert<JsonT, C>
+              .., // Read<A> 
+              .., // Read<B>
+              .., // Read<C>
               ..,
             // the last argument is a function containing all converted attribues
             // which you use to intantiate your type
@@ -491,7 +504,7 @@ Convert<Json, MyType> converter = json ->
 **Example:**
 
 ```java
-import static com.ravram.nemesis.Writers.*;
+import static com.ravram.nemesis.Readers.*;
 
 static class Coord {
    public final int s;
@@ -521,63 +534,39 @@ static class Figure {
    }
 }
 
-   Convert<Json, Coord> coord = json ->
-           convert(json)
-                   .with(js -> js.getValue(JSON_TO_INT, in("s")),
-                           js -> js.getValue(JSON_TO_INT, in("e")),
-                           (s, e) -> new Coord(s, e));
+   Read<Coord> coord = json ->
+           read(json).using(
+                   js -> js.transform().getValue(READ_INT, in("s")),
+                   js -> js.transform().getValue(READ_INT, in("e")),
+                   (s, e) -> new Coord(s, e));
 
-   Convert<Json, Line> line = json ->
-           convert(json)
-                   .with(js -> js.getValue(coord, in("x")),
-                           js -> js.getValue(coord, in("y")),
-                           (x, y) -> new Line(x, y));
+   Read<Line> line = json ->
+           read(json).using(
+                   js -> js.transform().getValue(coord, in("x")),
+                   js -> js.transform().getValue(coord, in("y")),
+                   (x, y) -> new Line(x, y));
 
-   Convert<Json, Figure> figure = json ->
-           convert(json))
-        .with(js->js.getValue(listOf(line),in("lines")),
-        lines->new Figure(lines));
+   Read<Figure> figure = json ->
+           read(json).using(
+                   js -> js.transform().getValue(listOf(line), in("lines")), 
+                   lines -> new Figure(lines));
 ```
 
-### Object Converters
+#### **Write** instances
 
-#### Default Object Converters
-
-For the most basic of JSON types, _nemesis_ already provides converters in `com.ravram.nemesis.Writers`.
-
-Here's a list:
-
-* `INT_TO_JSON` -> `Convert<Int, Json>`
-* `LONG_TO_JSON` -> `Convert<Long, Json>`
-* `DOUBLE_TO_JSON` -> `Convert<Double, Json>`
-* `FLOAT_TO_JSON` -> `Convert<Float, Json>`
-* `STRING_TO_JSON` -> `Convert<String, Json>`
-* `BOOLEAN_TO_JSON` -> `Convert<Boolean, Json>`
-* `NULL_TO_JSON`    -> `Convert<Void, Json>`
-* `LIST_TO_JSON`    -> `Convert<List<Json>, Json>`
-* `SET_TO_JSON` -> `Convert<Set<Json>, Json>`
-* `listFrom(Convert<A, Json>)` -> `Convert<List<A>, Json>`
-* `setFrom(Convert<A, Json>`) -> `Convert<Set<A>, Json>`
-* `mapFrom(Convert<A, Json>)` -> `Convert<Map<String, A>, Json>`
-* `optionalFrom(Convert<A, Json>)` -> `Convert<Optional<A>, Json>`
-
-#### Custom Object Converters
-
-When it comes to creating your own, _nemesis_ provides some help.
-
-There's a `convert` function which works like this:
+There's a `write` function which works like this:
 
 ```java
 
-Convert<MyType, Json> converter = json ->
-    convert(json)
-        .with (
+Write<MyType> writer = json ->
+    write(json)
+        .using (
             // arguments are pairs of `String` and `Convert<MyType, Json>`
             // `String` indicates the key an attribute of `MyType` should have in the json
             // `Convert<MyType, Json>` extracts that attribute and transforms it to a json
-              .., .. // String, Convert<MyType, Json> 
-              .., .. // String, Convert<MyType, Json>
-              .., .. // String, Convert<MyType, Json>)
+              .., .. // String, Write<MyType> 
+              .., .. // String, Write<MyType>
+              .., .. // String, Write<MyType>)
 ```
 **Example:**
 
@@ -612,19 +601,19 @@ static class Figure {
    }
 }
 
-   Convert<Coord, Json> jcoord = coord ->
-           convert(coord)
-                   .with("s", c -> WRITE_INT.convert(c.s),
-                           "e", c -> WRITE_INT.convert(c.e));
+   Write<Coord> jcoord = coord -> 
+           write(coord).using(
+                   "s", c -> WRITE_INT.convert(c.s), 
+                   "e", c -> WRITE_INT.convert(c.e));
 
-   Convert<Line, Json> jline = line ->
-           convert(line)
-                   .with("x", l -> jcoord.convert(l.x),
-                           "y", l -> jcoord.convert(l.y));
+   Write<Line> jline = line ->
+           write(line).using(
+                   "x", l -> jcoord.convert(l.x),
+                   "y", l -> jcoord.convert(l.y));
 
-   Convert<Figure, Json> jfigure = figure ->
-           convert(figure)
-                   .with("lines", f -> listFrom(jline).convert(f.lines));
+   Write<Figure> jfigure = figure ->
+           write(figure).using(
+                   "lines", f -> listFrom(jline).convert(f.lines));
 ```
 
 ### Automatic converter derivation

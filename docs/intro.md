@@ -24,7 +24,7 @@ It thus provides data structure-esque functions, which allow one to **safely**, 
 As with any JSON library, _nemesis_ complies to the JSON specification and can parse any form it may occur in.  
 The parsed version is represented through the datatype `com.ravram.nemesis.Json`.
 
-Every such `nemsis.model.Json` can either be marshalled back into a `String` or can be _transformed_. 
+Every such `com.ravram.nemsis.Json` can either be marshalled back into a `String` or can be _transformed_. 
 
 A transformation wraps the `com.ravram.nemesis.Json` into a `com.ravram.nemesis.JsonT`, which acts as the context in which
 changes are allowed to happen. These emphasise two properties:
