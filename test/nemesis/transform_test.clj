@@ -170,8 +170,8 @@
               json-arr (gen-shallow-arr opts)]
       (let [computed-obj (reduce-obj-j json-obj 0 fail)
             computed-arr (reduce-arr-j json-arr 0 fail)]
-        (is (.isLeft computed-obj))
-        (is (.isLeft computed-arr))))))
+        (is (.isFailure computed-obj))
+        (is (.isFailure computed-arr))))))
 
 ;; these operations are arbitrary.
 ;; None of them should actually work irrespective of their sanity

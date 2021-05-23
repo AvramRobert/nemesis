@@ -1,39 +1,39 @@
 package com.ravram.nemesis.coerce;
 
+import com.ravram.nemesis.Attempt;
 import com.ravram.nemesis.Json;
-import io.lacuna.bifurcan.List;
 import com.ravram.nemesis.model.*;
-import com.ravram.nemesis.util.error.Either;
+import io.lacuna.bifurcan.List;
 
 import static com.ravram.nemesis.util.misc.Collections.*;
 
 public class DynamicConversions {
 
-    public static <A> Either<String, Long> coerceIndex(final A value) {
-        if (value instanceof Long) return Either.right((Long) value);
-        else if (value instanceof Integer) return Either.right(Integer.toUnsignedLong((Integer) value));
-        else return Either.left("Value `%s` is not of type Long", value.toString());
+    public static <A> Attempt<Long> coerceIndex(final A value) {
+        if (value instanceof Long) return Attempt.success((Long) value);
+        else if (value instanceof Integer) return Attempt.success(Integer.toUnsignedLong((Integer) value));
+        else return Attempt.failure("Value `%s` is not of type Long", value.toString());
     }
 
-    public static <A> Either<String, String> coerceKey(final A key) {
-        if (key instanceof String) return Either.right((String) key);
-        return Either.left("Key `%s` is not of type String", key.toString());
+    public static <A> Attempt<String> coerceKey(final A key) {
+        if (key instanceof String) return Attempt.success((String) key);
+        return Attempt.failure("Key `%s` is not of type String", key.toString());
     }
 
     @SuppressWarnings("unchecked")
-    public static <A> Either<String, Json> coerceJson(final A value) {
+    public static <A> Attempt<Json> coerceJson(final A value) {
         if (value instanceof Number) {
-            return Either.right(new JNum((Number) value));
+            return Attempt.success(new JNum((Number) value));
 
         } else if (value instanceof String) {
-            return Either.right(new JString((String) value));
+            return Attempt.success(new JString((String) value));
 
         } else if (value instanceof Boolean) {
             final boolean bool = (Boolean) value;
-            return Either.right(bool ? JBool.jtrue : JBool.jfalse);
+            return Attempt.success(bool ? JBool.jtrue : JBool.jfalse);
 
         } else if (value == null) {
-            return Either.right(JNull.instance);
+            return Attempt.success(JNull.instance);
 
         } else if (value instanceof Integer[]) {
             final Integer[] array = (Integer[]) value;
@@ -68,6 +68,6 @@ public class DynamicConversions {
             return traverseSet(set, DynamicConversions::coerceJson).map(l -> new JArr(List.from(l)));
         }
         else
-            return Either.left("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value);
+            return Attempt.failure("Class type of `%s` for value `%s` is not supported", value.getClass().toString(), value);
     }
 }

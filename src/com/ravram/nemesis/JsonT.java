@@ -6,15 +6,14 @@ import com.ravram.nemesis.model.In;
 import com.ravram.nemesis.model.JArr;
 import com.ravram.nemesis.model.JObj;
 import com.ravram.nemesis.model.JType;
-import com.ravram.nemesis.util.error.Either;
 import io.lacuna.bifurcan.IEntry;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 
 import java.util.Arrays;
 
-import static com.ravram.nemesis.util.function.Functions.*;
-import static com.ravram.nemesis.util.error.Either.left;
+import static com.ravram.nemesis.util.function.Functions.Function1;
+import static com.ravram.nemesis.util.function.Functions.Function3;
 
 public class JsonT {
 
@@ -52,37 +51,37 @@ public class JsonT {
         return new JsonT(String.format(msg, params));
     }
 
-    private Either<String, Json> associateInObject(final JObj json, final Json toAssoc, final int depth, final Object... keys) {
-        final Either<String, String> skey = DynamicConversions.coerceKey(keys[depth]);
-        if (skey.isRight()) {
+    private Attempt<Json> associateInObject(final JObj json, final Json toAssoc, final int depth, final Object... keys) {
+        final Attempt<String> skey = DynamicConversions.coerceKey(keys[depth]);
+        if (skey.isSuccess()) {
             final String key   = skey.value();
             final Json value   = json.value.get(key, node);
             return associate(value, toAssoc, depth + 1, keys).map(x -> new JObj(json.value.put(key, x)));
         } else {
-            return Either.left("Key for json was expected to be a string: %s", skey.error());
+            return Attempt.failure("Key for json was expected to be a string: %s", skey.error());
         }
     }
 
-    private Either<String, Json> associateInArray(final JArr json, final Json toAssoc, final int depth, final Object... keys) {
-        final Either<String, Long> sidx = DynamicConversions.coerceIndex(keys[depth]);
-        if (sidx.isRight()) {
+    private Attempt<Json> associateInArray(final JArr json, final Json toAssoc, final int depth, final Object... keys) {
+        final Attempt<Long> sidx = DynamicConversions.coerceIndex(keys[depth]);
+        if (sidx.isSuccess()) {
             final List<Json> list = json.value;
             final long idx        = sidx.value();
             if (list.size() > idx) {
                 final Json value = list.nth(idx, node);
                 return associate(value, toAssoc, depth + 1, keys).map(x -> new JArr((List<Json>) json.value.update(idx, __ -> x)));
             }
-            else return Either.left("Index of `%d` does not exist.", idx);
+            else return Attempt.failure("Index of `%d` does not exist.", idx);
         } else {
-            return Either.left("Index for array was expected to be a long: %s", sidx.error());
+            return Attempt.failure("Index for array was expected to be a long: %s", sidx.error());
         }
     }
 
-    private Either<String, Json> associate(final Json value, final Json toAssoc, final int depth, final Object... keys) {
-        if      (depth >= keys.length)     return Either.right(toAssoc);
+    private Attempt<Json> associate(final Json value, final Json toAssoc, final int depth, final Object... keys) {
+        if      (depth >= keys.length)     return Attempt.success(toAssoc);
         else if (value.type() == JType.JsonObject) return associateInObject((JObj) value, toAssoc, depth, keys);
         else if (value.type() == JType.JsonArray)  return associateInArray((JArr) value, toAssoc, depth, keys);
-        else return left("Cannot insert into `%s`. It is not a structure.", toAssoc);
+        else return Attempt.failure("Cannot insert into `%s`. It is not a structure.", toAssoc);
     }
 
     private JsonT blindGet (final In in) {
@@ -95,8 +94,8 @@ public class JsonT {
                 final Object k = path[depth];
                 if (tree.type() == JType.JsonObject) {
                     final JObj obj = (JObj) tree;
-                    final Either<String, String> ekey = DynamicConversions.coerceKey(k);
-                    if (ekey.isLeft()) return fail(ekey.error());
+                    final Attempt<String> ekey = DynamicConversions.coerceKey(k);
+                    if (ekey.isFailure()) return fail(ekey.error());
                     else {
                         final String key = ekey.value();
                         final Json value = obj.value.get(key, null);
@@ -109,8 +108,8 @@ public class JsonT {
                 }
                 else if (tree.type() == JType.JsonArray) {
                     final JArr arr = (JArr) tree;
-                    final Either<String, Long> eindex = DynamicConversions.coerceIndex(k);
-                    if (eindex.isLeft()) return fail(eindex.error());
+                    final Attempt<Long> eindex = DynamicConversions.coerceIndex(k);
+                    if (eindex.isFailure()) return fail(eindex.error());
                     else {
                         final long index = eindex.value();
                         final Json value = arr.value.nth(index, null);
@@ -128,14 +127,14 @@ public class JsonT {
     }
 
     private JsonT blindInsert(final Json value, final In in) {
-        final Either<String, Json> result = associate(json, value, 0, in.path);
-        if (result.isLeft()) return fail(result.error());
+        final Attempt<Json> result = associate(json, value, 0, in.path);
+        if (result.isFailure()) return fail(result.error());
         else return succeed(result.value());
     }
 
     private <A> JsonT blindInsertConverted(final A value, final Write<A> to, final In in) {
-        final Either<String, Json> converted = to.apply(value);
-        if (converted.isRight()) return blindInsert(converted.value(), in);
+        final Attempt<Json> converted = to.apply(value);
+        if (converted.isSuccess()) return blindInsert(converted.value(), in);
         else return fail(converted.error());
     }
 
@@ -172,32 +171,32 @@ public class JsonT {
         }
     }
 
-    private <A> Either<String, A> blindReduceObj(final A init,
-                                                 final Function3<A, String, JsonT, Either<String, A>> f) {
+    private <A> Attempt<A> blindReduceObj(final A init,
+                                                 final Function3<A, String, JsonT, Attempt<A>> f) {
         A start = init;
         if (json.type() == JType.JsonObject) {
             for (IEntry<String, Json> e : jobj().value.entries()) {
-                final Either<String, A> res = f.apply(start, e.key(), e.value().transform());
-                if (res.isRight()) start = res.value();
-                else return Either.left(res.error());
+                final Attempt<A> res = f.apply(start, e.key(), e.value().transform());
+                if (res.isSuccess()) start = res.value();
+                else return Attempt.failure(res.error());
             }
-            return Either.right(start);
-        } else return left(String.format("Cannot reduce over json type `%s`.", json.type()));
+            return Attempt.success(start);
+        } else return Attempt.failure("Cannot reduce over json type `%s`.", json.type());
     }
 
-    private <A> Either<String, A> blindReduceArr(final A init,
-                                                 final Function3<A, Integer, JsonT, Either<String, A>> f) {
+    private <A> Attempt<A> blindReduceArr(final A init,
+                                                 final Function3<A, Integer, JsonT, Attempt<A>> f) {
         A start = init;
         if (json.type() == JType.JsonArray) {
             int i = 0;
             final List<Json> js = jarr().value;
             for (Json j : js) {
-                final Either<String, A> res = f.apply(start, i, j.transform());
-                if (res.isRight()) start = res.value();
-                else return Either.left(res.error());
+                final Attempt<A> res = f.apply(start, i, j.transform());
+                if (res.isSuccess()) start = res.value();
+                else return Attempt.failure(res.error());
             }
-            return Either.right(start);
-        } else return left(String.format("Cannot reduce over json type `%s`.", json.type()));
+            return Attempt.success(start);
+        } else return Attempt.failure("Cannot reduce over json type `%s`", json.type());
     }
 
     public final JsonT getJson(final In in) {
@@ -205,7 +204,7 @@ public class JsonT {
         else return blindGet(in);
     }
 
-    public final <A> Either<String, A> getValue(final Read<A> f, final In in) {
+    public final <A> Attempt<A> getValue(final Read<A> f, final In in) {
         return getJson(in).as(f);
     }
 
@@ -254,9 +253,9 @@ public class JsonT {
                                           final In in) {
         if (failed || in.isEmpty) return this;
         else {
-            final Convert<String, Json, Json> g = from.compose(f).compose(to);
-            final Either<String, Json> result = blindGet(in).as(g::apply);
-            if (result.isLeft()) return fail("Could not apply update. Error: %s", result.error());
+            final Convert<Json, Json> g = to.compose(f).compose(from);
+            final Attempt<Json> result = blindGet(in).as(g::apply);
+            if (result.isFailure()) return fail("Could not apply update. Error: %s", result.error());
             else return blindInsert(result.value(), in);
         }
     }
@@ -278,25 +277,25 @@ public class JsonT {
         else return blindMerge(that);
     }
 
-    public final <A> Either<String, A> reduceObj(final A init,
-                                                 final Function3<A, String, JsonT, Either<String, A>> f) {
-        if (failed) return Either.left(error);
+    public final <A> Attempt<A> reduceObj(final A init,
+                                                 final Function3<A, String, JsonT, Attempt<A>> f) {
+        if (failed) return Attempt.failure(error);
         else return blindReduceObj(init, f);
     }
 
-    public final <A> Either<String, A> reduceArr(final A init,
-                                                 final Function3<A, Integer, JsonT, Either<String, A>> f) {
-        if (failed) return Either.left(error);
+    public final <A> Attempt<A> reduceArr(final A init,
+                                                 final Function3<A, Integer, JsonT, Attempt<A>> f) {
+        if (failed) return Attempt.failure(error);
         else return blindReduceArr(init, f);
     }
 
-    public final <A> Either<String, A> as(final Read<A> f) {
-        if (failed) return Either.left(error);
+    public final <A> Attempt<A> as(final Read<A> f) {
+        if (failed) return Attempt.failure(error);
         else return f.apply(json);
     }
 
-    public final Either<String, Json> affix() {
-        if (failed) return Either.left(error);
-        else return Either.right(json);
+    public final Attempt<Json> affix() {
+        if (failed) return Attempt.failure(error);
+        else return Attempt.success(json);
     }
 }

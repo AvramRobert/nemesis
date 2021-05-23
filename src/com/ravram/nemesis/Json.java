@@ -2,9 +2,10 @@ package com.ravram.nemesis;
 
 import com.ravram.nemesis.coerce.JsonReader;
 import com.ravram.nemesis.coerce.JsonWriter;
-import com.ravram.nemesis.model.*;
+import com.ravram.nemesis.model.In;
+import com.ravram.nemesis.model.JObj;
+import com.ravram.nemesis.model.JTrait;
 import com.ravram.nemesis.parser.Parser;
-import com.ravram.nemesis.util.error.Either;
 
 public interface Json extends JTrait {
 
@@ -12,7 +13,7 @@ public interface Json extends JTrait {
 
     static In in (final Object... path) { return new In(path); }
 
-    static Either<String, Json> forceParse(final String text) {
+    static Attempt<Json> forceParse(final String text) {
         return Parser.parse(text);
     }
 
@@ -20,7 +21,7 @@ public interface Json extends JTrait {
         return forceParse(text).fold(JsonT::new, JsonT::new);
     }
 
-    static <A> Either<String, A> parseAs(final Read<A> f, final String text) {
+    static <A> Attempt<A> parseAs(final Read<A> f, final String text) {
         return parse(text).as(f);
     }
 
@@ -34,7 +35,7 @@ public interface Json extends JTrait {
         return json.encode();
     }
 
-    static <A> Either<String, Json> asJson (final A value, final Write<A> f) {
+    static <A> Attempt<Json> asJson (final A value, final Write<A> f) {
         return f.apply(value);
     }
 }

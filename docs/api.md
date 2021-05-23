@@ -548,7 +548,7 @@ static class Figure {
 
    Read<Figure> figure = json ->
            read(json).using(
-                   js -> js.transform().getValue(listOf(line), in("lines")), 
+                   js -> js.transform().getValue(readListOf(line), in("lines")),
                    lines -> new Figure(lines));
 ```
 
@@ -574,46 +574,46 @@ Write<MyType> writer = json ->
 import static com.ravram.nemesis.Writers.*;
 
 static class Coord {
-   public final int s;
-   public final int e;
+    public final int s;
+    public final int e;
 
-   public Coord(final int s, final int e) {
-      this.s = s;
-      this.e = e;
-   }
+    public Coord(final int s, final int e) {
+        this.s = s;
+        this.e = e;
+    }
 }
 
 static class Line {
-   public final Coord x;
-   public final Coord y;
+    public final Coord x;
+    public final Coord y;
 
-   public Line(final Coord x, final Coord y) {
-      this.x = x;
-      this.y = y;
-   }
+    public Line(final Coord x, final Coord y) {
+        this.x = x;
+        this.y = y;
+    }
 }
 
 static class Figure {
-   public final List<Line> lines;
+    public final List<Line> lines;
 
-   public Figure(final List<Line> lines) {
-      this.lines = lines;
-   }
+    public Figure(final List<Line> lines) {
+        this.lines = lines;
+    }
 }
 
-   Write<Coord> jcoord = coord -> 
-           write(coord).using(
-                   "s", c -> WRITE_INT.convert(c.s), 
-                   "e", c -> WRITE_INT.convert(c.e));
+    Write<Coord> jcoord = coord ->
+            write(coord).using(
+                    "s", c -> WRITE_INT.convert(c.s),
+                    "e", c -> WRITE_INT.convert(c.e));
 
-   Write<Line> jline = line ->
-           write(line).using(
-                   "x", l -> jcoord.convert(l.x),
-                   "y", l -> jcoord.convert(l.y));
+    Write<Line> jline = line ->
+            write(line).using(
+                    "x", l -> jcoord.convert(l.x),
+                    "y", l -> jcoord.convert(l.y));
 
-   Write<Figure> jfigure = figure ->
-           write(figure).using(
-                   "lines", f -> listFrom(jline).convert(f.lines));
+    Write<Figure> jfigure = figure ->
+            write(figure).using(
+                    "lines", f -> writeListOf(jline).convert(f.lines));
 ```
 
 ### Automatic converter derivation

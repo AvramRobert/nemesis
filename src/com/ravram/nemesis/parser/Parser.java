@@ -1,8 +1,8 @@
 package com.ravram.nemesis.parser;
 
+import com.ravram.nemesis.Attempt;
 import com.ravram.nemesis.Json;
 import com.ravram.nemesis.model.*;
-import com.ravram.nemesis.util.error.Either;
 import io.lacuna.bifurcan.List;
 import io.lacuna.bifurcan.Map;
 
@@ -577,17 +577,17 @@ public class Parser {
         return abruptEnd(JSON_PATTERN);
     }
 
-    public static Either<String, Json> parse(final String input) {
+    public static Attempt<Json> parse(final String input) {
         final Parser p = new Parser(input);
-        if (input.isEmpty()) return Either.left("No input to parse.");
+        if (input.isEmpty()) return Attempt.failure("No input to parse.");
         else {
             try {
-                if (p.consumeAny()) return Either.right(p.result);
-                else return Either.left(p.failure);
+                if (p.consumeAny()) return Attempt.success(p.result);
+                else return Attempt.failure(p.failure);
             } catch (Exception e) {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 e.printStackTrace(new PrintStream(baos));
-                return Either.left(baos.toString());
+                return Attempt.failure(baos.toString());
             }
         }
     }

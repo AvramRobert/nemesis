@@ -7,8 +7,8 @@
 
   import %s.model.JObj;
   import %2$s.Write;
-  import %2$s.model.Json;
-  import %2$s.util.error.Either;
+  import %2$s.Attempt;
+  import %2$s.Json;
   import io.lacuna.bifurcan.Map;
   import io.lacuna.bifurcan.Maps.Entry;
   import java.util.Arrays;
@@ -32,7 +32,7 @@
     %s
   }")
 
-(def function-def "public final Either<String, Json> using(%s) {\n return %s; }")
+(def function-def "public final Attempt<Json> using(%s) {\n return %s; }")
 
 (def param-def "final String key%d, final Write<A> f%d")
 

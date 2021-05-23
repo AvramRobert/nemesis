@@ -6,8 +6,8 @@
   "package %s;
   import static %s.util.function.Functions.*;
   import %2$s.Read;
-  import %2$s.util.error.Either;
-  import %2$s.model.Json;
+  import %2$s.Attempt;
+  import %2$s.Json;
 
   public final class %s {
     private final Json json;
@@ -24,7 +24,7 @@
 (def flat-map-def "f%d.apply(json)\n.flatMap(%s -> %s)")
 
 (def function-def
-  "public final <%s> Either<String, %s> using(\n%s,\n%s) {
+  "public final <%s> Attempt<%s> using(\n%s,\n%s) {
     return %s;
   }")
 

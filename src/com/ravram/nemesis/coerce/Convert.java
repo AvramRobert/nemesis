@@ -1,19 +1,19 @@
 package com.ravram.nemesis.coerce;
 
-import com.ravram.nemesis.util.error.Either;
-import com.ravram.nemesis.util.error.Left;
-import com.ravram.nemesis.util.error.Right;
+import com.ravram.nemesis.Attempt;
+import com.ravram.nemesis.util.error.Failure;
 import com.ravram.nemesis.util.function.Functions.Function1;
 
 @FunctionalInterface
-public interface Convert <E, A, B> {
-    default <C> Convert<E, A, C> compose (final Convert<E, B, C> f) {
-        return a -> apply(a).fold(f::apply, Left::new);
+public interface Convert <I, O> {
+
+    default <P> Convert<P, O> compose (final Convert<P, I> g) {
+        return p -> g.apply(p).fold(this::apply, Failure::new);
     }
 
-    default <C> Convert<E, A, C> compose (final Function1<B, C> f) {
-        return a -> apply(a).fold(b -> new Right<>(f.apply(b)), Left::new);
+    default <P> Convert<P, O> compose (final Function1<P, I> g) {
+        return p -> apply(g.apply(p));
     }
 
-    Either<E, B> apply(final A value);
+    Attempt<O> apply(final I value);
 }
