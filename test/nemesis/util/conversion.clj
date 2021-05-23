@@ -51,7 +51,7 @@
     (apply [_ a b c] (fn a b c))))
 
 (defn in [args]
-  (Json/in (into-array Object args)))
+  (into-array Object args))
 
 (defn converted [f & cljs]
   (->> cljs

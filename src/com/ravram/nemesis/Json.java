@@ -2,7 +2,6 @@ package com.ravram.nemesis;
 
 import com.ravram.nemesis.coerce.JsonReader;
 import com.ravram.nemesis.coerce.JsonWriter;
-import com.ravram.nemesis.model.In;
 import com.ravram.nemesis.model.JObj;
 import com.ravram.nemesis.model.JTrait;
 import com.ravram.nemesis.parser.Parser;
@@ -10,8 +9,6 @@ import com.ravram.nemesis.parser.Parser;
 public interface Json extends JTrait {
 
     Json empty = JObj.empty;
-
-    static In in (final Object... path) { return new In(path); }
 
     static Attempt<Json> forceParse(final String text) {
         return Parser.parse(text);

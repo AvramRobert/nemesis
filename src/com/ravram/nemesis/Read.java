@@ -140,7 +140,7 @@ public interface Read<A> extends Convert<Json, A> {
 
     static <K, A> Read<Map<K, A>> map(final Convert<String, K> kf, final Read<A> vf) {
         return json -> {
-            if (json.type() == JType.JsonString) {
+            if (json.type() == JType.JsonObject) {
                 final JObj obj = (JObj) json;
                 Map<K, A> map = new HashMap<>();
                 for (IEntry<String, Json> entry : obj.value) {
