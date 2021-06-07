@@ -26,7 +26,7 @@ public final class Success<A> implements Attempt<A> {
 
     @Override
     public String error() {
-        throw new UnsupportedOperationException(String.format("There is no error. Operation succeeded with %s.", value));
+        throw new UnsupportedOperationException(String.format("There is no error. Operation succeeded with value:\n%s.", value));
     }
 
     @Override

@@ -21,7 +21,7 @@ public final class Failure<A> implements Attempt<A> {
 
     @Override
     public A value() {
-        throw new UnsupportedOperationException(String.format("There is no value. Computation failed with: %s.", error));
+        throw new UnsupportedOperationException(String.format("There is no value. Computation failed with:\n%s.", error));
     }
 
     @Override

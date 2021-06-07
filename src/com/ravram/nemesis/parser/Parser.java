@@ -18,6 +18,9 @@ public class Parser {
     private static final char COMMA = ',';
     private static final char COLON = ':';
     private static final char QUOTE = '\"';
+    private static final char BACKSLASH = '\\';
+    private static final char NEWLINE = '\n';
+
     private static final char O_CURLY = '{';
     private static final char C_CURLY = '}';
     private static final char O_BRACKET = '[';
@@ -31,13 +34,13 @@ public class Parser {
     private static final char E = 'e';
     private static final char T = 't';
     private static final char R = 'r';
+    private static final char B = 'b';
     private static final char MINUS = '-';
     private static final char PLUS = '+';
     private static final char DECIMAL = '.';
     private static final char EXP_S = 'e';
     private static final char EXP_L = 'E';
     private static final char SPACE = ' ';
-    private static final char NEWLINE = '\n';
     private static final char ZERO = '0';
     private static final char ONE = '1';
     private static final char TWO = '2';
@@ -50,6 +53,16 @@ public class Parser {
     private static final char NINE = '9';
 
     private static final String TEXT_PATTERN = "text";
+
+    public static final String ESCAPE_PATTERN =
+            join(quote(QUOTE),
+                    quote(BACKSLASH),
+                    quote(R),
+                    quote(N),
+                    quote(F),
+                    quote(T),
+                    quote(B));
+
     private static final String A_PATTERN = quote(A);
     private static final String L_PATTERN = quote(L);
     private static final String S_PATTERN = quote(S);
@@ -57,18 +70,39 @@ public class Parser {
     private static final String U_PATTERN = quote(U);
     private static final String R_PATTERN = quote(R);
     private static final String COLON_PATTERN = quote(COLON);
+
     private static final String NUM_PATTERN =
-            join(quote(ONE), quote(TWO), quote(THREE), quote(FOUR), quote(FIVE), quote(SIX), quote(SEVEN), quote(EIGHT), quote(NINE));
+            join(quote(ONE),
+                    quote(TWO),
+                    quote(THREE),
+                    quote(FOUR),
+                    quote(FIVE),
+                    quote(SIX),
+                    quote(SEVEN),
+                    quote(EIGHT),
+                    quote(NINE));
+
     private static final String BOOL_PATTERN =
             join(quote("true"), quote("false"));
+
     private static final String NULL_PATTERN =
             quote("null");
+
     private static final String JSON_PATTERN =
-            join(join(quote(O_CURLY), quote(O_BRACKET), quote(QUOTE)), BOOL_PATTERN, NULL_PATTERN, NUM_PATTERN);
+            join(join(
+                    quote(O_CURLY),
+                    quote(O_BRACKET),
+                    quote(QUOTE)),
+                    BOOL_PATTERN,
+                    NULL_PATTERN,
+                    NUM_PATTERN);
+
     private static final String OBJ_KEY_PATTERN =
             join(quote(QUOTE), quote(C_CURLY));
+
     private static final String OBJ_VAL_PATTERN =
             join(quote(COMMA), quote(C_CURLY));
+
     private static final String ARR_VAL_PATTERN =
             join(quote(COMMA), quote(C_BRACKET));
 
@@ -281,7 +315,7 @@ public class Parser {
                     return succeed(new JNum(number));
             }
         }
-        // the entry point guarantees that I always have enough digits for a number
+        // the entry point guarantees enough digits for a number
         final int number = Integer.parseInt(text.substring(start, cursor));
         return succeed(new JNum(number));
     }
@@ -387,15 +421,77 @@ public class Parser {
         } else return abruptEnd(U_PATTERN);
     }
 
+    private boolean consumeEscape(final StringBuilder bld) {
+        cursor++; // consume '\'
+        if (cursor < length) {
+            final char current = text.charAt(cursor);
+            switch (current) {
+                case QUOTE:
+                case BACKSLASH:
+                    cursor++;
+                    bld.append(current);
+                    return SUCCESSFUL;
+                case N:
+                    cursor++;
+                    bld.append("\n");
+                    return SUCCESSFUL;
+                case F:
+                    cursor++;
+                    bld.append("\f");
+                    return SUCCESSFUL;
+                case T:
+                    cursor++;
+                    bld.append("\t");
+                    return SUCCESSFUL;
+                case B:
+                    cursor++;
+                    bld.append("\b");
+                    return SUCCESSFUL;
+                case R:
+                    cursor++;
+                    bld.append("\r");
+                    return SUCCESSFUL;
+                default:
+                    return unexpected(current, ESCAPE_PATTERN);
+            }
+        }
+        return abruptEnd(ESCAPE_PATTERN);
+    }
+
+    private boolean consumeStringEscaping(final int start) {
+        final StringBuilder bld = new StringBuilder(text.substring(start, cursor));
+        while (cursor < length) {
+            final char current = text.charAt(cursor);
+            if (current == BACKSLASH) {
+                if (!consumeEscape(bld)) {
+                    return FAILED;
+                }
+            } else if (current == QUOTE) {
+                cursor++; // consume `"`
+                final Json value = new JString(bld.toString());
+                return succeed(value);
+            } else {
+                cursor++;
+                bld.append(current);
+            }
+        }
+        return abruptEnd(TEXT_PATTERN);
+    }
+
     private boolean consumeString() {
         cursor++; // consume `"`
         int start = cursor;
         while (cursor < length) {
-            if (text.charAt(cursor) == QUOTE) {
+            final char current = text.charAt(cursor);
+            if (current == BACKSLASH) {
+                return consumeStringEscaping(start);
+            }
+            else if (current == QUOTE) {
                 final Json value = new JString(text.substring(start, cursor));
                 cursor++; // consume `"`
                 return succeed(value);
-            } else {
+            }
+            else {
                 cursor++;
             }
         }
@@ -582,7 +678,12 @@ public class Parser {
         if (input.isEmpty()) return Attempt.failure("No input to parse.");
         else {
             try {
-                if (p.consumeAny()) return Attempt.success(p.result);
+                if (p.consumeAny()) {
+                    if (p.cursor < p.length) {
+                        return Attempt.failure("Unexpected 'EOF'. Input ended abruptly.\nInput was unparsable after: %s", p.pointedSample(10));
+                    }
+                    else return Attempt.success(p.result);
+                }
                 else return Attempt.failure(p.failure);
             } catch (Exception e) {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();

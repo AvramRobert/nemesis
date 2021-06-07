@@ -19,9 +19,8 @@ public interface AttemptTrait<A> {
         else return e.apply(error());
     }
 
-    default void consume(final Consumer1<A> f, final Consumer1<String> e) {
+    default void consume(final Consumer1<A> f) {
         if (isSuccess()) f.apply(value());
-        else e.apply(error());
     }
 
     boolean isSuccess();
