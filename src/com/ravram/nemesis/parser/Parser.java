@@ -464,12 +464,15 @@ public class Parser {
             final char current = text.charAt(cursor);
             if (current == BACKSLASH) {
                 if (consumeEscape(bld)) {
-                } else return FAILED;
-            } else if (current == QUOTE) {
+                }
+                else return FAILED;
+            }
+            else if (current == QUOTE) {
                 cursor++; // consume `"`
                 final Json value = new JString(bld.toString());
                 return succeed(value);
-            } else {
+            }
+            else {
                 cursor++;
                 bld.append(current);
             }
