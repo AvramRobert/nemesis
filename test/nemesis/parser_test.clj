@@ -18,7 +18,7 @@
   (for-all [json-string gen-faulty-json-string]
     (is (not (-> json-string (Parser/parse) (.isSuccess))))))
 
-(deftest parses-escpaed-characters
+(deftest parses-escaped-characters
   (let [parse #(-> % (Parser/parse) (.value))
         cases {:quote     "\"\\\"\""
                :backslash "\"\\\\\""
@@ -26,7 +26,8 @@
                :backspace "\"\\b\""
                :tab       "\"\\t\""
                :form      "\"\\f\""
-               :return    "\"\\r\""}]
+               :return    "\"\\r\""
+               :url       "\"\u200b\""}]
     (doseq [[case example] cases
             :let [actual-parsed   (parse example)
                   expected-parsed (c/parse-string example)]]

@@ -191,7 +191,7 @@
 
 (def gen-faulty-json-string
   (->> [(gen/return " ")
-        (gen/return "\"ab")
+        #_(gen/return "\"ab")
         (gen/return "\n")
         (gen/return "{")
         (gen/return "[")

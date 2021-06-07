@@ -20,6 +20,10 @@ public class Parser {
     private static final char QUOTE = '\"';
     private static final char BACKSLASH = '\\';
     private static final char NEWLINE = '\n';
+    private static final char BACKSPACE = '\b';
+    private static final char TAB = '\t';
+    private static final char CARRIAGE_RETURN = '\r';
+    private static final char FORM_FEED = '\f';
 
     private static final char O_CURLY = '{';
     private static final char C_CURLY = '}';
@@ -421,51 +425,42 @@ public class Parser {
         } else return abruptEnd(U_PATTERN);
     }
 
-    private boolean consumeEscape(final StringBuilder bld) {
-        cursor++; // consume '\'
-        if (cursor < length) {
-            final char current = text.charAt(cursor);
-            switch (current) {
-                case QUOTE:
-                case BACKSLASH:
-                    cursor++;
-                    bld.append(current);
-                    return SUCCESSFUL;
-                case N:
-                    cursor++;
-                    bld.append("\n");
-                    return SUCCESSFUL;
-                case F:
-                    cursor++;
-                    bld.append("\f");
-                    return SUCCESSFUL;
-                case T:
-                    cursor++;
-                    bld.append("\t");
-                    return SUCCESSFUL;
-                case B:
-                    cursor++;
-                    bld.append("\b");
-                    return SUCCESSFUL;
-                case R:
-                    cursor++;
-                    bld.append("\r");
-                    return SUCCESSFUL;
-                default:
-                    return unexpected(current, ESCAPE_PATTERN);
-            }
-        }
-        return abruptEnd(ESCAPE_PATTERN);
-    }
-
     private boolean consumeStringEscaping(final int start) {
         final StringBuilder bld = new StringBuilder(text.substring(start, cursor));
         while (cursor < length) {
             final char current = text.charAt(cursor);
             if (current == BACKSLASH) {
-                if (consumeEscape(bld)) {
+                cursor++; // consume '\'
+                if (cursor < length) {
+                    final char next = text.charAt(cursor);
+                    cursor++; // consume escape
+                    switch (next) {
+                        case QUOTE:
+                            bld.append(QUOTE);
+                            continue;
+                        case BACKSLASH:
+                            bld.append(BACKSLASH);
+                            continue;
+                        case N:
+                            bld.append(NEWLINE);
+                            continue;
+                        case B:
+                            bld.append(BACKSPACE);
+                            continue;
+                        case F:
+                            bld.append(FORM_FEED);
+                            continue;
+                        case T:
+                            bld.append(TAB);
+                            continue;
+                        case R:
+                            bld.append(CARRIAGE_RETURN);
+                            continue;
+                        default:
+                            bld.append(BACKSLASH).append(next);
+                    }
                 }
-                else return FAILED;
+                else return abruptEnd(ESCAPE_PATTERN);
             }
             else if (current == QUOTE) {
                 cursor++; // consume `"`
@@ -680,12 +675,7 @@ public class Parser {
         if (input.isEmpty()) return Attempt.failure("No input to parse.");
         else {
             try {
-                if (p.consumeAny()) {
-                    if (p.cursor < p.length) {
-                        return Attempt.failure("Unexpected 'EOF'. Input ended abruptly.\nInput was unparsable after: %s", p.pointedSample(10));
-                    }
-                    else return Attempt.success(p.result);
-                }
+                if (p.consumeAny()) return Attempt.success(p.result);
                 else return Attempt.failure(p.failure);
             } catch (Exception e) {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
