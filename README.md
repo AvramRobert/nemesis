@@ -33,11 +33,11 @@ public static void main (String... args) {
     String json2 = "{ \"numbers\" : [{ \"first\" : 1 }, { \"second\" : 2 }] }";
 
     Either<String, String> modified = parse(json1)
-         .insertValue("Mark", in("Oh-Hai"))
-         .insertValue("value", in("Deep", "Nested", "Structure"))
+         .insertValue("Mark", "Oh-Hai")
+         .insertValue("value", "Deep", "Nested", "Structure")
          .remove("hello")
          .mergeJson(parse(json2))
-         .updateValue(JSON_TO_LONG, a -> a + 1, in("numbers", 1, "second"))
+         .updateValue(JSON_TO_LONG, a -> a + 1, "numbers", 1, "second")
          .affix()
          .map(json -> json.encode());
 

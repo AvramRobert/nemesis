@@ -111,7 +111,7 @@ The simplest insertion is of either `Json` or `JsonT` values.
 ```java
 JsonT jsonT2 = parse("{ \"a\" : 1 }");
 
-jsonT.insertJson(jsonT2, in("node"));
+jsonT.insertJson(jsonT2, "node");
 ```
 
 ```json
@@ -129,14 +129,14 @@ Any raw values can be directly inserted into a `JsonT`, **as long as they are pa
 
 ```java
 jsonT
-    .insertValue(1, in("field-1"))
-    .insertValue(true, in("field-2"))
-    .insertValue("bla", in("field-3"))
-    .insertValue(null, in("field-4"))
-    .insertValue(Arrays.asList(1, 2, 3, 4)), in("field-5"))
-    .insertValue(new int[]{1, 2, 3, 4}, in("field-6"))
-    .insertValue(new HashSet(Arrays.asList(1, 2, 3, 4)), in("field-7"))
-    .insertValue(Map.of("a", "b"), in("field-8"));
+    .insertValue(1, "field-1")
+    .insertValue(true, "field-2")
+    .insertValue("bla", "field-3")
+    .insertValue(null, "field-4")
+    .insertValue(Arrays.asList(1, 2, 3, 4)), "field-5")
+    .insertValue(new int[]{1, 2, 3, 4}, "field-6")
+    .insertValue(new HashSet(Arrays.asList(1, 2, 3, 4)), "field-7")
+    .insertValue(Map.of("a", "b"), "field-8");
 ```
 
 ```json
@@ -177,7 +177,6 @@ For more information on `Write`, take a look [here](api.md#converting).
 ```java
 import static com.ravram.nemesis.Json.*;
 import static com.ravram.nemesis.Write;
-import static com.ravram.nemesis.Writers.WRITE_INT;
 
 static class Point {
    final int a;
@@ -191,10 +190,10 @@ static class Point {
 
    Write<Point> writePoint = point -> 
         write(point).using(
-                "a", p -> WRITE_INT.apply(p.a),
-                "b", p -> WRITE_INT.apply(p.b));
+                "a", p -> Write.INT.apply(p.a),
+                "b", p -> Write.INT.apply(p.b));
 
-jsonT.insertValue(new Point(1,1), writePoint, in("point"))
+jsonT.insertValue(new Point(1,1), writePoint, "point")
 ```
 
 ```json
@@ -214,7 +213,7 @@ Values can be inserted with arbitrary nestedness. Structure will automatically b
 **Note: This only works on JSON objects.**
 
 ```java
-jsonT.insertValue(true, in("is", "this", "deep", "enough"))
+jsonT.insertValue(true, "is", "this", "deep", "enough")
 ```
 
 ```json
@@ -238,7 +237,7 @@ Entries can only be deleted at the top level. (Support for removal at arbitrary 
 
 ```java
 jsonT
-    .insertValue(1, in("value"))
+    .insertValue(1, "value")
     .remove("hello", "value");
 ```
 
@@ -253,9 +252,11 @@ Can either be performed directly on a `JsonT` node or on a proper type `A`, prov
 
 For more information on `Read`, take a look [here](api.md#converting).
 ```java
+import com.ravram.nemesis.Read;
+
 jsonT
-    .insertValue(1, in("one", "level")
-    .updateValue(READ_INT, n -> n + 1, in("one", "level"));
+    .insertValue(1, "one", "level")
+    .updateValue(Read.INT, n -> n + 1, "one", "level");
 ```
 
 ```json
@@ -276,8 +277,8 @@ JSON can be retrieved from any level and any structure.
 **Note: This returns a `JsonT` to leverage safety and further composition.**
 ```java
 jsonT
-  .insertValue(Arrays.asList(1, 2, 3), in("one", "level"))
-  .getJson(in("one", "level", 2));
+  .insertValue(Arrays.asList(1, 2, 3), "one", "level")
+  .getJson("one", "level", 2);
 ```
 
 #### Values
@@ -285,11 +286,11 @@ Values of any type `A` can be retrieved from any level and any structure, provid
 
 For more information on `Read`, take a look [here](api.md#converting).
 ```java
-
+import com.ravram.nemesis.Read;
 
 jsonT
-  .insertValue(true, in("one", "level"))
-  .getValue(READ_BOOLEAN, in("one", "level", 2));
+  .insertValue(true, "one", "level")
+  .getValue(Read.BOOLEAN, "one", "level", 2);
   
 ```
 
@@ -323,19 +324,21 @@ A `JsonT` can be materialised to a concrete type `A` provided a `Read<A>` instan
 
 For more information on `Read`, take a look [here](api.md#converting).
 
-#### Casting to JSON types
+#### Casting to simple types
 
-Writers and Readers for a bunch of types can be found in `com.ravram.nemesis.Writers` and
-`com.ravram.nemsis.Readers` respectively.
+There are a bunch of default `Read<A>` and `Write<A>` instances for many types. \
+These can be found statically in the respective `Read<A>` and `Write<A>` classes.
 
 A list of all the defaults can be found [here](api.md#default-readwrite-instances).
 
 ```java
-jsonT.getJson(in("hello")).as(READ_STRING); // Either<String, String>
+import com.ravram.nemesis.Read;
+
+jsonT.getJson("hello").as(Read.STRING); // Either<String, String>
 ```
 or
 ```java
-jsonT.getValue(WRITE_STRING, in("hello")); // Either<String, String>
+jsonT.getValue(Read.STRING, "hello"); // Either<String, String>
 ```
 
 #### Casting to arbitrary types
@@ -346,6 +349,8 @@ that one constructs a `Read<A>` instance for that type.
 For more information on `Read`, take a look [here](api.md#converting).
 
 ```java
+import com.ravram.nemesis.Read;
+
 static class Greeting {
     public final String value;
     
@@ -356,7 +361,7 @@ static class Greeting {
 
 Convert<Json, Greeting> converter = json ->
     convert(json).using(
-            json  -> json.transform().getValue(READ_STRING, in("hello")), 
+            json  -> json.transform().getValue(Read.STRING, "hello"), 
             value -> new Greeting(value));
 ```
 
@@ -379,10 +384,10 @@ Function3<A, String, JsonT, Either<String, A>>
 ```
 
 ```java
-
+import com.ravram.nemesis.Write;
 
 jsonT.reduceObj("Greeting:",(inter,key,jsonValue)->{
-        return jsonValue.as(WRITE_STRING).map(value->inter+" "+key+" "+value);
+        return jsonValue.as(Write.STRING).map(value->inter+" "+key+" "+value);
         });
 ```
 
@@ -407,13 +412,13 @@ Function3<A, Integer, JsonT, Either<String, A>>
 ```
 
 ```java
+import com.ravram.nemesis.Read;
 
+JsonT json = parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]");
 
-JsonT json=parse("[{\"value\" : 1}, {\"value\" : 2}, {\"value\" : 3}, {\"value\" : 4}]")
-
-        json.reduceArr(0,(inter,index,jsonValue)->{
-        return jsonValue.getAs(READ_INT,in("value")).map(x->x+inter);
-        });
+json.reduceArr(0, (inter, index, jsonValue) -> {
+    return jsonValue.getAs(Read.INT, "value").map(x -> x + inter);
+});
 ```
 
 ### Creating
@@ -462,7 +467,7 @@ instances for that type and using them wherever needed.
 #### Default Read/Write Instances
 
 _nemesis_ provides `Read` and `Write` instances for a number of basic types.
-These can be found in `com.ravram.nemesis.Readers` and `com.ravram.nemesis.Writers` respectively.
+These can be found statically in `Read` and `Write` respectively.
 
 Here's a list:
 
@@ -504,7 +509,7 @@ Read<MyType> reader = json ->
 **Example:**
 
 ```java
-import static com.ravram.nemesis.Readers.*;
+import com.ravram.nemesis.Read;
 
 static class Coord {
    public final int s;
@@ -536,19 +541,19 @@ static class Figure {
 
    Read<Coord> coord = json ->
            read(json).using(
-                   js -> js.transform().getValue(READ_INT, in("s")),
-                   js -> js.transform().getValue(READ_INT, in("e")),
+                   js -> js.transform().getValue(Read.INT, "s"),
+                   js -> js.transform().getValue(Read.INT, "e"),
                    (s, e) -> new Coord(s, e));
 
    Read<Line> line = json ->
            read(json).using(
-                   js -> js.transform().getValue(coord, in("x")),
-                   js -> js.transform().getValue(coord, in("y")),
+                   js -> js.transform().getValue(coord, "x"),
+                   js -> js.transform().getValue(coord, "y"),
                    (x, y) -> new Line(x, y));
 
    Read<Figure> figure = json ->
            read(json).using(
-                   js -> js.transform().getValue(readList(line), in("lines")),
+                   js -> js.transform().getValue(readList(line), ),
                    lines -> new Figure(lines));
 ```
 
@@ -571,7 +576,7 @@ Write<MyType> writer = json ->
 **Example:**
 
 ```java
-import static com.ravram.nemesis.Writers.*;
+import com.ravram.nemesis.Write;
 
 static class Coord {
    public final int s;
@@ -603,8 +608,8 @@ static class Figure {
 
    Write<Coord> jcoord = coord ->
            write(coord).using(
-                   "s", c -> WRITE_INT.convert(c.s),
-                   "e", c -> WRITE_INT.convert(c.e));
+                   "s", c -> Write.INT.convert(c.s),
+                   "e", c -> Write.INT.convert(c.e));
 
    Write<Line> jline = line ->
            write(line).using(
